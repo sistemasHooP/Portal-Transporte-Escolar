@@ -510,7 +510,11 @@ function abrirCarteirinha(aluno) {
     // Forçar a src do elemento img caso o QRious renderize em canvas
     document.getElementById('cart-qrcode-img').src = qr.toDataURL();
 
-    // 5. Exibir Modal
+    // 5. Código Único (Para Impressão Oficial)
+    const elAuthCode = document.getElementById('cart-auth-code');
+    if(elAuthCode) elAuthCode.innerText = aluno.chave || '---';
+
+    // 6. Exibir Modal
     document.getElementById('modal-carteirinha').classList.remove('hidden');
     document.getElementById('cart-flip-container').classList.remove('is-flipped');
     fecharModalConsulta();
