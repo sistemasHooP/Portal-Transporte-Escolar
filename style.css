@@ -403,10 +403,11 @@ input[type="file"] { display: none; }
     
     /* Layout Lado a Lado (Remove 3D) */
     .carteirinha-wrapper {
-        perspective: none; height: auto; max-width: 100%; margin-top: 10mm;
-        display: flex; flex-direction: row; gap: 5mm; justify-content: center;
+        perspective: none; height: auto; margin-top: 10mm;
+        display: flex; flex-direction: row; gap: 5mm; justify-content: start;
         /* Centraliza na folha horizontal */
-        align-items: center; height: 100vh; 
+        align-items: flex-start;
+        width: 100% !important; /* Remove limitação de largura */
     }
     
     .carteirinha-card-inner {
@@ -422,7 +423,7 @@ input[type="file"] { display: none; }
         outline: 1px dashed #ccc; 
         box-sizing: border-box;
         -webkit-print-color-adjust: exact; print-color-adjust: exact;
-        font-size: 8pt; 
+        font-size: 8.5pt; /* Leve aumento para evitar sensação de espremido */
         margin-bottom: 0;
         color: white !important;
         background: linear-gradient(135deg, var(--card-color, #2563eb), #0f172a) !important;
@@ -432,7 +433,7 @@ input[type="file"] { display: none; }
 
     /* --- FRENTE: LAYOUT HÍBRIDO (Foto Esq / Dados Dir) --- */
     .carteirinha-front {
-        padding: 3mm !important;
+        padding: 2mm !important; /* Reduzido padding para dar espaço */
         display: grid;
         grid-template-columns: 24mm 1fr; /* Coluna Foto | Coluna Dados */
         grid-template-rows: 10mm 1fr 6mm; /* Header | Corpo | Rodapé (Chave) */
@@ -447,8 +448,8 @@ input[type="file"] { display: none; }
         margin: 0; padding-bottom: 1mm; height: 100%;
     }
     .carteirinha-front .cart-logo { width: 8mm; height: 8mm; padding: 0.5mm; }
-    .carteirinha-front .cart-org-info h3 { font-size: 7pt; line-height: 1; margin: 0; font-weight: 800; white-space: normal; }
-    .carteirinha-front .cart-org-info small { font-size: 5pt; line-height: 1; display: block; margin-top: 0.5mm; white-space: normal; }
+    .carteirinha-front .cart-org-info h3 { font-size: 7.5pt; line-height: 1; margin: 0; font-weight: 800; white-space: normal; }
+    .carteirinha-front .cart-org-info small { font-size: 5.5pt; line-height: 1; display: block; margin-top: 0.5mm; white-space: normal; }
 
     /* CORPO */
     .carteirinha-front .cart-body { display: contents; } /* Remove wrapper flex */
@@ -469,12 +470,12 @@ input[type="file"] { display: none; }
     }
     
     .carteirinha-front .cart-info-main h2 { 
-        font-size: 9pt; margin-bottom: 1mm; line-height: 1.1; 
+        font-size: 9.5pt; margin-bottom: 1mm; line-height: 1.1; 
         text-transform: uppercase; font-weight: 800;
         white-space: normal; overflow: visible; 
     }
     .carteirinha-front .cart-info-main .cart-course { 
-        padding: 0.5mm 2mm; font-size: 6.5pt; border-radius: 2mm; 
+        padding: 0.5mm 2mm; font-size: 7pt; border-radius: 2mm; 
         margin-bottom: 2mm; display: inline-block;
         background: rgba(255,255,255,0.2);
         white-space: normal;
@@ -490,11 +491,11 @@ input[type="file"] { display: none; }
         margin-bottom: 0.5mm; display: flex; align-items: baseline;
     }
     .carteirinha-front .detail-label { 
-        font-size: 5pt; text-transform: uppercase; opacity: 0.8; 
+        font-size: 5.5pt; text-transform: uppercase; opacity: 0.8; 
         width: 15mm; flex-shrink: 0; display: inline-block;
     }
     .carteirinha-front .detail-value { 
-        font-size: 6.5pt; font-weight: 700; font-family: monospace;
+        font-size: 7pt; font-weight: 700; font-family: monospace;
         white-space: normal; /* Permitir quebra */
     }
 
@@ -502,16 +503,16 @@ input[type="file"] { display: none; }
     .cart-print-auth {
         display: block !important;
         grid-column: 1 / -1; grid-row: 3;
-        text-align: center; font-family: monospace; font-size: 6pt;
+        text-align: center; font-family: monospace; font-size: 6.5pt;
         background: rgba(0,0,0,0.3); padding: 1mm; border-radius: 1mm;
         margin-top: auto; 
     }
-    .cart-print-auth span { opacity: 0.7; font-size: 5pt; margin-right: 3px; }
-    .cart-print-auth strong { font-size: 7pt; letter-spacing: 1px; color: #fff; }
+    .cart-print-auth span { opacity: 0.7; font-size: 5.5pt; margin-right: 3px; }
+    .cart-print-auth strong { font-size: 7.5pt; letter-spacing: 1px; color: #fff; }
 
     /* --- VERSO: LAYOUT OTIMIZADO --- */
     .carteirinha-back {
-        padding: 3mm !important;
+        padding: 2mm !important; /* Reduzido padding */
         display: grid;
         grid-template-columns: 28mm 1fr; /* QR Code | Validade */
         grid-template-rows: 6mm 1fr 6mm; /* Header | Corpo | Footer */
@@ -521,7 +522,7 @@ input[type="file"] { display: none; }
     /* Header Verso */
     .carteirinha-back .cart-back-header {
         grid-column: 1 / -1; grid-row: 1;
-        font-size: 6pt; border-bottom: 0.5pt solid rgba(255,255,255,0.3);
+        font-size: 6.5pt; border-bottom: 0.5pt solid rgba(255,255,255,0.3);
         margin: 0; padding-bottom: 1mm; position: static; white-space: nowrap;
     }
 
@@ -536,16 +537,16 @@ input[type="file"] { display: none; }
         grid-column: 2; grid-row: 2;
         text-align: center; margin: 0;
     }
-    .carteirinha-back .validity-label { font-size: 6pt; display: block; margin-bottom: 1mm; }
-    .carteirinha-back .validity-year { font-size: 24pt; font-weight: 900; line-height: 1; display: block; }
+    .carteirinha-back .validity-label { font-size: 6.5pt; display: block; margin-bottom: 1mm; }
+    .carteirinha-back .validity-year { font-size: 26pt; font-weight: 900; line-height: 1; display: block; }
 
     /* Footer Verso */
     .carteirinha-back .cart-footer {
         grid-column: 1 / -1; grid-row: 3;
         position: static; padding: 0; margin: 0; border: none;
-        font-size: 5pt; align-self: end;
+        font-size: 5.5pt; align-self: end;
     }
-    .carteirinha-back .cart-sec-name { font-size: 6.5pt; margin-bottom: 0.5mm; }
+    .carteirinha-back .cart-sec-name { font-size: 7pt; margin-bottom: 0.5mm; }
 
     /* Esconder botões na impressão */
     .modal-actions-row, .cart-actions, .btn-close-modern, .btn-action-pri, .btn-action-sec, .btn-flip { display: none !important; }
