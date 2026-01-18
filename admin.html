@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão Educacional</title>
+    
+    <!-- Fontes e Ícones -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+    <!-- TELA DE LOGIN (Overlay Fixo) -->
+    <div id="login-screen" class="login-wrapper">
+        <div class="login-box">
+            <div style="margin-bottom: 2rem; color: var(--primary);">
+                <i class="fa-solid fa-layer-group" style="font-size: 3rem;"></i>
+            </div>
+            
+            <h2 style="margin: 0 0 0.5rem 0; font-size: 1.5rem; color: var(--text-main);">Portal Administrativo</h2>
+            <p style="color: var(--text-muted); margin: 0 0 2rem 0; font-size: 0.9rem;">Acesso restrito à Secretaria</p>
+            
+            <form onsubmit="realizarLogin(event)">
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock icon-left"></i>
+                    <input type="password" id="admin-pass" placeholder="Senha de segurança" required autocomplete="current-password">
+                    <i class="fa-solid fa-eye password-toggle" onclick="toggleSenha()"></i>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">
+                    Entrar no Sistema <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                <a href="index.html" class="btn-back-login">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar ao Site Público
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- APLICAÇÃO PRINCIPAL (APP SHELL) -->
+    <div id="admin-panel" class="hidden" style="width: 100%; height: 100%;">
+        
+        <div id="app-container">
+            
+            <!-- COLUNA 1: SIDEBAR (Fixa à Esquerda) -->
+            <aside class="sidebar">
+                <div class="brand">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>GESTOR PRO</span>
+                </div>
+                
+                <nav class="nav-menu">
+                    <button id="btn-dashboard" class="nav-item active" onclick="switchTab('tab-dashboard')">
+                        <i class="fa-solid fa-gauge-high"></i> Dashboard
+                    </button>
+                    <button id="btn-relatorios" class="nav-item" onclick="switchTab('tab-relatorios')">
+                        <i class="fa-solid fa-file-contract"></i> Relatórios
+                    </button>
+                    <button id="btn-eventos" class="nav-item" onclick="switchTab('tab-eventos')">
+                        <i class="fa-regular fa-calendar-days"></i> Eventos
+                    </button>
+                    <button id="btn-inscricoes" class="nav-item" onclick="switchTab('tab-inscricoes')">
+                        <i class="fa-solid fa-users-viewfinder"></i> Inscrições
+                    </button>
+                    <button id="btn-config" class="nav-item" onclick="switchTab('tab-config')">
+                        <i class="fa-solid fa-sliders"></i> Configurações
+                    </button>
+                </nav>
+                
+                <div class="nav-footer">
+                    <button class="btn-logout" onclick="logout()">
+                        <i class="fa-solid fa-power-off"></i> Encerrar Sessão
+                    </button>
+                </div>
+            </aside>
+
+            <!-- COLUNA 2: CONTEÚDO PRINCIPAL (Expansível) -->
+            <main class="main-content">
+                
+                <!-- ÁREA DE ROLAGEM INTERNA (Onde as abas vivem) -->
+                <div class="scroll-area">
+                    
+                    <!-- ========================================= -->
+                    <!-- ABA 1: DASHBOARD -->
+                    <!-- ========================================= -->
+                    <section id="tab-dashboard" class="tab-content active">
+                        <div class="page-header">
+                            <div class="page-title">
+                                <h1>Visão Geral</h1>
+                                <p>Monitoramento em tempo real do sistema.</p>
+                            </div>
+                            <button onclick="carregarDashboard()" class="btn btn-secondary btn-icon" title="Atualizar Dados">
+                                <i class="fa-solid fa-rotate-right" style="color: var(--text-main);"></i>
+                            </button>
+                        </div>
+
+                        <!-- Grid de Cards -->
+                        <div class="dashboard-grid">
+                            <div class="card-widget">
+                                <h3>Total Inscritos</h3>
+                                <span class="value" id="stat-total">0</span>
+                            </div>
+                            <div class="card-widget" style="border-left: 4px solid var(--green-text);">
+                                <h3>Aprovados</h3>
+                                <span class="value" id="stat-aprovados" style="color: var(--green-text);">0</span>
+                            </div>
+                            <div class="card-widget" style="border-left: 4px solid var(--amber-text);">
+                                <h3>Pendentes</h3>
+                                <span class="value" id="stat-pendentes" style="color: var(--amber-text);">0</span>
+                            </div>
+                        </div>
+
+                        <!-- Gráficos -->
+                        <div class="charts-wrapper">
+                            <div class="chart-card">
+                                <h4>Inscrições por Evento</h4>
+                                <div style="flex: 1; position: relative; min-height: 0;">
+                                    <canvas id="chartEventos"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card">
+                                <h4>Status Geral</h4>
+                                <div style="flex: 1; position: relative; min-height: 0;">
+                                    <canvas id="chartStatus"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ========================================= -->
+                    <!-- ABA 2: RELATÓRIOS -->
+                    <!-- ========================================= -->
+                    <section id="tab-relatorios" class="tab-content hidden">
+                        <div class="page-header">
+                            <div class="page-title">
+                                <h1>Central de Relatórios</h1>
+                                <p>Geração de listas e documentos oficiais.</p>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-grid">
+                            <!-- Card Principal de Relatório -->
+                            <div class="card-widget" style="grid-column: 1 / -1;">
+                                <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 1rem;">
+                                    <i class="fa-solid fa-file-pdf" style="color: var(--primary);"></i> Lista de Transporte
+                                </h3>
+                                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                                    Gere a lista oficial de alunos aprovados para o controle do transporte escolar. 
+                                    Você pode filtrar por evento específico e instituição de ensino.
+                                </p>
+                                
+                                <div style="display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap; background: #f8fafc; padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border);">
+                                    <div style="flex: 1; min-width: 200px;">
+                                        <label class="swal-label">Selecionar Evento</label>
+                                        <select id="relatorio-evento" class="filter-select" style="width: 100%;">
+                                            <option value="">Carregando eventos...</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div style="flex: 1; min-width: 200px;">
+                                        <label class="swal-label">Filtrar Instituição</label>
+                                        <select id="relatorio-inst" class="filter-select" style="width: 100%;">
+                                            <option value="">Todas as Instituições</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button class="btn btn-primary" onclick="gerarRelatorioTransporte()" style="height: 42px;">
+                                        <i class="fa-solid fa-print"></i> Gerar PDF Oficial
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ========================================= -->
+                    <!-- ABA 3: EVENTOS -->
+                    <!-- ========================================= -->
+                    <section id="tab-eventos" class="tab-content hidden">
+                        <div class="page-header">
+                            <div class="page-title">
+                                <h1>Gestão de Eventos</h1>
+                                <p>Crie e configure novos períodos de inscrição.</p>
+                            </div>
+                            <button class="btn btn-primary" onclick="modalNovoEvento()">
+                                <i class="fa-solid fa-plus"></i> Novo Evento
+                            </button>
+                        </div>
+
+                        <div class="table-container">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">ID</th>
+                                            <th>Título do Evento</th>
+                                            <th>Período</th>
+                                            <th>Status</th>
+                                            <th style="text-align: right;">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-eventos-admin">
+                                        <!-- Preenchido via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ========================================= -->
+                    <!-- ABA 4: INSCRIÇÕES -->
+                    <!-- ========================================= -->
+                    <section id="tab-inscricoes" class="tab-content hidden">
+                        <div class="page-header">
+                            <div class="page-title">
+                                <h1>Inscrições</h1>
+                                <p>Gerenciamento completo de alunos.</p>
+                            </div>
+                            <button onclick="carregarInscricoes()" class="btn btn-secondary btn-icon" title="Recarregar">
+                                <i class="fa-solid fa-rotate-right" style="color: var(--text-main);"></i>
+                            </button>
+                        </div>
+
+                        <div class="table-container">
+                            <!-- Toolbar de Filtros -->
+                            <div class="table-toolbar">
+                                <div class="search-input-group">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    <input type="text" id="filtro-nome" placeholder="Buscar por Nome, CPF ou Chave..." onkeyup="resetEFiltrar()">
+                                </div>
+                                <select id="filtro-evento" class="filter-select" onchange="resetEFiltrar()">
+                                    <option value="">Todos Eventos</option>
+                                </select>
+                                <select id="filtro-status" class="filter-select" onchange="resetEFiltrar()">
+                                    <option value="">Todos Status</option>
+                                    <option value="Pendente">Pendente</option>
+                                    <option value="Aprovada">Aprovada</option>
+                                    <option value="Rejeitada">Rejeitada</option>
+                                    <option value="Ficha Emitida">Ficha Emitida</option>
+                                </select>
+                            </div>
+
+                            <!-- Tabela -->
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 40px; text-align: center;">
+                                                <input type="checkbox" id="check-all" onclick="toggleAllChecks()">
+                                            </th>
+                                            <th>Data</th>
+                                            <th>Aluno</th>
+                                            <th>Evento</th>
+                                            <th>Status</th>
+                                            <th style="text-align: right;">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-inscricoes-admin">
+                                        <!-- Preenchido via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Paginação -->
+                            <div style="padding: 1rem; border-top: var(--border); text-align: center;">
+                                <button id="btn-load-more" class="btn btn-secondary" style="display:none; margin: 0 auto;" onclick="renderizarProximaPagina()">
+                                    Carregar Mais <i class="fa-solid fa-chevron-down"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ========================================= -->
+                    <!-- ABA 5: CONFIGURAÇÕES -->
+                    <!-- ========================================= -->
+                    <section id="tab-config" class="tab-content hidden">
+                        <div class="page-header">
+                            <div class="page-title">
+                                <h1>Configurações</h1>
+                                <p>Parâmetros globais do sistema.</p>
+                            </div>
+                        </div>
+
+                        <div class="swal-grid-2">
+                            <!-- Card Instituições -->
+                            <div class="card-widget">
+                                <h3 style="margin-bottom: 1rem; font-size: 1rem; color: var(--text-main);">Instituições de Ensino</h3>
+                                <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                                    <input type="text" id="nova-inst" class="swal-input-custom" placeholder="Nova Instituição...">
+                                    <button class="btn btn-primary" onclick="addInstituicao()"><i class="fa-solid fa-plus"></i></button>
+                                </div>
+                                <div id="lista-instituicoes" style="flex: 1; max-height: 250px; overflow-y: auto; border: var(--border); border-radius: var(--radius);">
+                                    <!-- Lista via JS -->
+                                </div>
+                            </div>
+
+                            <!-- Card Configurações Gerais -->
+                            <div class="card-widget">
+                                <h3 style="margin-bottom: 1rem; font-size: 1rem; color: var(--text-main);">Carteirinha & Sistema</h3>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <label class="swal-label">Cor da Carteirinha (Hex ou Nome)</label>
+                                    <div style="display:flex; gap:10px;">
+                                        <input type="color" id="config-cor-picker" class="swal-input-custom" style="width:50px; padding:0; height:38px;" onchange="document.getElementById('config-cor').value = this.value">
+                                        <input type="text" id="config-cor" class="swal-input-custom" placeholder="#2563eb">
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom: 15px;">
+                                    <label class="swal-label">Nome da Secretaria</label>
+                                    <input type="text" id="config-nome-sec" class="swal-input-custom" placeholder="Secretaria Mun. de Educação">
+                                </div>
+
+                                <div style="margin-bottom: 15px;">
+                                    <label class="swal-label">Nome do Secretário(a)</label>
+                                    <input type="text" id="config-nome-resp" class="swal-input-custom" placeholder="João da Silva">
+                                </div>
+
+                                <div style="margin-bottom: 15px;">
+                                    <label class="swal-label">ID da Pasta Google Drive</label>
+                                    <input type="text" id="config-drive-id" class="swal-input-custom" placeholder="ID da Pasta (ex: 1AbCd...)">
+                                </div>
+
+                                <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="salvarConfigGeral()">
+                                    <i class="fa-solid fa-save"></i> Salvar Todas as Configurações
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                </div> <!-- Fim da Área de Scroll Interna -->
+            </main>
+        </div>
+    </div>
+
+    <!-- BARRA FLUTUANTE DE AÇÃO EM MASSA -->
+    <div id="bulk-bar" class="bulk-bar hidden">
+        <span style="font-weight: 600;"><span id="bulk-count">0</span> selecionados</span>
+        <div style="height: 20px; width: 1px; background: rgba(255,255,255,0.3);"></div>
+        <button class="btn-icon" style="background: var(--green-bg); color: var(--green-text); width: auto; padding: 0 10px; gap: 5px;" onclick="acaoEmMassa('Aprovada')">
+            <i class="fa-solid fa-check"></i> Aprovar
+        </button>
+        <button class="btn-icon" style="background: var(--red-bg); color: var(--red-text); width: auto; padding: 0 10px; gap: 5px;" onclick="acaoEmMassa('Rejeitada')">
+            <i class="fa-solid fa-xmark"></i> Rejeitar
+        </button>
+        <button class="btn-icon" style="background: transparent; border: 1px solid rgba(255,255,255,0.5);" onclick="desmarcarTudo()">
+            <i class="fa-solid fa-times"></i>
+        </button>
+    </div>
+
+    <!-- MODAL CARTEIRINHA ADMIN (NOVO V2.0) -->
+    <div id="modal-carteirinha-admin" class="modal-overlay hidden" style="z-index: 3000;">
+        <div class="modal-content-cart transparent-modal">
+            
+            <div class="carteirinha-wrapper">
+                <!-- Inner container que gira -->
+                <div class="carteirinha-card-inner" id="cart-admin-flip-container" onclick="this.classList.toggle('is-flipped')">
+                    
+                    <!-- FRENTE -->
+                    <div class="carteirinha-face carteirinha-front">
+                        <div class="cart-header">
+                            <img src="logo.png" alt="Logo" class="cart-logo" id="cart-admin-logo">
+                            <div class="cart-org-info">
+                                <h3 id="cart-admin-sys-name">TRANSPORTE ESCOLAR</h3>
+                                <small>Secretaria de Educação</small>
+                            </div>
+                        </div>
+
+                        <div class="cart-body">
+                            <div class="cart-photo-frame">
+                                <img id="cart-admin-img" src="" alt="Foto">
+                            </div>
+                            
+                            <div class="cart-info-main">
+                                <h2 id="cart-admin-nome">Nome do Aluno</h2>
+                                <span class="cart-course" id="cart-admin-course">Curso do Aluno</span>
+                            </div>
+
+                            <div class="cart-details-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Instituição</span>
+                                    <span class="detail-value" id="cart-admin-inst">Instituição</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">CPF</span>
+                                    <span class="detail-value" id="cart-admin-cpf">000.000.000-00</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Nascimento</span>
+                                    <span class="detail-value" id="cart-admin-nasc">--/--/----</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Matrícula</span>
+                                    <span class="detail-value" id="cart-admin-mat">000000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VERSO -->
+                    <div class="carteirinha-face carteirinha-back">
+                        <div class="cart-back-header">
+                            Documento de Identificação Estudantil
+                        </div>
+
+                        <div class="qr-code-box">
+                            <!-- QR Code agora gerado via JS -->
+                            <img id="cart-admin-qr-img" src="" alt="QR Code Validação">
+                        </div>
+
+                        <div class="validity-box">
+                            <span class="validity-label">Válido até Dezembro de</span>
+                            <span class="validity-year" id="cart-admin-validade-ano">2025</span>
+                        </div>
+
+                        <div class="cart-footer">
+                            <span class="cart-sec-name" id="cart-admin-sec-name">Secretário</span>
+                            Secretário(a) de Educação
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+            <div class="cart-actions">
+                <button class="btn-action-sec" onclick="document.getElementById('modal-carteirinha-admin').classList.add('hidden')">
+                    Fechar
+                </button>
+                <button class="btn-flip" onclick="document.getElementById('cart-admin-flip-container').classList.toggle('is-flipped')">
+                    <i class="fa-solid fa-rotate"></i> Virar
+                </button>
+                <button class="btn-action-pri" onclick="window.print()">
+                    <i class="fa-solid fa-print"></i> Imprimir
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Adicionando biblioteca QRious para QR Code seguro -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
