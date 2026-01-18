@@ -11,17 +11,17 @@
     --primary: #2563eb;        
     --primary-dark: #1e40af;   
     --primary-light: #eff6ff; 
-    --secondary: #0ea5e9;     
+    --secondary: #0ea5e9;      
     --accent: #f59e0b;        
     
     /* Variável Dinâmica da Carteirinha (Padrão) */
     --card-color: #2563eb;    
 
     /* Cores de Fundo e Texto */
-    --bg-body: #f1f5f9;       
-    --bg-card: #ffffff;       
-    --text-main: #1e293b;     
-    --text-muted: #64748b;    
+    --bg-body: #f1f5f9;        
+    --bg-card: #ffffff;        
+    --text-main: #1e293b;      
+    --text-muted: #64748b;     
     
     /* Sombras e Bordas */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -314,6 +314,9 @@ input[type="file"] { display: none; }
 .detail-label { display: block; font-size: 0.6rem; text-transform: uppercase; opacity: 0.7; }
 .detail-value { display: block; font-size: 0.75rem; font-weight: 600; font-family: monospace; }
 
+/* Ocultar elementos exclusivos de impressão na visualização Web */
+.cart-print-auth { display: none; }
+
 /* VERSO */
 .carteirinha-back {
     transform: rotateY(180deg); -webkit-transform: rotateY(180deg);
@@ -432,7 +435,7 @@ input[type="file"] { display: none; }
         padding: 3mm !important;
         display: grid;
         grid-template-columns: 24mm 1fr; /* Coluna Foto | Coluna Dados */
-        grid-template-rows: 10mm 1fr auto; /* Header | Corpo | Rodapé (Chave) */
+        grid-template-rows: 10mm 1fr 6mm; /* Header | Corpo | Rodapé (Chave) */
         gap: 1mm;
     }
 
@@ -495,16 +498,16 @@ input[type="file"] { display: none; }
         white-space: normal; /* Permitir quebra */
     }
 
-    /* CHAVE ÚNICA (RODAPÉ FRENTE) - VISÍVEL APENAS NA IMPRESSÃO */
-    #cart-key-print {
+    /* CÓDIGO ÚNICO (RODAPÉ FRENTE) - VISÍVEL APENAS NA IMPRESSÃO */
+    .cart-print-auth {
         display: block !important;
         grid-column: 1 / -1; grid-row: 3;
         text-align: center; font-family: monospace; font-size: 6pt;
         background: rgba(0,0,0,0.3); padding: 1mm; border-radius: 1mm;
         margin-top: auto; 
     }
-    /* Ocultar elementos de chave não usados */
-    .cart-key-container { display: none; }
+    .cart-print-auth span { opacity: 0.7; font-size: 5pt; margin-right: 3px; }
+    .cart-print-auth strong { font-size: 7pt; letter-spacing: 1px; color: #fff; }
 
     /* --- VERSO: LAYOUT OTIMIZADO --- */
     .carteirinha-back {
