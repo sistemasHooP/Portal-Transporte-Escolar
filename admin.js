@@ -503,6 +503,7 @@ function abrirEdicaoEvento(evento) {
     const checkFicha = config.exigeFicha ? 'checked' : '';
     const checkCart = config.emiteCarteirinha ? 'checked' : '';
     const cidades = config.cidadesPermitidas ? config.cidadesPermitidas.join(', ') : '';
+    const limite = config.limiteInscricoes || ''; // NOVO
     
     const camposExtras = config.camposPersonalizados || [];
     let htmlExtras = '';
@@ -528,12 +529,20 @@ function abrirEdicaoEvento(evento) {
                 </div>
             </div>
             
-            <div class="swal-full">
+            <div class="swal-grid-2">
+                <div>
+                    <label class="swal-label">Limite de Vagas (Opcional)</label>
+                    <input type="number" id="edit_limite" class="swal-input-custom" placeholder="0 para ilimitado" value="${limite}">
+                </div>
+                <div></div>
+            </div>
+            
+            <div class="swal-full" style="margin-top:10px;">
                 <label class="swal-label">Mensagem de Alerta (Topo do Formulário)</label>
                 <textarea id="edit_msg" class="swal-input-custom" style="height:60px;">${config.mensagemAlerta || ''}</textarea>
             </div>
             
-            <div style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:15px;">
+            <div style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:15px; margin-top:15px;">
                 <label class="swal-label" style="color:var(--primary);">Perguntas Personalizadas (Opcional)</label>
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
                     <input type="text" id="new-extra-edit" class="swal-input-custom" placeholder="Digite uma nova pergunta (ex: Tamanho da Camiseta)">
@@ -570,7 +579,8 @@ function abrirEdicaoEvento(evento) {
                 exigeFicha: document.getElementById('edit_req_ficha').checked,
                 emiteCarteirinha: document.getElementById('edit_emitir_carteirinha').checked,
                 cidadesPermitidas: cidadesArr,
-                camposPersonalizados: extras
+                camposPersonalizados: extras,
+                limiteInscricoes: document.getElementById('edit_limite').value // NOVO
             }; 
         }
     }).then((res) => {
@@ -642,9 +652,14 @@ function modalNovoEvento() {
                         <input type="text" id="swal-cidades" class="swal-input-custom" placeholder="Deixe vazio para todas">
                     </div>
                     <div>
-                        <label class="swal-label">Observações (Somente Leitura)</label>
-                        <textarea id="txt_obs_admin" class="swal-input-custom" style="height:42px;" placeholder="Instruções para o aluno..."></textarea>
+                        <label class="swal-label">Limite de Vagas (Opcional)</label>
+                        <input type="number" id="swal-limite" class="swal-input-custom" placeholder="0 para ilimitado">
                     </div>
+                </div>
+                
+                <div class="swal-full" style="margin-top:10px;">
+                    <label class="swal-label">Observações (Somente Leitura)</label>
+                    <textarea id="txt_obs_admin" class="swal-input-custom" style="height:42px;" placeholder="Instruções para o aluno..."></textarea>
                 </div>
 
                 <label class="swal-label" style="margin-top: 15px;">Documentos Obrigatórios</label>
@@ -715,7 +730,8 @@ function modalNovoEvento() {
                     arquivos: { foto: document.getElementById('req_foto').checked, doc: document.getElementById('req_doc').checked },
                     exigeFicha: document.getElementById('req_ficha').checked,
                     emiteCarteirinha: document.getElementById('emitir_carteirinha').checked,
-                    cidadesPermitidas: cidadesArr 
+                    cidadesPermitidas: cidadesArr,
+                    limiteInscricoes: document.getElementById('swal-limite').value // NOVO
                 }, 
                 status: 'Ativo'
             }
