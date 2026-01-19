@@ -11,7 +11,7 @@
     --primary: #2563eb;        
     --primary-dark: #1e40af;    
     --primary-light: #eff6ff; 
-    --secondary: #0ea5e9;       
+    --secondary: #0ea5e9;        
     --accent: #f59e0b;        
     
     /* Variável Dinâmica da Carteirinha (Padrão) */
@@ -20,8 +20,8 @@
     /* Cores de Fundo e Texto */
     --bg-body: #f1f5f9;        
     --bg-card: #ffffff;        
-    --text-main: #1e293b;       
-    --text-muted: #64748b;      
+    --text-main: #1e293b;        
+    --text-muted: #64748b;       
     
     /* Sombras e Bordas */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -379,6 +379,26 @@ input[type="file"] { display: none; }
 .cart-footer { margin-top: auto; text-align: center; font-size: 0.65rem; opacity: 0.6; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
 .cart-sec-name { font-weight: 600; display: block; margin-bottom: 2px; text-transform: uppercase; }
 
+/* LOGO VERSO OVERLAY - NOVO! */
+.cart-logo-verso-overlay {
+    position: absolute;
+    top: 20px;  /* Posição padrão */
+    right: 20px; /* Posição padrão - Ajuste aqui se necessário */
+    width: 60px; /* Tamanho estimado */
+    height: 60px;
+    z-index: 10; /* Garante que fique por cima */
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cart-logo-verso-overlay img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
 /* BOTÕES DO MODAL */
 .modal-actions-row { margin-top: 25px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
 .btn-action-pri { 
@@ -650,6 +670,16 @@ input[type="file"] { display: none; }
         width: 100%; height: 100%; object-fit: contain; filter: invert(1); /* Inverte se fundo for escuro */
     }
     .carteirinha-back .cart-sec-name { font-size: 9.5pt; margin-bottom: 1mm; }
+
+    /* LOGO VERSO OVERLAY - IMPRESSÃO */
+    .cart-logo-verso-overlay {
+        position: absolute !important;
+        top: 5mm !important; /* Ajuste para caber no papel impresso */
+        right: 5mm !important;
+        width: 15mm !important;
+        height: 15mm !important;
+        z-index: 20 !important;
+    }
 
     /* Esconder botões na impressão */
     .modal-actions-row, .cart-actions, .btn-close-modern, .btn-action-pri, .btn-action-sec, .btn-flip { display: none !important; }
