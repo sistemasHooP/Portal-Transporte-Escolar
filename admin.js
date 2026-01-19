@@ -148,7 +148,6 @@ function carregarConfigGeral() {
             document.getElementById('config-nome-sec').value = json.nomeSec || '';
             document.getElementById('config-nome-resp').value = json.nomeResp || '';
             document.getElementById('config-assinatura').value = json.assinatura || ''; 
-            // Carrega valor da logo verso se existir (para exibição no input)
             if(document.getElementById('config-logo-verso')) {
                 document.getElementById('config-logo-verso').value = json.logoVerso || '';
             }
@@ -1378,23 +1377,36 @@ function imprimirCarteirinhaAdmin(chave) {
         // NOVO CÓDIGO PARA A LOGO NO VERSO
         // CORREÇÃO: A classe no HTML é 'cart-back-header', não 'carteirinha-back-header'
         const backHeader = document.querySelector('#modal-carteirinha-admin .cart-back-header');
+        
+        // 1. Resetar o cabeçalho para o estado original (texto)
         if (backHeader) {
-            const urlLogoVerso = config.urlLogoVerso; 
+            backHeader.innerHTML = 'Documento de Identificação Estudantil';
+            backHeader.style = ''; // Remove estilos inline anteriores
+        }
 
-            if (urlLogoVerso && urlLogoVerso.trim() !== "") {
-                const logoVersoUrl = formatarUrlDrive(urlLogoVerso);
-                // Limpa o conteúdo atual e insere a imagem
-                backHeader.innerHTML = `<img src="${logoVersoUrl}" alt="Logo Verso" class="cart-back-logo" style="max-height: 100%; max-width: 100%; object-fit: contain;">`;
-                // Adiciona estilos para centralizar
-                backHeader.style.display = 'flex';
-                backHeader.style.justifyContent = 'center';
-                backHeader.style.alignItems = 'center';
-                backHeader.style.padding = '5px';
-            } else {
-                // Se não tiver logo, reseta para o texto padrão (caso o modal seja reutilizado)
-                backHeader.innerHTML = 'Documento de Identificação Estudantil';
-                backHeader.style = ''; // Reseta estilos inline
-            }
+        // 2. Lidar com a Logo Flutuante (Absolute Position)
+        const backFace = document.querySelector('#modal-carteirinha-admin .carteirinha-back');
+        
+        // Remover logo antiga se existir para evitar duplicatas
+        const oldLogo = backFace.querySelector('.cart-back-logo-floating');
+        if(oldLogo) oldLogo.remove();
+        
+        // Se houver URL configurada, criar e injetar a imagem
+        if (config.urlLogoVerso && config.urlLogoVerso.trim() !== "") {
+            const logoImg = document.createElement('img');
+            logoImg.src = formatarUrlDrive(config.urlLogoVerso);
+            logoImg.className = 'cart-back-logo-floating';
+            
+            // Estilos para flutuar no canto superior direito
+            logoImg.style.position = 'absolute';
+            logoImg.style.top = '10px';
+            logoImg.style.right = '10px';
+            logoImg.style.width = '40px';
+            logoImg.style.height = '40px';
+            logoImg.style.objectFit = 'contain';
+            logoImg.style.zIndex = '10'; // Garante que fique acima do fundo
+            
+            backFace.appendChild(logoImg);
         }
 
         // Geração do QR Code usando QRious (Client-side)
