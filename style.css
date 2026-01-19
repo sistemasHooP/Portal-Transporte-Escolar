@@ -256,7 +256,7 @@ input[type="file"] { display: none; }
 }
 .btn-ver-cart:hover { background: #1e40af; }
 
-/* --- CARTEIRINHA DIGITAL (ESTRUTURA DE VISUALIZAÇÃO WEB) --- */
+/* --- CARTEIRINHA DIGITAL (ESTRUTURA DE VISUALIZAÇÃO WEB - MANTIDA) --- */
 .transparent-modal { background: transparent !important; box-shadow: none !important; padding: 0; }
 .carteirinha-wrapper {
     width: 100%; max-width: 350px; height: 520px; margin: 0 auto;
@@ -278,7 +278,7 @@ input[type="file"] { display: none; }
     background-color: #0f172a; color: white;
 }
 
-/* FRENTE */
+/* FRENTE WEB */
 .carteirinha-front {
     z-index: 2;
     background: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(135deg, var(--card-color, #2563eb), #0f172a);
@@ -317,7 +317,7 @@ input[type="file"] { display: none; }
 /* Ocultar elementos exclusivos de impressão na visualização Web */
 .cart-print-auth { display: none; }
 
-/* VERSO */
+/* VERSO WEB */
 .carteirinha-back {
     transform: rotateY(180deg); -webkit-transform: rotateY(180deg);
     display: flex; flex-direction: column; padding: 20px;
@@ -382,11 +382,12 @@ input[type="file"] { display: none; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-/* --- IMPRESSÃO EXTENDIDA HORIZONTAL (120mm x 75mm) --- */
+/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO (Frente em cima, Verso embaixo) --- */
+/* Formato do Cartão: Horizontal (Largo) */
 @media print {
-    /* Forçar orientação Paisagem (Horizontal) na página */
+    /* Forçar orientação Paisagem na folha se desejar que os cartões fiquem largos na folha */
     @page { 
-        size: landscape; 
+        size: portrait; /* Folha em pé (Retrato) para empilhar Frente e Verso */
         margin: 0; 
     }
 
@@ -401,44 +402,51 @@ input[type="file"] { display: none; }
     #modal-carteirinha *, #modal-carteirinha-admin * { visibility: visible; }
     .modal-content, .modal-content-cart { box-shadow: none; padding: 0; margin: 0; background: transparent; }
     
-    /* Layout Lado a Lado (Remove 3D) */
+    /* WRAPPER EMPILHADO: Mudei de Row para Column para ficar um em cima do outro */
     .carteirinha-wrapper {
         perspective: none; height: auto; margin-top: 10mm;
-        display: flex; flex-direction: row; gap: 5mm; justify-content: start;
-        align-items: flex-start;
+        display: flex; 
+        flex-direction: column; /* EMPILHADO VERTICALMENTE */
+        gap: 5mm; 
+        align-items: center; /* Centraliza na folha */
+        justify-content: start;
         width: 100% !important; 
     }
     
     .carteirinha-card-inner {
         transform: none !important; position: relative; height: auto;
-        display: flex; gap: 5mm;
+        display: contents; /* Remove o container para que as faces obedeçam ao flex column do wrapper */
     }
     
-    /* DIMENSÕES ESTICADAS HORIZONTALMENTE (120mm x 75mm) */
+    /* DIMENSÕES HORIZONTAIS DO CARTÃO (120mm x 75mm) */
+    /* Cada face agora é um bloco horizontal */
     .carteirinha-face {
         position: relative; transform: none !important;
-        width: 120mm; height: 75mm; /* Mais larga para atender ao pedido "esticar" */
+        width: 120mm; height: 75mm; /* Formato LARGO */
         outline: 1px dashed #ccc; 
         box-sizing: border-box;
         -webkit-print-color-adjust: exact; print-color-adjust: exact;
-        font-size: 11pt; /* Fonte aumentada proporcionalmente */
+        font-size: 11pt; 
         margin-bottom: 0;
         color: white !important;
         background: linear-gradient(135deg, var(--card-color, #2563eb), #0f172a) !important;
         overflow: hidden; 
         border-radius: 4mm;
+        display: block; /* Garante comportamento de bloco */
     }
 
-    /* --- FRENTE --- */
+    /* --- FRENTE (Layout Horizontal Interno) --- */
     .carteirinha-front {
         padding: 4mm !important;
         display: grid;
-        grid-template-columns: 32mm 1fr; /* Foto ajustada e restante para texto */
-        grid-template-rows: 15mm 1fr 8mm; /* Header | Corpo | Rodapé */
+        /* Grid de 2 colunas: Foto Esquerda | Dados Direita */
+        grid-template-columns: 32mm 1fr; 
+        /* Grid de 3 linhas: Cabeçalho | Info Principal | Rodapé (Código) */
+        grid-template-rows: 15mm 1fr 8mm; 
         gap: 3mm;
     }
 
-    /* HEADER */
+    /* HEADER FRENTE */
     .carteirinha-front .cart-header {
         grid-column: 1 / -1; grid-row: 1;
         display: flex; align-items: center; gap: 4mm;
@@ -449,7 +457,7 @@ input[type="file"] { display: none; }
     .carteirinha-front .cart-org-info h3 { font-size: 10pt; line-height: 1.1; margin: 0; font-weight: 800; white-space: normal; }
     .carteirinha-front .cart-org-info small { font-size: 8pt; line-height: 1; display: block; margin-top: 1mm; white-space: normal; }
 
-    /* CORPO */
+    /* CORPO FRENTE (Remove flex do web) */
     .carteirinha-front .cart-body { display: contents; }
 
     /* FOTO À ESQUERDA */
@@ -460,7 +468,7 @@ input[type="file"] { display: none; }
         align-self: center; margin-top: 1mm;
     }
 
-    /* DADOS À DIREITA */
+    /* DADOS À DIREITA (Preenchendo a horizontal) */
     .carteirinha-front .cart-info-main { 
         grid-column: 2; grid-row: 2;
         text-align: left; margin-left: 2mm; margin-top: 1mm;
@@ -508,11 +516,12 @@ input[type="file"] { display: none; }
     .cart-print-auth span { opacity: 0.7; font-size: 8pt; margin-right: 5px; }
     .cart-print-auth strong { font-size: 10pt; letter-spacing: 2px; color: #fff; }
 
-    /* --- VERSO --- */
+    /* --- VERSO (Layout Horizontal Interno) --- */
     .carteirinha-back {
         padding: 4mm !important;
         display: grid;
-        grid-template-columns: 40mm 1fr; /* QR Code mais largo | Validade */
+        /* Grid de 2 colunas: QR Code Largo | Validade */
+        grid-template-columns: 40mm 1fr; 
         grid-template-rows: 8mm 1fr 8mm; /* Header | Corpo | Footer */
         align-items: center;
     }
