@@ -621,6 +621,12 @@ input[type="file"] { display: none; }
         margin: 0; padding-bottom: 1mm; position: static; white-space: nowrap;
     }
 
+    /* Classe específica para a logo do verso na impressão */
+    .cart-back-logo {
+        max-height: 25px; /* Altura máxima para não estourar o cabeçalho */
+        object-fit: contain;
+    }
+
     /* QR Code */
     .carteirinha-back .qr-code-box {
         grid-column: 1; grid-row: 2;
@@ -633,7 +639,7 @@ input[type="file"] { display: none; }
         text-align: center; margin: 0;
     }
     .carteirinha-back .validity-label { font-size: 8pt; display: block; margin-bottom: 2mm; }
-    .carteirinha-back .validity-year { font-size: 36pt; font-weight: 900; line-height: 1; display: block; }
+    .carteirinha-back .validity-year { font-size: 36pt; font-weight: 900; line-height: 1; color: var(--accent); text-shadow: 0 4px 10px rgba(0,0,0,0.3); display: block; }
 
     /* Footer Verso COM ASSINATURA */
     .carteirinha-back .cart-footer {
