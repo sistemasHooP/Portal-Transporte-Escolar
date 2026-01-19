@@ -464,14 +464,20 @@ input[type="file"] { display: none; }
         margin: 10mm; /* MARGEM DE SEGURANÇA ADICIONADA */
     }
 
-    body > *:not(#modal-carteirinha):not(#modal-carteirinha-admin) { display: none !important; }
+    /* ESCONDE TUDO EXCETO O MODAL DO ADMIN */
+    body > *:not(#modal-carteirinha-admin) { display: none !important; }
     
-    #modal-carteirinha, #modal-carteirinha-admin {
+    /* MODAL ADMIN: VISÍVEL NA IMPRESSÃO */
+    #modal-carteirinha-admin {
         display: block !important; position: absolute; top: 0; left: 0; 
         width: 100%; background: white; z-index: 9999; margin: 0; padding: 0;
         visibility: visible;
     }
-    #modal-carteirinha *, #modal-carteirinha-admin * { visibility: visible; }
+    #modal-carteirinha-admin * { visibility: visible; }
+    
+    /* GARANTE QUE O MODAL DO ALUNO NÃO SEJA IMPRESSO */
+    #modal-carteirinha { display: none !important; }
+
     .modal-content, .modal-content-cart { box-shadow: none; padding: 0; margin: 0; background: transparent; }
     
     /* WRAPPER EMPILHADO E CENTRALIZADO */
