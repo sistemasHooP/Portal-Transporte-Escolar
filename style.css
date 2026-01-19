@@ -256,7 +256,7 @@ input[type="file"] { display: none; }
 }
 .btn-ver-cart:hover { background: #1e40af; }
 
-/* --- CARTEIRINHA DIGITAL (ESTRUTURA DE VISUALIZAÇÃO WEB - MANTIDA) --- */
+/* --- CARTEIRINHA DIGITAL (ESTRUTURA DE VISUALIZAÇÃO WEB) --- */
 .transparent-modal { background: transparent !important; box-shadow: none !important; padding: 0; }
 .carteirinha-wrapper {
     width: 100%; max-width: 350px; height: 520px; margin: 0 auto;
@@ -278,7 +278,7 @@ input[type="file"] { display: none; }
     background-color: #0f172a; color: white;
 }
 
-/* FRENTE WEB */
+/* FRENTE */
 .carteirinha-front {
     z-index: 2;
     background: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(135deg, var(--card-color, #2563eb), #0f172a);
@@ -317,7 +317,7 @@ input[type="file"] { display: none; }
 /* Ocultar elementos exclusivos de impressão na visualização Web */
 .cart-print-auth, .assinatura-box-print { display: none; }
 
-/* VERSO WEB */
+/* VERSO */
 .carteirinha-back {
     transform: rotateY(180deg); -webkit-transform: rotateY(180deg);
     display: flex; flex-direction: column; padding: 20px;
@@ -371,6 +371,16 @@ input[type="file"] { display: none; }
 }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+/* Animações */
+.fade-in { animation: fadeIn 0.6s ease-out forwards; opacity: 0; }
+.fade-in-down { animation: fadeInDown 0.8s ease-out forwards; opacity: 0; }
+.fade-in-up { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
+.zoom-in { animation: zoomIn 0.3s ease-out forwards; }
+@keyframes fadeIn { to { opacity: 1; } }
+@keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
 /* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + DETALHES ALINHADOS + ESPAÇO OTIMIZADO --- */
 @media print {
