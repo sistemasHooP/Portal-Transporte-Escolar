@@ -1,691 +1,606 @@
-/* --- UTILS CRÍTICOS (No topo para garantir carregamento) --- */
-.hidden, #loader-overlay.hidden { 
-    display: none !important; 
-    visibility: hidden !important; 
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
+const URL_API = 'https://script.google.com/macros/s/AKfycby-rnmBcploCmdEb8QWkMyo1tEanCcPkmNOA_QMlujH0XQvjLeiCCYhkqe7Hqhi6-mo8A/exec';
 
-/* --- Variáveis de Design (Modern Edu Theme) --- */
-:root {
-    --primary: #2563eb;        
-    --primary-dark: #1e40af;    
-    --primary-light: #eff6ff; 
-    --secondary: #0ea5e9;        
-    --accent: #f59e0b;        
-    
-    /* Variável Dinâmica da Carteirinha (Padrão) */
-    --card-color: #2563eb;    
+// Definição dos campos padrão
+const CAMPO_DEFS = {
+    'NomeCompleto': { label: 'Nome Completo', type: 'text', placeholder: 'Digite seu nome completo' },
+    'CPF': { label: 'CPF', type: 'text', placeholder: '000.000.000-00', mask: 'cpf' },
+    'DataNascimento': { label: 'Data de Nascimento', type: 'date', placeholder: '' },
+    'Telefone': { label: 'Celular (WhatsApp)', type: 'tel', placeholder: '(00) 00000-0000', mask: 'tel' },
+    'Endereco': { label: 'Endereço Residencial', type: 'text', placeholder: 'Rua, Número, Complemento, Bairro' },
+    'Cidade': { label: 'Cidade', type: 'text', placeholder: 'Digite sua cidade' },
+    'Estado': { label: 'Estado (UF)', type: 'select', options: ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'] },
+    'NomeInstituicao': { label: 'Instituição de Ensino', type: 'select' }, 
+    'NomeCurso': { label: 'Curso', type: 'text', placeholder: 'Ex: Engenharia Civil' },
+    'PeriodoCurso': { label: 'Período/Semestre', type: 'text', placeholder: 'Ex: 3º Período' },
+    'Matricula': { label: 'Nº Matrícula', type: 'text', placeholder: '' },
+    'Email': { label: 'E-mail', type: 'email', placeholder: 'seu@email.com' }
+};
 
-    /* Cores de Fundo e Texto */
-    --bg-body: #f1f5f9;        
-    --bg-card: #ffffff;        
-    --text-main: #1e293b;        
-    --text-muted: #64748b;       
-    
-    /* Sombras e Bordas */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-float: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    
-    --radius-sm: 8px;
-    --radius-md: 16px;
-    --radius-lg: 24px;
-    --radius-pill: 50px;
-}
+let listaInstituicoesCache = [];
+let configSistemaCache = null; // Cache para guardar nome, logo, cores, etc.
 
-/* --- Configurações Globais --- */
-* { box-sizing: border-box; }
+// Inicialização
+document.addEventListener('DOMContentLoaded', () => { 
+    carregarConfiguracoesVisuais();
+    carregarEventos(); 
+});
 
-body {
-    font-family: 'Poppins', sans-serif;
-    background-color: var(--bg-body);
-    color: var(--text-main);
-    margin: 0;
-    padding: 0;
-    padding-bottom: 100px; /* Espaço para FAB */
-    line-height: 1.5;
-    -webkit-tap-highlight-color: transparent;
-}
-
-h1, h2, h3, p { margin: 0; }
-a { text-decoration: none; color: inherit; }
-button { font-family: inherit; cursor: pointer; border: none; outline: none; }
-
-/* --- HERO SECTION --- */
-.hero-header {
-    position: relative; width: 100%; height: 320px;
-    background-color: var(--primary-dark); background-size: cover; background-position: center;
-    border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;
-    overflow: hidden; box-shadow: var(--shadow-md);
-    display: flex; align-items: center; justify-content: center; text-align: center; color: white;
-}
-.hero-bg-overlay {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(to bottom, rgba(30, 58, 138, 0.6), rgba(30, 58, 138, 0.9)); z-index: 1;
-}
-.hero-content {
-    position: relative; z-index: 2; padding: 20px; display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 800px;
-}
-.logo-container { margin-bottom: 15px; }
-.sys-logo {
-    width: 100px; height: 100px; object-fit: contain; background: white;
-    border-radius: 50%; padding: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 3px solid rgba(255,255,255,0.3);
-}
-.text-container h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-.sys-phrase { font-size: 0.95rem; font-weight: 300; opacity: 0.9; max-width: 90%; margin: 0 auto; }
-
-/* --- CONTEÚDO PRINCIPAL --- */
-main { max-width: 900px; margin: -40px auto 0; padding: 0 20px; position: relative; z-index: 10; }
-
-.section-title {
-    margin-bottom: 25px; display: flex; flex-direction: column; align-items: flex-start;
-    width: 100%; background: white; padding: 15px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
-}
-.section-title h2 { font-size: 1.2rem; color: var(--primary); font-weight: 700; display: flex; align-items: center; gap: 10px; line-height: 1.4; flex-wrap: wrap; }
-.title-bar { width: 50px; height: 4px; background: var(--accent); border-radius: 2px; margin-top: 8px; }
-
-/* --- CARDS DE EVENTOS --- */
-.cards-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-@media(min-width: 768px) { .cards-grid { grid-template-columns: 1fr 1fr; } }
-
-.card-event {
-    background: var(--bg-card); border-radius: var(--radius-md); box-shadow: var(--shadow-md);
-    padding: 20px; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.05);
-    display: flex; flex-direction: column; position: relative; overflow: visible;
-}
-.card-event:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); border-color: var(--secondary); }
-
-.card-status {
-    align-self: flex-start; font-size: 0.75rem; font-weight: 700; padding: 6px 12px;
-    border-radius: 20px; text-transform: uppercase; margin-bottom: 15px; display: inline-block;
-    letter-spacing: 0.5px; position: relative;
-}
-.status-ativo { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-
-.card-title { font-size: 1.25rem; color: var(--primary-dark); font-weight: 700; margin-bottom: 12px; line-height: 1.4; display: block; }
-.card-desc { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 20px; flex-grow: 1; }
-.card-dates {
-    display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text-main);
-    background: var(--primary-light); padding: 10px 15px; border-radius: 8px; margin-bottom: 20px;
-    font-weight: 600; border: 1px solid #dbeafe;
-}
-
-.btn-inscrever {
-    width: 100%; padding: 14px; background: linear-gradient(90deg, var(--primary), #3b82f6);
-    color: white; font-weight: 600; border-radius: var(--radius-sm); display: flex;
-    justify-content: space-between; align-items: center; transition: all 0.3s;
-    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
-}
-.btn-inscrever:hover { opacity: 1; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3); }
-.btn-inscrever i { transition: transform 0.3s; }
-.btn-inscrever:hover i { transform: translateX(5px); }
-
-/* --- FORMULÁRIO --- */
-#area-inscricao { position: relative; padding-top: 40px; }
-.nav-bar { margin-bottom: 25px; display: flex; justify-content: flex-start; }
-.btn-back {
-    background: white; padding: 12px 24px; border-radius: var(--radius-pill); font-weight: 600;
-    box-shadow: var(--shadow-md); color: var(--text-main); transition: all 0.2s;
-    border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 8px; cursor: pointer;
-}
-.btn-back:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-light); }
-
-.form-card-container { width: 100%; }
-.form-card {
-    background: var(--bg-card); border-radius: var(--radius-lg); padding: 25px;
-    box-shadow: var(--shadow-lg); border: 1px solid rgba(0,0,0,0.05);
-}
-.form-header {
-    display: flex; align-items: flex-start; gap: 15px; margin-bottom: 30px;
-    padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;
-}
-.header-icon {
-    width: 50px; height: 50px; background: var(--primary-light); color: var(--primary);
-    border-radius: 12px; display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem; flex-shrink: 0;
-}
-.subtitle { font-size: 0.9rem; color: var(--text-muted); margin-top: 5px; }
-
-.grid-form { display: grid; grid-template-columns: 1fr; gap: 20px; }
-@media(min-width: 600px) { .grid-form { grid-template-columns: 1fr 1fr; } }
-
-label { display: block; margin-bottom: 8px; font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
-input, select {
-    width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: var(--radius-sm);
-    font-size: 1rem; background: #f8fafc; transition: all 0.3s; color: var(--text-main);
-}
-input:focus, select:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
-
-.upload-section {
-    background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: var(--radius-md);
-    padding: 25px; margin-top: 30px;
-}
-.upload-info {
-    font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;
-    display: flex; align-items: center; gap: 10px; font-weight: 500;
-}
-.file-input-wrapper { margin-bottom: 15px; }
-.file-label {
-    display: flex; align-items: center; gap: 15px; background: white; padding: 15px;
-    border-radius: var(--radius-sm); border: 1px solid #e2e8f0; cursor: pointer;
-    transition: all 0.2s; box-shadow: var(--shadow-sm);
-}
-.file-label:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-2px); }
-.icon-box {
-    width: 45px; height: 45px; background: #f1f5f9; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 1.2rem;
-}
-.text-box { flex: 1; }
-.text-box strong { display: block; font-size: 1rem; color: var(--text-main); margin-bottom: 2px; }
-.text-box small { font-size: 0.85rem; color: var(--text-muted); }
-.status-icon { color: var(--accent); font-size: 1.2rem; }
-input[type="file"] { display: none; }
-
-.divider-form {
-    display: flex; align-items: center; text-align: center; margin: 40px 0 30px 0;
-    color: var(--text-muted); font-size: 0.85rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 1px;
-}
-.divider-form::before, .divider-form::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
-.divider-form span { padding: 0 15px; background: var(--bg-card); }
-
-.btn-submit {
-    width: 100%; padding: 18px; background: var(--primary); color: white;
-    font-size: 1.15rem; font-weight: 700; border-radius: var(--radius-pill);
-    box-shadow: var(--shadow-float); display: flex; align-items: center; justify-content: center;
-    gap: 12px; transition: transform 0.2s; margin-top: 10px;
-}
-.btn-submit:active { transform: scale(0.98); }
-
-/* --- FAB --- */
-#fab-consulta {
-    position: fixed; bottom: 25px; right: 25px; background: var(--primary-dark);
-    color: white; border-radius: var(--radius-pill); padding: 16px 28px;
-    display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-float);
-    z-index: 1000; transition: transform 0.2s; cursor: pointer;
-}
-#fab-consulta:hover { transform: translateY(-3px); background: var(--primary); }
-.fab-text { font-weight: 600; font-size: 1rem; }
-.fab-icon { font-size: 1.3rem; }
-
-/* --- MODAIS MODERNOS (REDESENHADO) --- */
-.modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); z-index: 2000;
-    display: flex; align-items: center; justify-content: center;
-}
-.modal-content {
-    background: white; width: 90%; max-width: 420px; border-radius: 24px;
-    padding: 30px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); position: relative;
-    max-height: 90vh; overflow-y: auto; text-align: center;
-}
-.modal-header-modern {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
-    position: absolute; top: 20px; right: 20px; width: auto; left: auto;
-}
-/* Esconder título do header pois já está no corpo centralizado */
-.modal-header-modern h3 { display: none; }
-
-.btn-close-modern {
-    background: #f1f5f9; width: 36px; height: 36px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; color: var(--text-muted);
-    transition: all 0.2s; font-size: 1.1rem; border: none; cursor: pointer;
-}
-.btn-close-modern:hover { background: #e2e8f0; color: #ef4444; transform: rotate(90deg); }
-
-.modal-body-centered { padding-top: 10px; }
-
-.icon-circle {
-    width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary-light), #fff); 
-    color: var(--primary); font-size: 2rem; border-radius: 50%; 
-    display: flex; align-items: center; justify-content: center; 
-    margin: 0 auto 20px; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
-    border: 1px solid #dbeafe;
-}
-
-.modal-body-centered h3 { margin-bottom: 10px; color: var(--text-main); }
-.modal-body-centered p { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 25px; line-height: 1.6; }
-
-/* INPUT GROUP MODERNO (FUSIONADO) */
-.input-group-modern {
-    position: relative; display: flex; width: 100%; margin-top: 20px;
-}
-.input-group-modern input {
-    width: 100%; padding: 16px 20px; padding-right: 60px; /* Espaço para o botão */
-    border-radius: 50px; border: 2px solid #e2e8f0;
-    font-size: 1.1rem; background: #f8fafc; outline: none;
-    transition: all 0.3s ease; text-transform: uppercase;
-    letter-spacing: 2px; font-weight: 600; color: var(--primary-dark);
-    text-align: center;
-}
-.input-group-modern input::placeholder { text-transform: none; letter-spacing: normal; font-weight: 400; font-size: 1rem; }
-.input-group-modern input:focus {
-    border-color: var(--primary); background: white;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
-}
-.input-group-modern button {
-    position: absolute; right: 6px; top: 6px; bottom: 6px;
-    width: 48px; border-radius: 50%;
-    background: var(--primary); color: white; border: none;
-    font-size: 1.2rem; cursor: pointer; transition: all 0.2s;
-    display: flex; align-items: center; justify-content: center; padding: 0;
-    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
-}
-.input-group-modern button:hover { background: var(--primary-dark); transform: scale(1.05); }
-.input-group-modern button:active { transform: scale(0.95); }
-
-/* RESULT AREA */
-.result-area { min-height: 20px; margin-top: 20px; }
-.result-card {
-    padding: 20px; border-radius: 16px; text-align: left;
-    background: white; border: 1px solid #e2e8f0; 
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-    animation: fadeInUp 0.4s ease-out;
-}
-.result-success { border-left: 5px solid #10b981; background: #f0fdf4; }
-.result-pending { border-left: 5px solid #f59e0b; background: #fffbeb; }
-
-.btn-ver-cart {
-    width: 100%; margin-top: 15px; padding: 14px; 
-    background: linear-gradient(90deg, #2563eb, #3b82f6); color: white;
-    border-radius: 12px; font-weight: 600; transition: all 0.2s;
-    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-}
-.btn-ver-cart:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3); }
-
-/* --- CARTEIRINHA DIGITAL (ESTRUTURA DE VISUALIZAÇÃO WEB) --- */
-.transparent-modal { background: transparent !important; box-shadow: none !important; padding: 0; }
-.carteirinha-wrapper {
-    width: 100%; max-width: 350px; height: 520px; margin: 0 auto;
-    perspective: 1200px; -webkit-perspective: 1200px;
-}
-.carteirinha-card-inner {
-    position: relative; width: 100%; height: 100%; text-align: center;
-    transition: transform 0.8s; transform-style: preserve-3d; -webkit-transform-style: preserve-3d;
-    cursor: pointer;
-}
-.carteirinha-card-inner.is-flipped { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
-
-.carteirinha-face {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    -webkit-backface-visibility: hidden; backface-visibility: hidden;
-    transform: translateZ(0); -webkit-transform: translateZ(0);
-    border-radius: 20px; overflow: hidden;
-    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.4);
-    background-color: #0f172a; color: white;
-}
-
-/* FRENTE */
-.carteirinha-front {
-    z-index: 2;
-    background: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(135deg, var(--card-color, #2563eb), #0f172a);
-    background-size: 15px 15px, 100% 100%;
-    display: flex; flex-direction: column; padding: 20px;
-    transform: rotateY(0deg); -webkit-transform: rotateY(0deg);
-}
-.cart-header {
-    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
-    position: relative; z-index: 2; text-align: left; padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-}
-.cart-logo {
-    width: 45px; height: 45px; background: white; border-radius: 50%;
-    padding: 3px; object-fit: contain; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-.cart-org-info h3 { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2; text-transform: uppercase; margin: 0; }
-.cart-org-info small { font-size: 0.7rem; text-transform: uppercase; opacity: 0.9; font-weight: 300; display: block; margin-top: 2px;}
-.cart-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 2; gap: 15px; }
-.cart-photo-frame {
-    width: 110px; height: 140px; background: #e2e8f0; border: 3px solid white;
-    border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-bottom: 5px;
-}
-.cart-photo-frame img { width: 100%; height: 100%; object-fit: cover; }
-.cart-info-main { width: 100%; text-align: center; }
-.cart-info-main h2 { font-size: 1.1rem; text-transform: uppercase; font-weight: 700; margin-bottom: 5px; line-height: 1.2; text-shadow: 0 2px 2px rgba(0,0,0,0.2); }
-.cart-info-main .cart-course {
-    font-size: 0.85rem; background: rgba(255,255,255,0.15); padding: 4px 10px;
-    border-radius: 15px; display: inline-block; margin-bottom: 10px;
-}
-.cart-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-top: 10px; }
-.detail-item { background: rgba(0,0,0,0.2); padding: 5px; border-radius: 6px; text-align: center; }
-.detail-label { display: block; font-size: 0.6rem; text-transform: uppercase; opacity: 0.7; }
-.detail-value { display: block; font-size: 0.75rem; font-weight: 600; font-family: monospace; }
-
-/* Ocultar elementos exclusivos de impressão na visualização Web */
-.cart-print-auth, .assinatura-box-print { display: none; }
-
-/* VERSO */
-.carteirinha-back {
-    transform: rotateY(180deg); -webkit-transform: rotateY(180deg);
-    display: flex; flex-direction: column; padding: 20px;
-    background: linear-gradient(135deg, var(--card-color, #1e293b), #000000);
-}
-.cart-back-header {
-    text-align: center; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px;
-    opacity: 0.6; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;
-}
-.qr-code-box {
-    width: 160px; height: 160px; background: white; padding: 10px;
-    border-radius: 12px; margin: 0 auto 20px; display: flex; align-items: center;
-    justify-content: center;
-}
-.qr-code-box img { width: 100%; height: 100%; object-fit: contain; }
-.validity-box { text-align: center; margin-bottom: 20px; }
-.validity-label { font-size: 0.8rem; opacity: 0.8; text-transform: uppercase; display: block; }
-.validity-year { font-size: 3.5rem; font-weight: 800; line-height: 1; color: var(--accent); text-shadow: 0 4px 10px rgba(0,0,0,0.3); display: block; }
-.cart-footer { margin-top: auto; text-align: center; font-size: 0.65rem; opacity: 0.6; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
-.cart-sec-name { font-weight: 600; display: block; margin-bottom: 2px; text-transform: uppercase; }
-
-/* LOGO VERSO OVERLAY - NOVO! */
-.cart-logo-verso-overlay {
-    position: absolute;
-    top: 20px;  /* Posição padrão */
-    right: 20px; /* Posição padrão - Ajuste aqui se necessário */
-    width: 60px; /* Tamanho estimado */
-    height: 60px;
-    z-index: 10; /* Garante que fique por cima */
-    opacity: 0.9;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.cart-logo-verso-overlay img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-/* BOTÕES DO MODAL */
-.modal-actions-row { margin-top: 25px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
-.btn-action-pri { 
-    background: white; color: var(--primary); padding: 12px 24px; border-radius: 30px; 
-    font-weight: 700; box-shadow: var(--shadow-md); border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
-}
-.btn-action-sec { 
-    background: rgba(255,255,255,0.1); color: white; padding: 12px 24px; border-radius: 30px; 
-    border: 1px solid rgba(255,255,255,0.3); cursor: pointer; display: flex; align-items: center; gap: 8px;
-}
-.btn-flip {
-    background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px;
-    font-weight: 700; border: none; cursor: pointer; box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 8px;
-}
-
-/* --- FOOTER --- */
-#main-footer { text-align: center; margin-top: 50px; color: var(--text-muted); font-size: 0.9rem; }
-.footer-links a { font-size: 0.8rem; color: var(--primary); opacity: 0.8; }
-
-/* --- LOADER MODERNIZADO (ATUALIZADO) --- */
-#loader-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    /* Fundo sutil em gradiente radial para um look mais moderno */
-    background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%);
-    z-index: 9999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    transition: opacity 0.3s ease;
-}
-
-.loader-logo { 
-    width: 140px; /* Aumentado de 80px */
-    height: auto;
-    max-height: 140px;
-    margin-bottom: 30px; 
-    animation: pulse-logo 2s infinite ease-in-out; 
-    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
-    object-fit: contain;
-}
-
-.spinner-ring {
-    width: 50px; height: 50px; 
-    border: 4px solid #cbd5e1; 
-    border-top: 4px solid var(--primary);
-    border-radius: 50%; 
-    animation: spin 0.8s linear infinite; 
-    margin-bottom: 20px;
-    box-shadow: 0 0 15px rgba(37, 99, 235, 0.1);
-}
-
-#loader-text {
-    font-family: 'Poppins', sans-serif;
-    font-size: 1rem;
-    color: var(--text-muted);
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    animation: fadeIn 1s;
-}
-
-@keyframes pulse-logo { 
-    0% { transform: scale(1); opacity: 1; } 
-    50% { transform: scale(1.05); opacity: 0.9; } 
-    100% { transform: scale(1); opacity: 1; } 
-}
-
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-/* Animações */
-.fade-in { animation: fadeIn 0.6s ease-out forwards; opacity: 0; }
-.fade-in-down { animation: fadeInDown 0.8s ease-out forwards; opacity: 0; }
-.fade-in-up { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
-.zoom-in { animation: zoomIn 0.3s ease-out forwards; }
-@keyframes fadeIn { to { opacity: 1; } }
-@keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-
-/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + CENTRALIZADO + MARGEM SEGURA --- */
-@media print {
-    @page { 
-        size: portrait; 
-        margin: 10mm; /* MARGEM DE SEGURANÇA ADICIONADA */
+// --- CARREGAR CONFIGURAÇÕES VISUAIS (CAPA, LOGO, NOME, CORES) ---
+function carregarConfiguracoesVisuais() {
+    const cached = sessionStorage.getItem('sys_config');
+    if(cached) {
+        configSistemaCache = JSON.parse(cached);
+        aplicarConfiguracoes(configSistemaCache);
     }
 
-    /* ESCONDE TUDO EXCETO O MODAL DO ADMIN */
-    body > *:not(#modal-carteirinha-admin) { display: none !important; }
-    
-    /* MODAL ADMIN: VISÍVEL NA IMPRESSÃO */
-    #modal-carteirinha-admin {
-        display: block !important; position: absolute; top: 0; left: 0; 
-        width: 100%; background: white; z-index: 9999; margin: 0; padding: 0;
-        visibility: visible;
-    }
-    #modal-carteirinha-admin * { visibility: visible; }
-    
-    /* GARANTE QUE O MODAL DO ALUNO NÃO SEJA IMPRESSO */
-    #modal-carteirinha { display: none !important; }
+    fetch(`${URL_API}?action=getPublicConfig`)
+        .then(res => res.json())
+        .then(json => {
+            if(json.status === 'success') {
+                sessionStorage.setItem('sys_config', JSON.stringify(json.config));
+                configSistemaCache = json.config;
+                aplicarConfiguracoes(json.config);
+            }
+        })
+        .catch(e => console.error("Erro config visual:", e));
+}
 
-    .modal-content, .modal-content-cart { box-shadow: none; padding: 0; margin: 0; background: transparent; }
-    
-    /* WRAPPER EMPILHADO E CENTRALIZADO */
-    .carteirinha-wrapper {
-        perspective: none; height: auto; margin-top: 10mm;
-        display: flex; 
-        flex-direction: column; /* EMPILHADO VERTICALMENTE */
-        gap: 5mm; 
-        align-items: center; /* Centraliza na folha */
-        justify-content: start;
-        width: auto !important; /* Deixa a largura automática para respeitar o centro */
-        margin-left: auto; margin-right: auto; /* Centralização horizontal clássica */
+function aplicarConfiguracoes(config) {
+    if(!config) return;
+
+    // 1. Textos
+    if(config.nomeSistema) {
+        document.getElementById('sys-name').innerText = config.nomeSistema;
+        document.getElementById('footer-sys-name').innerText = config.nomeSistema;
+        document.title = config.nomeSistema;
+        
+        // Nome na carteirinha digital
+        const cartSys = document.getElementById('cart-sys-name');
+        if(cartSys) cartSys.innerText = config.nomeSistema.toUpperCase();
     }
     
-    .carteirinha-card-inner {
-        transform: none !important; position: relative; height: auto;
-        display: contents; 
-    }
-    
-    /* DIMENSÕES HORIZONTAIS DO CARTÃO (120mm x 75mm) */
-    .carteirinha-face {
-        position: relative; transform: none !important;
-        width: 120mm; height: 75mm; /* Formato LARGO */
-        outline: 1px dashed #ccc; 
-        box-sizing: border-box;
-        -webkit-print-color-adjust: exact; print-color-adjust: exact;
-        font-size: 11pt; 
-        margin-bottom: 0;
-        color: white !important;
-        background: linear-gradient(135deg, var(--card-color, #2563eb), #0f172a) !important;
-        overflow: hidden; 
-        border-radius: 4mm;
-        display: block; 
+    if(config.fraseMotivacional) {
+        document.getElementById('sys-phrase').innerText = config.fraseMotivacional;
     }
 
-    /* --- FRENTE (Layout Compacto) --- */
-    .carteirinha-front {
-        padding: 2.5mm !important; /* Margem interna reduzida para caber tudo */
-        display: grid;
-        grid-template-columns: 30mm 1fr; /* Coluna Foto | Coluna Dados */
-        /* Row 1: Header (13mm)
-           Row 2: Nome/Curso (Auto)
-           Row 3: Detalhes (1fr - ocupa o resto)
-           Row 4: Rodapé (5mm) */
-        grid-template-rows: 13mm auto 1fr 6mm; 
-        gap: 1mm; /* Gaps mínimos */
-        align-items: center;
+    // 2. Logo (Hero e Carteirinha)
+    if(config.urlLogo && config.urlLogo.trim() !== "") {
+        const logoUrl = formatarUrlDrive(config.urlLogo);
+        const logoEls = ['sys-logo', 'cart-logo-img'];
+        logoEls.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) { 
+                el.src = logoUrl; 
+                el.style.display = 'block'; 
+            }
+        });
+        // Atualiza também a logo do loader se existir
+        const loaderImg = document.getElementById('loader-img-tag');
+        if(loaderImg) { loaderImg.src = logoUrl; loaderImg.style.display = 'block'; }
     }
 
-    /* HEADER FRENTE */
-    .carteirinha-front .cart-header {
-        grid-column: 1 / -1; grid-row: 1;
-        display: flex; align-items: center; gap: 3mm;
-        border-bottom: 1pt solid rgba(255,255,255,0.4);
-        margin: 0; padding-bottom: 0.5mm; height: 100%;
-    }
-    .carteirinha-front .cart-logo { width: 10mm; height: 10mm; padding: 0.5mm; }
-    .carteirinha-front .cart-org-info h3 { font-size: 9pt; line-height: 1.1; margin: 0; font-weight: 800; white-space: normal; }
-    .carteirinha-front .cart-org-info small { font-size: 7pt; line-height: 1; display: block; margin-top: 0.5mm; white-space: normal; }
-
-    /* CORPO FRENTE */
-    .carteirinha-front .cart-body { display: contents; }
-
-    /* FOTO À ESQUERDA */
-    .carteirinha-front .cart-photo-frame {
-        width: 28mm; height: 36mm;
-        margin: 0; border: 1.5pt solid white;
-        grid-column: 1; grid-row: 2 / span 2; 
-        align-self: center; margin-top: 1mm;
+    // 3. Capa (Background Hero)
+    if(config.urlCapa && config.urlCapa.trim() !== "") {
+        const capaUrl = formatarUrlDrive(config.urlCapa);
+        document.getElementById('hero-section').style.backgroundImage = `url('${capaUrl}')`;
     }
 
-    /* DADOS À DIREITA (Nome e Curso) */
-    .carteirinha-front .cart-info-main { 
-        grid-column: 2; grid-row: 2;
-        text-align: left; margin-left: 2mm; margin-top: 1mm;
-        display: flex; flex-direction: column; justify-content: center;
-        align-items: flex-start; /* FIX: Evita que o fundo estique até o final */
-        margin-bottom: 1mm;
-    }
-    
-    .carteirinha-front .cart-info-main h2 { 
-        font-size: 12pt; margin-bottom: 0.5mm; line-height: 1.1; 
-        text-transform: uppercase; font-weight: 800;
-        white-space: normal; overflow: visible; 
-    }
-    .carteirinha-front .cart-info-main .cart-course { 
-        padding: 0.5mm 3mm; font-size: 8pt; border-radius: 3mm; 
-        margin-bottom: 0; display: inline-block;
-        background: rgba(255,255,255,0.2);
-        white-space: normal;
-        /* Garante que o fundo não ocupe 100% da largura, mas apenas o texto */
-        width: fit-content; 
+    // 4. Cor da Carteirinha
+    if(config.corCarteirinha) {
+        document.documentElement.style.setProperty('--card-color', config.corCarteirinha);
     }
 
-    /* DETALHES EXTRAS (CPF, Nasc, Matrícula) - Alinhado ao topo */
-    .carteirinha-front .cart-details-grid {
-        display: grid; 
-        grid-template-columns: 1fr 1fr; 
-        gap: 1mm;
-        grid-column: 2; grid-row: 3;
-        margin-left: 2mm; margin-top: 1mm;
-        align-self: flex-start;
+    // 5. NOVO: Logo Verso (Overlay)
+    if(config.urlLogoVerso && config.urlLogoVerso.trim() !== "") {
+        const logoVersoUrl = formatarUrlDrive(config.urlLogoVerso);
+        const logoVersoBox = document.getElementById('cart-logo-verso-box');
+        if(logoVersoBox) {
+            logoVersoBox.innerHTML = `<img src="${logoVersoUrl}" alt="Logo Verso">`;
+        }
     }
-    .carteirinha-front .detail-item {
-        background: transparent; padding: 0; border: none; text-align: left;
-        margin-bottom: 0.5mm; display: flex; flex-direction: column;
-    }
-    .carteirinha-front .detail-label { 
-        font-size: 5.5pt; text-transform: uppercase; opacity: 0.8; 
-        display: block; margin-bottom: 0.5mm;
-    }
-    .carteirinha-front .detail-value { 
-        font-size: 7.5pt; font-weight: 700; font-family: monospace;
-        white-space: nowrap; 
-    }
-
-    /* CÓDIGO ÚNICO (RODAPÉ) - Compactado */
-    .cart-print-auth {
-        display: block !important;
-        grid-column: 1 / -1; grid-row: 4;
-        text-align: center; font-family: monospace; font-size: 8pt;
-        background: rgba(0,0,0,0.3); padding: 1mm; border-radius: 1mm;
-        margin-top: 0; align-self: end;
-    }
-    .cart-print-auth span { opacity: 0.7; font-size: 7pt; margin-right: 4px; }
-    .cart-print-auth strong { font-size: 9pt; letter-spacing: 1.5px; color: #fff; }
-
-    /* --- VERSO (Layout Horizontal Interno) --- */
-    .carteirinha-back {
-        padding: 4mm !important;
-        display: grid;
-        grid-template-columns: 40mm 1fr; 
-        grid-template-rows: 8mm 1fr 8mm; 
-        align-items: center;
-    }
-
-    /* Header Verso */
-    .carteirinha-back .cart-back-header {
-        grid-column: 1 / -1; grid-row: 1;
-        font-size: 8pt; border-bottom: 1pt solid rgba(255,255,255,0.3);
-        margin: 0; padding-bottom: 1mm; position: static; white-space: nowrap;
-    }
-
-    /* QR Code */
-    .carteirinha-back .qr-code-box {
-        grid-column: 1; grid-row: 2;
-        width: 35mm; height: 35mm; padding: 2mm; background: white; margin: 0;
-    }
-
-    /* Validade e Assinatura */
-    .carteirinha-back .validity-box {
-        grid-column: 2; grid-row: 2;
-        text-align: center; margin: 0;
-    }
-    .carteirinha-back .validity-label { font-size: 8pt; display: block; margin-bottom: 2mm; }
-    .carteirinha-back .validity-year { font-size: 36pt; font-weight: 900; line-height: 1; display: block; }
-
-    /* Footer Verso COM ASSINATURA */
-    .carteirinha-back .cart-footer {
-        grid-column: 1 / -1; grid-row: 3;
-        position: static; padding: 0; margin: 0; border: none;
-        font-size: 7.5pt; align-self: end;
-        display: flex; flex-direction: column; align-items: center;
-    }
-    .assinatura-box-print {
-        display: block !important; /* Exibe apenas na impressão */
-        width: 40mm; height: 15mm; margin-bottom: 1mm;
-    }
-    .assinatura-box-print img {
-        width: 100%; height: 100%; object-fit: contain; filter: invert(1); /* Inverte se fundo for escuro */
-    }
-    .carteirinha-back .cart-sec-name { font-size: 9.5pt; margin-bottom: 1mm; }
-
-    /* LOGO VERSO OVERLAY - IMPRESSÃO */
-    .cart-logo-verso-overlay {
-        position: absolute !important;
-        top: 5mm !important; /* Ajuste para caber no papel impresso */
-        right: 5mm !important;
-        width: 15mm !important;
-        height: 15mm !important;
-        z-index: 20 !important;
-    }
-
-    /* Esconder botões na impressão */
-    .modal-actions-row, .cart-actions, .btn-close-modern, .btn-action-pri, .btn-action-sec, .btn-flip { display: none !important; }
 }
 
-@media(max-width: 400px) {
-    .hero-header { height: 260px; }
-    .text-container h1 { font-size: 1.4rem; }
+// --- UTILS UI ---
+function toggleLoader(show, msg = "Processando...") {
+    const el = document.getElementById('loader-overlay');
+    if(show) { 
+        document.getElementById('loader-text').innerText = msg; 
+        el.classList.remove('hidden'); 
+    } else { 
+        el.classList.add('hidden'); 
+    }
 }
+
+function showSuccess(titulo, html, callback) {
+    Swal.fire({ 
+        icon: 'success', 
+        title: titulo, 
+        html: html, 
+        confirmButtonColor: '#2563eb', 
+        confirmButtonText: 'OK',
+        allowOutsideClick: false
+    }).then(() => { if(callback) callback(); });
+}
+
+function showError(titulo, text) {
+    Swal.fire({ 
+        icon: 'error', 
+        title: titulo, 
+        text: text, 
+        confirmButtonColor: '#d33' 
+    });
+}
+
+// --- MODAIS ---
+function abrirModalConsulta() { 
+    document.getElementById('modal-consulta').classList.remove('hidden'); 
+    setTimeout(() => document.getElementById('busca-chave').focus(), 100); 
+}
+
+function fecharModalConsulta() { 
+    document.getElementById('modal-consulta').classList.add('hidden'); 
+    document.getElementById('resultado-busca').innerHTML = ''; 
+    document.getElementById('busca-chave').value = ''; 
+}
+
+document.getElementById('modal-consulta').addEventListener('click', function(e) { 
+    if (e.target === this) fecharModalConsulta(); 
+});
+
+// --- VALIDAÇÕES E MÁSCARAS ---
+function validarCPF(cpf) {
+    cpf = cpf.replace(/[^\d]+/g, '');
+    if (cpf == '') return false;
+    if (cpf.length != 11 || cpf == "00000000000" || cpf == "11111111111") return false;
+    let add = 0; 
+    for (let i = 0; i < 9; i++) add += parseInt(cpf.charAt(i)) * (10 - i);
+    let rev = 11 - (add % 11); 
+    if (rev == 10 || rev == 11) rev = 0; 
+    if (rev != parseInt(cpf.charAt(9))) return false;
+    add = 0; 
+    for (let i = 0; i < 10; i++) add += parseInt(cpf.charAt(i)) * (11 - i);
+    rev = 11 - (add % 11); 
+    if (rev == 10 || rev == 11) rev = 0; 
+    if (rev != parseInt(cpf.charAt(10))) return false;
+    return true;
+}
+
+function aplicarMascaraCPF(v) { 
+    return v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').replace(/(-\d{2})\d+?$/, '$1'); 
+}
+
+function aplicarMascaraTelefone(v) { 
+    return v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2').replace(/(-\d{4})\d+?$/, '$1'); 
+}
+
+function ativarMascaras() {
+    const iC = document.querySelector('input[name="CPF"]');
+    if(iC) { 
+        iC.maxLength=14; 
+        iC.addEventListener('input', e=>e.target.value=aplicarMascaraCPF(e.target.value)); 
+    }
+    const iT = document.querySelector('input[name="Telefone"]');
+    if(iT) { 
+        iT.maxLength=15; 
+        iT.addEventListener('input', e=>e.target.value=aplicarMascaraTelefone(e.target.value)); 
+    }
+}
+
+// --- UPLOAD PREVIEW ---
+function previewArquivo(input) {
+    const label = input.parentElement.querySelector('label');
+    const statusIcon = label.querySelector('.status-icon');
+    
+    if(input.files && input.files[0]) {
+        label.style.borderColor = '#10b981'; // Verde
+        label.style.backgroundColor = '#ecfdf5';
+        statusIcon.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#10b981"></i>';
+    } else {
+        label.style.borderColor = '#e2e8f0';
+        label.style.backgroundColor = 'white';
+        statusIcon.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i>';
+    }
+}
+
+// --- COMPRESSÃO DE IMAGEM OTIMIZADA ---
+async function comprimirImagem(file, maxWidth = 600, quality = 0.5) {
+    if(file.type === 'application/pdf') return toBase64(file);
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader(); 
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image(); 
+            img.src = event.target.result;
+            img.onload = () => {
+                const c = document.createElement('canvas'); 
+                let w = img.width, h = img.height;
+                if (w > maxWidth) { h *= maxWidth / w; w = maxWidth; }
+                c.width = w; c.height = h; 
+                const ctx = c.getContext('2d'); 
+                ctx.drawImage(img, 0, 0, w, h);
+                // Comprime agressivamente para JPEG 50%
+                resolve(c.toDataURL('image/jpeg', quality).split(',')[1]);
+            }; 
+            img.onerror = (e) => reject(e);
+        }; 
+        reader.onerror = (e) => reject(e);
+    });
+}
+
+// --- LÓGICA DE EVENTOS ---
+function carregarEventos() {
+    toggleLoader(true, "Carregando eventos...");
+    fetch(`${URL_API}?action=getEventosAtivos`)
+        .then(res => res.json())
+        .then(json => {
+            toggleLoader(false);
+            const c = document.getElementById('cards-container'); 
+            c.innerHTML = '';
+            
+            if (!json.data || json.data.length === 0) { 
+                c.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:3rem; color:#64748b; background:white; border-radius:16px;">
+                    <i class="fa-regular fa-calendar-xmark" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i>
+                    <h3>Nenhum evento disponível no momento.</h3>
+                    <p>Fique atento às próximas datas!</p>
+                </div>`; 
+                return; 
+            }
+            
+            json.data.forEach(ev => {
+                // Lógica de Vagas
+                const limite = parseInt(ev.limite || 0);
+                const inscritos = parseInt(ev.inscritos || 0);
+                let esgotado = false;
+                
+                if (limite > 0 && inscritos >= limite) {
+                    esgotado = true;
+                }
+
+                // Elementos Visuais
+                let statusBadge = '<div class="card-status status-ativo">Inscrições Abertas</div>';
+                let btnHtml = `
+                    <button class="btn-inscrever" onclick='abrirInscricao(${JSON.stringify(ev)})'>
+                        <span>Inscrever-se Agora</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>`;
+
+                if (esgotado) {
+                    statusBadge = '<div class="card-status" style="background:#fee2e2; color:#991b1b; border-color:#fecaca;"><i class="fa-solid fa-ban"></i> Vagas Esgotadas</div>';
+                    btnHtml = `
+                        <button class="btn-inscrever" style="background:#94a3b8; cursor:not-allowed; box-shadow:none; opacity:0.7;" disabled>
+                            <span>Encerrado</span>
+                            <i class="fa-solid fa-lock"></i>
+                        </button>`;
+                }
+
+                c.innerHTML += `
+                    <div class="card-event fade-in" ${esgotado ? 'style="opacity:0.9;"' : ''}>
+                        ${statusBadge}
+                        
+                        <h3 class="card-title">${ev.titulo}</h3>
+                        
+                        <div class="card-dates">
+                            <i class="fa-regular fa-calendar-days"></i> Até ${formatarData(ev.fim)}
+                        </div>
+                        
+                        ${limite > 0 ? `<p style="font-size:0.8rem; color:#64748b; margin-bottom:10px;"><i class="fa-solid fa-users"></i> ${inscritos} / ${limite} vagas preenchidas</p>` : ''}
+
+                        <p class="card-desc">${ev.descricao}</p>
+                        
+                        ${btnHtml}
+                    </div>`;
+            });
+        })
+        .catch(() => { 
+            toggleLoader(false); 
+            document.getElementById('cards-container').innerHTML = '<div style="grid-column:1/-1; text-align:center; color:red; padding:20px;">Erro de conexão. Verifique sua internet.</div>'; 
+        });
+}
+
+async function abrirInscricao(evento) {
+    document.getElementById('lista-eventos').classList.add('hidden'); 
+    document.getElementById('fab-consulta').classList.add('hidden'); 
+    document.getElementById('hero-section').classList.add('hidden'); 
+    document.getElementById('area-inscricao').classList.remove('hidden');
+    
+    document.getElementById('titulo-evento').innerText = evento.titulo; 
+    document.getElementById('form-inscricao').dataset.idEvento = evento.id;
+    
+    let config = {}; 
+    try { config = typeof evento.config === 'string' ? JSON.parse(evento.config) : evento.config; } catch(e) {}
+    document.getElementById('form-inscricao').dataset.config = JSON.stringify(config);
+
+    const areaCampos = document.getElementById('campos-dinamicos'); 
+    areaCampos.innerHTML = '';
+    
+    const areaAvisos = document.getElementById('area-avisos');
+    areaAvisos.innerHTML = '';
+    
+    if(config.mensagemAlerta) {
+        areaAvisos.innerHTML += `
+            <div class="info-banner" style="background-color:#fff7ed; border-left-color:#f97316; color:#9a3412; padding: 15px; border-left-width: 4px; margin-bottom: 20px;">
+                <i class="fa-solid fa-triangle-exclamation"></i> 
+                <strong>Atenção:</strong> ${config.mensagemAlerta}
+            </div>`;
+    }
+    
+    if(config.observacoesTexto) {
+        areaAvisos.innerHTML += `
+            <div class="info-banner" style="background-color:#eff6ff; border-left-color:#2563eb; color:#1e40af; padding: 15px; border-left-width: 4px; margin-bottom: 20px;">
+                <i class="fa-solid fa-circle-info"></i>
+                <strong>Instruções:</strong><br>
+                ${config.observacoesTexto.replace(/\n/g, '<br>')}
+            </div>
+        `;
+    }
+    
+    // Campos Fixos (CPF, Email)
+    areaCampos.innerHTML += `
+        <div><label>CPF <span style="color:red">*</span></label><input type="text" name="CPF" placeholder="000.000.000-00" required></div>
+        <div><label>E-mail <span style="color:red">*</span></label><input type="email" name="Email" placeholder="seu@email.com" required></div>`;
+
+    // Carregar instituições se necessário
+    if(config.camposTexto && config.camposTexto.includes('NomeInstituicao') && listaInstituicoesCache.length === 0) {
+        try { toggleLoader(true,"Carregando lista..."); const r = await fetch(`${URL_API}?action=getInstituicoes`); const j = await r.json(); if(j.data) listaInstituicoesCache = j.data; } catch(e){} finally { toggleLoader(false); }
+    }
+
+    // Gerar Campos Dinâmicos
+    if(config.camposTexto) {
+        config.camposTexto.forEach(key => {
+            if(CAMPO_DEFS[key]) {
+                const def = CAMPO_DEFS[key];
+                const labelHTML = `<label>${def.label} <span style="color:red">*</span></label>`;
+                
+                if (key === 'NomeInstituicao' && listaInstituicoesCache.length > 0) {
+                    let opt = '<option value="">Selecione...</option>'; 
+                    listaInstituicoesCache.forEach(i => opt += `<option value="${i}">${i}</option>`); 
+                    opt += `<option value="Outra">Outra (Digitar nome)</option>`;
+                    areaCampos.innerHTML += `<div>${labelHTML}<select name="${key}" required onchange="verificarOutraInst(this)">${opt}</select><input type="text" id="input_outra_inst" placeholder="Digite o nome da instituição" style="display:none; margin-top:10px;"></div>`;
+                }
+                else if (key === 'Cidade') {
+                    if (config.cidadesPermitidas && config.cidadesPermitidas.length > 0) {
+                        let optCidade = '<option value="">Selecione sua cidade...</option>';
+                        config.cidadesPermitidas.forEach(c => optCidade += `<option value="${c}">${c}</option>`);
+                        areaCampos.innerHTML += `<div>${labelHTML}<select name="${key}" required>${optCidade}</select></div>`;
+                    } else {
+                        areaCampos.innerHTML += `<div>${labelHTML}<input type="text" name="${key}" placeholder="${def.placeholder}" required></div>`;
+                    }
+                }
+                else if (key === 'Estado' && def.options) {
+                    let optUF = `<option value="">UF</option>`;
+                    def.options.forEach(uf => optUF += `<option value="${uf}">${uf}</option>`);
+                    areaCampos.innerHTML += `<div>${labelHTML}<select name="${key}" required>${optUF}</select></div>`;
+                }
+                else {
+                    areaCampos.innerHTML += `<div>${labelHTML}<input type="${def.type}" name="${key}" placeholder="${def.placeholder||''}" required></div>`;
+                }
+            }
+        });
+    }
+
+    if(config.camposPersonalizados && config.camposPersonalizados.length > 0) {
+        areaCampos.innerHTML += `<div style="grid-column:1/-1; margin-top:20px; padding-top:10px; border-top:1px dashed #e2e8f0;"><h4 style="color:var(--primary); font-size:1rem; margin-bottom:15px;">Perguntas Adicionais</h4></div>`;
+        config.camposPersonalizados.forEach(p => {
+            areaCampos.innerHTML += `<div><label>${p} <span style="color:red">*</span></label><input type="text" name="${p}" required placeholder="Sua resposta"></div>`;
+        });
+    }
+
+    ativarMascaras();
+    
+    // Reset Uploads Visuals
+    const df = document.getElementById('div-upload-foto'), dd = document.getElementById('div-upload-doc');
+    df.classList.add('hidden'); document.getElementById('file-foto').required = false; previewArquivo({parentElement: df, files: []});
+    dd.classList.add('hidden'); document.getElementById('file-doc').required = false; previewArquivo({parentElement: dd, files: []});
+    
+    if(config.arquivos?.foto) { df.classList.remove('hidden'); document.getElementById('file-foto').required = true; }
+    if(config.arquivos?.doc) { dd.classList.remove('hidden'); document.getElementById('file-doc').required = true; }
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+window.verificarOutraInst = function(s) { 
+    const i = document.getElementById('input_outra_inst'); 
+    if(s.value==='Outra'){ i.style.display='block'; i.required=true; i.focus(); } else { i.style.display='none'; i.required=false; } 
+}
+
+async function enviarInscricao(e) {
+    e.preventDefault();
+    const iCPF = document.querySelector('input[name="CPF"]');
+    if(!validarCPF(iCPF.value)) return showError('CPF Inválido', 'Por favor, verifique o CPF digitado.');
+    
+    // Validação de Tamanho de Arquivo (PDF)
+    const fileDoc = document.getElementById('file-doc');
+    if (fileDoc && fileDoc.files.length > 0) {
+        const file = fileDoc.files[0];
+        // 2MB em bytes = 2 * 1024 * 1024 = 2097152 bytes
+        if (file.size > 2 * 1024 * 1024) {
+            return showError('Arquivo Muito Grande', 'O PDF do comprovante deve ter no máximo 2MB. Por favor, comprima o arquivo e tente novamente.');
+        }
+    }
+
+    const r = await Swal.fire({ 
+        title: 'Confirmar envio?', 
+        text: 'Verifique se todos os dados estão corretos.',
+        icon: 'question', 
+        showCancelButton: true, 
+        confirmButtonText: 'Sim, Enviar',
+        confirmButtonColor: '#2563eb'
+    });
+    if(!r.isConfirmed) return;
+
+    toggleLoader(true, "Enviando seus dados...");
+    
+    const inputs = document.querySelectorAll('#campos-dinamicos input, #campos-dinamicos select, #campos-dinamicos textarea');
+    let dados = {};
+    inputs.forEach(i => { 
+        if(i.id !== 'input_outra_inst' || i.style.display !== 'none') { dados[i.name] = i.value; }
+    });
+    if(dados['NomeInstituicao'] === 'Outra') { dados['NomeInstituicao'] = document.getElementById('input_outra_inst').value; }
+
+    const config = JSON.parse(document.getElementById('form-inscricao').dataset.config);
+    const arqs = {};
+    
+    try {
+        // Compressão ajustada (maxWidth: 600, quality: 0.5)
+        if(config.arquivos?.foto) { arqs.foto = { data: await comprimirImagem(document.getElementById('file-foto').files[0]), mime: 'image/jpeg' }; }
+        if(config.arquivos?.doc) { const f = document.getElementById('file-doc').files[0]; arqs.doc = { data: await toBase64(f), mime: f.type }; }
+        
+        fetch(URL_API, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'novaInscricao', eventoId: document.getElementById('form-inscricao').dataset.idEvento, campos: dados, arquivos: arqs }) 
+        })
+        .then(res => res.json())
+        .then(j => {
+            toggleLoader(false);
+            if(j.status === 'success') {
+                showSuccess('Inscrição Realizada!', `
+                    <div style="text-align:center">
+                        <p>Anote sua chave de acesso:</p>
+                        <h2 style="color:#2563eb; font-size:2rem; margin:10px 0; letter-spacing:2px; font-family:monospace;">${j.chave}</h2>
+                        <p style="font-size:0.9rem; color:#64748b;">Enviamos uma confirmação para seu e-mail.</p>
+                    </div>`, 
+                    () => { document.getElementById('form-inscricao').reset(); voltarHome(); });
+            } else {
+                showError('Não foi possível enviar', j.message);
+            }
+        });
+    } catch(err) { 
+        toggleLoader(false); showError('Erro Técnico', 'Ocorreu uma falha no envio. Tente novamente.'); 
+        console.error(err);
+    }
+}
+
+// --- CONSULTA E CARTEIRINHA DIGITAL ---
+function consultarChave() {
+    const c = document.getElementById('busca-chave').value.trim();
+    if(!c) return showError('Atenção', 'Digite a chave de acesso.');
+    
+    const areaResult = document.getElementById('resultado-busca');
+    areaResult.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;"><i class="fa-solid fa-circle-notch fa-spin"></i> Buscando...</div>';
+    
+    fetch(`${URL_API}?action=consultarInscricao&chave=${c}`)
+        .then(r => r.json())
+        .then(j => {
+            if(j.status === 'success') {
+                const situacao = j.data.situacao;
+                const aprovado = situacao.includes('Aprovada') || situacao.includes('Emitida');
+                
+                let cssClass = aprovado ? 'result-success' : 'result-pending';
+                let icon = aprovado ? 'fa-circle-check' : 'fa-clock';
+                let cor = aprovado ? '#10b981' : '#f59e0b';
+                
+                let btnCarteirinha = '';
+                if (aprovado && j.data.emiteCarteirinha) {
+                    j.data.aluno.chave = j.data.chave;
+                    btnCarteirinha = `<button class="btn-ver-cart" onclick='abrirCarteirinha(${JSON.stringify(j.data.aluno)})'><i class="fa-solid fa-id-card"></i> Ver Carteirinha Digital</button>`;
+                } else if (aprovado) {
+                    btnCarteirinha = `<div style="margin-top:10px; font-size:0.8rem; color:#64748b;">* Carteirinha indisponível para este evento.</div>`;
+                }
+
+                areaResult.innerHTML = `
+                    <div class="result-card ${cssClass}">
+                        <h4 style="color:${cor}; margin-bottom:5px; font-size:1.1rem;"><i class="fa-solid ${icon}"></i> ${situacao}</h4>
+                        <p style="font-size:0.9rem; color:#334155;">Data: ${formatarData(j.data.data_inscricao)}</p>
+                        ${btnCarteirinha}
+                    </div>`;
+            } else {
+                areaResult.innerHTML = `<div class="result-card" style="border-color:#ef4444; background:#fef2f2; color:#b91c1c;"><i class="fa-solid fa-circle-xmark"></i> ${j.message}</div>`;
+            }
+        })
+        .catch(() => areaResult.innerHTML = '<p style="color:red; text-align:center;">Erro na busca.</p>');
+}
+
+function abrirCarteirinha(aluno) {
+    // 1. Dados Pessoais e Acadêmicos (Frente)
+    document.getElementById('cart-nome').innerText = aluno.nome || 'Aluno';
+    document.getElementById('cart-inst').innerText = aluno.instituicao || 'Instituição';
+    document.getElementById('cart-course').innerText = aluno.curso || 'Curso não informado';
+    document.getElementById('cart-cpf').innerText = aluno.cpf || '---';
+    document.getElementById('cart-mat').innerText = aluno.matricula || '-';
+    
+    // Tratamento Data Nascimento
+    let nasc = aluno.nascimento || '--/--/----';
+    if(nasc.includes('-')) { const p = nasc.split('-'); nasc = `${p[2]}/${p[1]}/${p[0]}`; }
+    document.getElementById('cart-nasc').innerText = nasc;
+
+    // 2. Foto do Aluno
+    const img = document.getElementById('cart-img');
+    // Placeholder transparente
+    img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNlMmU4ZjAiLz48L3N2Zz4='; 
+    if (aluno.foto) {
+        if (aluno.foto.startsWith('data:image') || aluno.foto.startsWith('http')) {
+             img.src = formatarUrlDrive(aluno.foto);
+        }
+    }
+    img.onerror = function() { this.src = 'https://via.placeholder.com/150?text=FOTO'; };
+
+    // 3. Dados Institucionais (Verso)
+    if(configSistemaCache) {
+        if(configSistemaCache.nomeSistema) document.getElementById('cart-sys-name').innerText = configSistemaCache.nomeSistema.toUpperCase();
+        if(configSistemaCache.nomeSecretaria) {
+             // Ajusta no verso e na frente (small)
+             document.getElementById('cart-sec-name').innerText = configSistemaCache.nomeSecretario || "Responsável";
+             document.querySelector('.cart-org-info small').innerText = configSistemaCache.nomeSecretaria;
+        }
+        
+        // 5. NOVO: Injeta Logo do Verso, se existir na configuração cacheada
+        if(configSistemaCache.urlLogoVerso && configSistemaCache.urlLogoVerso.trim() !== "") {
+            const logoVersoBox = document.getElementById('cart-logo-verso-box');
+            if(logoVersoBox) {
+                const logoVersoUrl = formatarUrlDrive(configSistemaCache.urlLogoVerso);
+                logoVersoBox.innerHTML = `<img src="${logoVersoUrl}" alt="Logo Verso">`;
+            }
+        }
+    }
+    
+    // 4. Validade e QR Code (USANDO QRIOUS)
+    document.getElementById('cart-validade-ano').innerText = aluno.ano_vigencia || new Date().getFullYear();
+
+    const linkValidacao = `${URL_API}?action=validar&chave=${aluno.chave}`;
+    
+    // Gerar QR Code no cliente
+    const qr = new QRious({
+      element: document.getElementById('cart-qrcode-img'),
+      value: linkValidacao,
+      size: 150,
+      backgroundAlpha: 0,
+      foreground: 'black'
+    });
+    // Forçar a src do elemento img caso o QRious renderize em canvas
+    document.getElementById('cart-qrcode-img').src = qr.toDataURL();
+
+    // 6. Exibir Modal
+    document.getElementById('modal-carteirinha').classList.remove('hidden');
+    document.getElementById('cart-flip-container').classList.remove('is-flipped');
+    fecharModalConsulta();
+}
+
+function formatarUrlDrive(url) {
+    if (!url) return '';
+    if (url.startsWith('data:')) return url;
+    let id = '';
+    const parts = url.split(/\/d\/|id=/);
+    if (parts.length > 1) id = parts[1].split(/\/|&/)[0];
+    if (id) return `https://lh3.googleusercontent.com/d/${id}`;
+    return url; 
+}
+
+function voltarHome() { 
+    document.getElementById('area-inscricao').classList.add('hidden'); 
+    document.getElementById('fab-consulta').classList.remove('hidden'); 
+    document.getElementById('hero-section').classList.remove('hidden'); 
+    document.getElementById('lista-eventos').classList.remove('hidden'); 
+}
+
+function formatarData(iso) { 
+    if(!iso) return '--'; 
+    const p = iso.split('T')[0].split('-'); 
+    return p.length<3 ? iso : `${p[2]}/${p[1]}/${p[0]}`; 
+}
+
+const toBase64 = f => new Promise((r, j) => { 
+    const rd = new FileReader(); 
+    rd.readAsDataURL(f); 
+    rd.onload = () => r(rd.result.split(',')[1]); 
+    rd.onerror = e => j(e); 
+});
