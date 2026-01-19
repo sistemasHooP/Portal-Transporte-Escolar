@@ -89,15 +89,6 @@ function aplicarConfiguracoes(config) {
     if(config.corCarteirinha) {
         document.documentElement.style.setProperty('--card-color', config.corCarteirinha);
     }
-
-    // 5. NOVO: Logo Verso (Overlay)
-    if(config.urlLogoVerso && config.urlLogoVerso.trim() !== "") {
-        const logoVersoUrl = formatarUrlDrive(config.urlLogoVerso);
-        const logoVersoBox = document.getElementById('cart-logo-verso-box');
-        if(logoVersoBox) {
-            logoVersoBox.innerHTML = `<img src="${logoVersoUrl}" alt="Logo Verso">`;
-        }
-    }
 }
 
 // --- UTILS UI ---
@@ -543,14 +534,7 @@ function abrirCarteirinha(aluno) {
              document.querySelector('.cart-org-info small').innerText = configSistemaCache.nomeSecretaria;
         }
         
-        // 5. NOVO: Injeta Logo do Verso, se existir na configuração cacheada
-        if(configSistemaCache.urlLogoVerso && configSistemaCache.urlLogoVerso.trim() !== "") {
-            const logoVersoBox = document.getElementById('cart-logo-verso-box');
-            if(logoVersoBox) {
-                const logoVersoUrl = formatarUrlDrive(configSistemaCache.urlLogoVerso);
-                logoVersoBox.innerHTML = `<img src="${logoVersoUrl}" alt="Logo Verso">`;
-            }
-        }
+        // CORREÇÃO: Removemos a injeção da Logo Verso aqui, pois é exclusiva do Admin.
     }
     
     // 4. Validade e QR Code (USANDO QRIOUS)
