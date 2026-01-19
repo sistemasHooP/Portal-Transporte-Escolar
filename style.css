@@ -457,11 +457,11 @@ input[type="file"] { display: none; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + DETALHES ALINHADOS + ESPAÇO OTIMIZADO --- */
+/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + CENTRALIZADO + MARGEM SEGURA --- */
 @media print {
     @page { 
         size: portrait; 
-        margin: 0; 
+        margin: 10mm; /* MARGEM DE SEGURANÇA ADICIONADA */
     }
 
     body > *:not(#modal-carteirinha):not(#modal-carteirinha-admin) { display: none !important; }
@@ -474,7 +474,7 @@ input[type="file"] { display: none; }
     #modal-carteirinha *, #modal-carteirinha-admin * { visibility: visible; }
     .modal-content, .modal-content-cart { box-shadow: none; padding: 0; margin: 0; background: transparent; }
     
-    /* WRAPPER EMPILHADO */
+    /* WRAPPER EMPILHADO E CENTRALIZADO */
     .carteirinha-wrapper {
         perspective: none; height: auto; margin-top: 10mm;
         display: flex; 
@@ -482,7 +482,8 @@ input[type="file"] { display: none; }
         gap: 5mm; 
         align-items: center; /* Centraliza na folha */
         justify-content: start;
-        width: 100% !important; 
+        width: auto !important; /* Deixa a largura automática para respeitar o centro */
+        margin-left: auto; margin-right: auto; /* Centralização horizontal clássica */
     }
     
     .carteirinha-card-inner {
