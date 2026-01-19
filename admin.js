@@ -723,8 +723,8 @@ function modalNovoEvento() {
                 return false;
             }
 
-            // Coletar campos marcados (Removida a obrigatoriedade de 'Cidade' e 'Estado')
-            const sels = [];
+            const sels = []; // Agora vazio, pois Cidade e Estado não são forçados
+            
             CAMPOS_PADRAO.forEach(c => { 
                 const el = document.getElementById(`check_${c.key}`);
                 if(el && el.checked) sels.push(c.key); 
@@ -1071,7 +1071,7 @@ function acaoEmMassa(s) {
     });
 }
 
-// --- GERAR FICHA DE INSCRIÇÃO (DINÂMICA E REVISADA) ---
+// --- GERAR FICHA DE INSCRIÇÃO (DINÂMICA E REVISADA: TABELAS) ---
 function gerarFicha(chave) {
     showLoading('Gerando Ficha...');
 
@@ -1094,124 +1094,158 @@ function gerarFicha(chave) {
         const nomeSistema = configSistema.nomeSistema || 'Sistema de Transporte';
         const nomeSecretaria = configSistema.nomeSecretaria || 'Secretaria de Educação';
 
-        // Foto do Aluno
+        // Foto do Aluno (URL)
         let fotoUrl = '';
         if(dados.linkFoto) {
             fotoUrl = formatarUrlDrive(dados.linkFoto);
         }
-        const imgTag = fotoUrl 
-            ? `<div class="ficha-photo-box" style="border:none;"><img src="${fotoUrl}" style="width:100px; height:130px; object-fit:cover; border:1px solid #000;"></div>`
-            : `<div class="ficha-photo-box">SEM FOTO</div>`;
+        
+        // Foto HTML
+        const fotoHtml = fotoUrl 
+            ? `<img src="${fotoUrl}" style="width:100%; height:100%; object-fit:cover;">`
+            : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:10px;">SEM FOTO</div>`;
 
         // Definição de Grupos para Organização Lógica
-        // A lógica aqui é: Se o campo existe no JSON da inscrição, ele é mostrado.
-        // Se foi removido do formulário, não estará no JSON e não aparecerá na ficha.
         const ordemPessoais = ['NomeCompleto', 'CPF', 'DataNascimento', 'Telefone', 'Email', 'Endereco', 'Cidade', 'Estado'];
         const ordemAcademicos = ['NomeInstituicao', 'NomeCurso', 'PeriodoCurso', 'Matricula', 'Turno'];
         
-        let htmlPessoais = '';
-        let htmlAcademicos = '';
-        let htmlOutros = '';
-
-        const camposExibidos = new Set();
-
-        // 1. Processar Pessoais
-        ordemPessoais.forEach(key => {
-            if (dados[key]) { // Só mostra se tiver valor preenchido
-                const label = LABELS_TODOS_CAMPOS[key] || key;
-                let val = dados[key];
-                // Formatação simples de data
-                if(key === 'DataNascimento' && val.includes('-') && val.length === 10) {
-                    const parts = val.split('-');
-                    if(parts.length === 3) val = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        // Helper para gerar linhas de tabela
+        const createTableRows = (keys) => {
+            let rows = '';
+            keys.forEach(key => {
+                if (dados[key]) {
+                    const label = LABELS_TODOS_CAMPOS[key] || key;
+                    let val = dados[key];
+                    if(key === 'DataNascimento' && val.includes('-') && val.length === 10) {
+                        const parts = val.split('-');
+                        if(parts.length === 3) val = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    }
+                    rows += `
+                        <tr>
+                            <td class="label-cell">${label.toUpperCase()}</td>
+                            <td class="value-cell">${val}</td>
+                        </tr>
+                    `;
                 }
-                htmlPessoais += `<div class="ficha-row"><span class="ficha-label">${label}:</span> <span class="ficha-value">${val}</span></div>`;
-                camposExibidos.add(key);
-            }
-        });
+            });
+            return rows;
+        };
 
-        // 2. Processar Acadêmicos
-        ordemAcademicos.forEach(key => {
-            if (dados[key]) {
-                const label = LABELS_TODOS_CAMPOS[key] || key;
-                htmlAcademicos += `<div class="ficha-row"><span class="ficha-label">${label}:</span> <span class="ficha-value">${dados[key]}</span></div>`;
-                camposExibidos.add(key);
-            }
-        });
-
-        // 3. Processar Outros (Campos extras ou personalizados)
-        const ignorar = ['linkFoto', 'linkDoc', 'Assinatura', 'Observacoes'];
+        const rowsPessoais = createTableRows(ordemPessoais);
+        const rowsAcademicos = createTableRows(ordemAcademicos);
+        
+        // Outras Informações
+        let rowsOutros = '';
+        const ignorar = ['linkFoto', 'linkDoc', 'Assinatura', 'Observacoes', ...ordemPessoais, ...ordemAcademicos];
         for (const [key, val] of Object.entries(dados)) {
-            if (!ignorar.includes(key) && !camposExibidos.has(key)) {
-                htmlOutros += `<div class="ficha-row"><span class="ficha-label">${key}:</span> <span class="ficha-value">${val}</span></div>`;
+            if (!ignorar.includes(key)) {
+                rowsOutros += `
+                    <tr>
+                        <td class="label-cell">${key.toUpperCase()}</td>
+                        <td class="value-cell">${val}</td>
+                    </tr>`;
             }
         }
+        if(!rowsOutros) rowsOutros = '<tr><td colspan="2" style="padding:10px; color:#666; font-style:italic;">Nenhuma informação adicional.</td></tr>';
 
-        // Montagem das Seções HTML (Só adiciona o cabeçalho da seção se houver conteúdo)
-        let sectionsHtml = '';
-        
-        if (htmlPessoais) {
-            sectionsHtml += `
-                <div class="ficha-section">
-                    <div class="ficha-section-header">DADOS PESSOAIS</div>
-                    <div class="ficha-section-body">${htmlPessoais}</div>
-                </div>`;
-        }
-        
-        if (htmlAcademicos) {
-            sectionsHtml += `
-                <div class="ficha-section">
-                    <div class="ficha-section-header">DADOS ACADÊMICOS</div>
-                    <div class="ficha-section-body">${htmlAcademicos}</div>
-                </div>`;
-        }
-        
-        if (htmlOutros) {
-            sectionsHtml += `
-                <div class="ficha-section">
-                    <div class="ficha-section-header">OUTRAS INFORMAÇÕES</div>
-                    <div class="ficha-section-body">${htmlOutros}</div>
-                </div>`;
-        }
-
+        // HTML FINAL COM TABELAS
         const htmlFicha = `
-            <div class="ficha-container">
-                <div class="ficha-header">
-                    <img src="${logoUrl}" alt="Logo" class="ficha-logo" onerror="this.style.opacity='0'">
-                    <div class="ficha-title">FICHA DE INSCRIÇÃO</div>
-                    <div class="ficha-subtitle">${nomeSistema} - ${nomeSecretaria}</div>
-                    <div class="ficha-event-title">${evento.titulo}</div>
-                    <div class="ficha-key-box">CHAVE: ${chave}</div>
-                </div>
-
-                <!-- Layout Flex para Foto + Dados Principais -->
-                <div style="display:flex; gap:20px; align-items:flex-start;">
-                    <div style="flex:1;">
-                        ${sectionsHtml}
-                    </div>
-                    ${fotoUrl ? `<div style="width:120px; flex-shrink:0; text-align:center; padding-top:10px;">${imgTag}<div style="font-size:10px; margin-top:5px; color:#666;">FOTO 3x4</div></div>` : ''}
-                </div>
-
-                <div class="ficha-sign-area">
-                    <div class="ficha-sign-line"></div>
-                    <div style="font-weight:bold; font-size:12px;">ASSINATURA DO ALUNO(A) OU RESPONSÁVEL</div>
-                    <div style="font-size:11px; margin-top:3px;">${dados.NomeCompleto || ''}</div>
-                    <div style="font-size:10px; margin-top:2px; color:#666;">CPF: ${dados.CPF || ''}</div>
-                </div>
-
-                <div class="ficha-footer">
-                    Documento gerado em ${new Date().toLocaleString('pt-BR')} • ${nomeSecretaria}
-                </div>
-            </div>
-            
-            <!-- Estilo Específico para Impressão da Ficha (Força Retrato e Ajusta Layout) -->
             <style>
-                .ficha-event-title { font-weight:bold; margin-top:5px; font-size:14px; text-transform:uppercase; }
                 @media print {
-                    @page { size: portrait; margin: 10mm; } /* Garante retrato para ficha individual */
-                    body { -webkit-print-color-adjust: exact; }
+                    @page { size: portrait; margin: 10mm; }
+                    body { -webkit-print-color-adjust: exact; font-family: 'Arial', sans-serif; }
+                }
+                .ficha-container { width: 100%; max-width: 800px; margin: 0 auto; border: 2px solid #000; padding: 2px; }
+                .inner-border { border: 1px solid #000; padding: 15px; min-height: 900px; position: relative; }
+                
+                /* HEADER TABLE */
+                .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border-bottom: 2px solid #000; }
+                .header-table td { padding: 5px; vertical-align: middle; }
+                
+                .logo-cell img { width: 80px; height: 80px; object-fit: contain; }
+                .center-info { text-align: center; }
+                .center-info h2 { margin: 0; font-size: 18px; font-weight: 900; text-transform: uppercase; }
+                .center-info h3 { margin: 5px 0 0; font-size: 14px; font-weight: normal; }
+                .center-info h4 { margin: 2px 0 0; font-size: 12px; font-weight: bold; color: #444; }
+                
+                .key-cell { text-align: center; border-left: 1px solid #000; }
+                .key-box { border: 1px solid #000; padding: 5px; margin-bottom: 5px; background: #eee; }
+                .key-box small { font-size: 9px; display: block; }
+                .key-box strong { font-size: 14px; font-family: monospace; display: block; }
+                .photo-box { width: 80px; height: 100px; border: 1px solid #000; margin: 0 auto; background: #f0f0f0; overflow: hidden; }
+
+                /* DATA SECTIONS */
+                .section-title { 
+                    background: #ddd; 
+                    font-weight: bold; 
+                    padding: 5px 10px; 
+                    border: 1px solid #000; 
+                    border-bottom: none; 
+                    margin-top: 20px; 
+                    font-size: 12px;
+                }
+                
+                .data-table { width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 12px; }
+                .data-table td { border: 1px solid #000; padding: 6px 8px; }
+                .label-cell { width: 30%; font-weight: bold; background: #f9f9f9; }
+                .value-cell { width: 70%; }
+
+                /* SIGNATURE */
+                .sign-area { margin-top: 60px; text-align: center; }
+                .sign-line { width: 60%; margin: 0 auto; border-top: 1px solid #000; }
+                .sign-text { font-size: 11px; margin-top: 5px; font-weight: bold; }
+                .sign-sub { font-size: 10px; margin-top: 2px; }
+
+                .footer-info { 
+                    position: absolute; bottom: 10px; left: 15px; right: 15px;
+                    border-top: 1px solid #ccc; padding-top: 5px;
+                    font-size: 9px; color: #555; text-align: right; 
                 }
             </style>
+
+            <div class="ficha-container">
+                <div class="inner-border">
+                    
+                    <table class="header-table">
+                        <tr>
+                            <td width="100" class="logo-cell"><img src="${logoUrl}" onerror="this.style.display='none'"></td>
+                            <td class="center-info">
+                                <h2>FICHA DE INSCRIÇÃO</h2>
+                                <h3>${nomeSistema}</h3>
+                                <h4>${evento.titulo}</h4>
+                            </td>
+                            <td width="120" class="key-cell">
+                                <div class="key-box">
+                                    <small>CHAVE DE ACESSO</small>
+                                    <strong>${chave}</strong>
+                                </div>
+                                <div class="photo-box">
+                                    ${fotoHtml}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    ${rowsPessoais ? `<div class="section-title">DADOS PESSOAIS</div><table class="data-table">${rowsPessoais}</table>` : ''}
+                    
+                    ${rowsAcademicos ? `<div class="section-title">DADOS ACADÊMICOS</div><table class="data-table">${rowsAcademicos}</table>` : ''}
+                    
+                    <div class="section-title">OUTRAS INFORMAÇÕES</div>
+                    <table class="data-table">${rowsOutros}</table>
+
+                    <div class="sign-area">
+                        <div class="sign-line"></div>
+                        <div class="sign-text">ASSINATURA DO ALUNO(A)</div>
+                        <div class="sign-sub">${dados.NomeCompleto || ''}</div>
+                    </div>
+
+                    <div class="footer-info">
+                        Documento oficial gerado em ${new Date().toLocaleString('pt-BR')}<br>
+                        ${nomeSecretaria}
+                    </div>
+
+                </div>
+            </div>
         `;
 
         const pl = document.getElementById('print-layer') || document.createElement('div');
@@ -1219,26 +1253,26 @@ function gerarFicha(chave) {
         if(!pl.parentElement) document.body.appendChild(pl);
         pl.innerHTML = htmlFicha;
         
-        const imgEl = pl.querySelector('.ficha-photo-box img');
-        const finalizeAndPrint = () => {
-            Swal.close(); 
-            if(inscricao.status === 'Pendente') {
-                fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'atualizarStatus', senha: sessionStorage.getItem('admin_token'), chave: chave, novoStatus: 'Ficha Emitida' }) });
-                inscricao.status = 'Ficha Emitida'; 
+        // Espera imagens carregarem
+        const images = pl.querySelectorAll('img');
+        let loaded = 0;
+        const checkPrint = () => {
+            loaded++;
+            if(loaded >= images.length) {
+                Swal.close();
+                if(inscricao.status === 'Pendente') {
+                    fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'atualizarStatus', senha: sessionStorage.getItem('admin_token'), chave: chave, novoStatus: 'Ficha Emitida' }) });
+                    inscricao.status = 'Ficha Emitida'; 
+                }
+                setTimeout(() => window.print(), 100);
             }
-            setTimeout(() => window.print(), 100);
         };
 
-        if (imgEl) {
-            if (imgEl.complete) { finalizeAndPrint(); } 
-            else {
-                if(Swal.isVisible()) Swal.update({ title: 'Carregando foto...' });
-                imgEl.onload = finalizeAndPrint;
-                imgEl.onerror = finalizeAndPrint; 
-            }
-        } else {
-            finalizeAndPrint();
-        }
+        if(images.length === 0) checkPrint();
+        else images.forEach(img => {
+            if(img.complete) checkPrint();
+            else { img.onload = checkPrint; img.onerror = checkPrint; }
+        });
 
     }).catch(err => {
         console.error(err);
