@@ -34,7 +34,7 @@ const LABELS_TODOS_CAMPOS = {
 let mapaEventos = {}; 
 let cacheEventos = {}; 
 let chartEventosInstance = null; let chartStatusInstance = null;
-let todasInscricoes = [];        
+let todasInscricoes = [];         
 let inscricoesFiltradas = []; 
 let dashboardData = []; 
 let paginaAtual = 1;
@@ -129,7 +129,7 @@ function carregarConfigGeral() {
             document.getElementById('config-cor-picker').value = json.corCard || '#2563eb';
             document.getElementById('config-nome-sec').value = json.nomeSec || '';
             document.getElementById('config-nome-resp').value = json.nomeResp || '';
-            document.getElementById('config-assinatura').value = json.assinatura || ''; // Novo campo
+            document.getElementById('config-assinatura').value = json.assinatura || ''; 
         }
     });
 }
@@ -139,7 +139,7 @@ function salvarConfigGeral() {
     const cor = document.getElementById('config-cor').value;
     const sec = document.getElementById('config-nome-sec').value;
     const resp = document.getElementById('config-nome-resp').value;
-    const ass = document.getElementById('config-assinatura').value; // Novo campo
+    const ass = document.getElementById('config-assinatura').value; 
 
     showLoading('Salvando...');
     fetch(URL_API, { 
@@ -235,80 +235,94 @@ function atualizarSelectsRelatorio(eventos, inscricoes) {
     }
 }
 
-// --- RELATÓRIO PDF ---
+// --- RELATÓRIO PDF (ATUALIZADO: HORIZONTAL + CABEÇALHO DA CONFIG) ---
 function gerarRelatorioTransporte() {
-    const eventoId = document.getElementById('relatorio-evento').value;
-    const instFiltro = document.getElementById('relatorio-inst').value;
-    
-    const alunosFiltrados = dashboardData.filter(i => {
-        let d = {}; try { d = JSON.parse(i.dadosJson); } catch (e) {}
-        return (eventoId === "" || String(i.eventoId) === String(eventoId)) &&
-               (instFiltro === "" || d.NomeInstituicao === instFiltro) &&
-               (i.status === 'Aprovada' || i.status === 'Ficha Emitida');
-    });
+    showLoading('Carregando dados do sistema...');
 
-    if (alunosFiltrados.length === 0) {
-        return Swal.fire({ icon: 'info', title: 'Sem dados', text: 'Nenhum aluno APROVADO encontrado com esses filtros.' });
-    }
+    // 1. Busca configurações atualizadas (Logo, Nomes)
+    fetch(`${URL_API}?action=getPublicConfig`)
+    .then(r => r.json())
+    .then(jsonConfig => {
+        Swal.close();
+        
+        const configSistema = jsonConfig.config || {};
+        
+        const eventoId = document.getElementById('relatorio-evento').value;
+        const instFiltro = document.getElementById('relatorio-inst').value;
+        
+        const alunosFiltrados = dashboardData.filter(i => {
+            let d = {}; try { d = JSON.parse(i.dadosJson); } catch (e) {}
+            return (eventoId === "" || String(i.eventoId) === String(eventoId)) &&
+                   (instFiltro === "" || d.NomeInstituicao === instFiltro) &&
+                   (i.status === 'Aprovada' || i.status === 'Ficha Emitida');
+        });
 
-    const todasChaves = new Set();
-    const chavesPrioritarias = ['NomeCompleto', 'NomeInstituicao', 'NomeCurso', 'PeriodoCurso', 'Telefone', 'Cidade', 'Estado'];
-    const ignorar = ['linkFoto', 'linkDoc', 'Assinatura', 'CPF', 'Email'];
-
-    alunosFiltrados.forEach(aluno => {
-        try {
-            const dados = JSON.parse(aluno.dadosJson);
-            Object.keys(dados).forEach(k => {
-                if (!ignorar.includes(k)) todasChaves.add(k);
-            });
-        } catch (e) {}
-    });
-
-    const listaChaves = Array.from(todasChaves).sort((a, b) => {
-        const idxA = chavesPrioritarias.indexOf(a);
-        const idxB = chavesPrioritarias.indexOf(b);
-        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-        if (idxA !== -1) return -1;
-        if (idxB !== -1) return 1;
-        return a.localeCompare(b);
-    });
-
-    let htmlChecks = `<div class="checkbox-grid" style="max-height:300px; overflow-y:auto; padding:5px;">`;
-    listaChaves.forEach(chave => {
-        const label = LABELS_TODOS_CAMPOS[chave] || chave;
-        const checked = chavesPrioritarias.includes(chave) ? 'checked' : '';
-        htmlChecks += `
-            <label class="checkbox-card">
-                <input type="checkbox" class="col-check" value="${chave}" ${checked}> ${label}
-            </label>`;
-    });
-    htmlChecks += `</div>`;
-
-    Swal.fire({
-        title: 'Personalizar Relatório',
-        html: `<p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">Selecione as colunas para o PDF:</p>${htmlChecks}`,
-        width: '700px',
-        showCancelButton: true,
-        confirmButtonText: 'Gerar PDF',
-        confirmButtonColor: '#2563eb',
-        preConfirm: () => {
-            const selecionados = [];
-            document.querySelectorAll('.col-check:checked').forEach(c => selecionados.push(c.value));
-            if (selecionados.length === 0) Swal.showValidationMessage('Selecione pelo menos uma coluna.');
-            return selecionados;
+        if (alunosFiltrados.length === 0) {
+            return Swal.fire({ icon: 'info', title: 'Sem dados', text: 'Nenhum aluno APROVADO encontrado com esses filtros.' });
         }
-    }).then((res) => {
-        if (res.isConfirmed) {
-            construirRelatorioFinal(alunosFiltrados, res.value, eventoId);
-        }
+
+        const todasChaves = new Set();
+        const chavesPrioritarias = ['NomeCompleto', 'NomeInstituicao', 'NomeCurso', 'PeriodoCurso', 'Telefone', 'Cidade', 'Estado'];
+        const ignorar = ['linkFoto', 'linkDoc', 'Assinatura', 'CPF', 'Email'];
+
+        alunosFiltrados.forEach(aluno => {
+            try {
+                const dados = JSON.parse(aluno.dadosJson);
+                Object.keys(dados).forEach(k => {
+                    if (!ignorar.includes(k)) todasChaves.add(k);
+                });
+            } catch (e) {}
+        });
+
+        const listaChaves = Array.from(todasChaves).sort((a, b) => {
+            const idxA = chavesPrioritarias.indexOf(a);
+            const idxB = chavesPrioritarias.indexOf(b);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+            return a.localeCompare(b);
+        });
+
+        let htmlChecks = `<div class="checkbox-grid" style="max-height:300px; overflow-y:auto; padding:5px;">`;
+        listaChaves.forEach(chave => {
+            const label = LABELS_TODOS_CAMPOS[chave] || chave;
+            const checked = chavesPrioritarias.includes(chave) ? 'checked' : '';
+            htmlChecks += `
+                <label class="checkbox-card">
+                    <input type="checkbox" class="col-check" value="${chave}" ${checked}> ${label}
+                </label>`;
+        });
+        htmlChecks += `</div>`;
+
+        Swal.fire({
+            title: 'Personalizar Relatório',
+            html: `<p style="font-size:0.9rem; color:#64748b; margin-bottom:15px;">Selecione as colunas para o PDF:</p>${htmlChecks}`,
+            width: '700px',
+            showCancelButton: true,
+            confirmButtonText: 'Gerar PDF',
+            confirmButtonColor: '#2563eb',
+            preConfirm: () => {
+                const selecionados = [];
+                document.querySelectorAll('.col-check:checked').forEach(c => selecionados.push(c.value));
+                if (selecionados.length === 0) Swal.showValidationMessage('Selecione pelo menos uma coluna.');
+                return selecionados;
+            }
+        }).then((res) => {
+            if (res.isConfirmed) {
+                construirRelatorioFinal(alunosFiltrados, res.value, eventoId, configSistema);
+            }
+        });
+
+    }).catch(err => {
+        Swal.fire('Erro', 'Não foi possível carregar as configurações do relatório.', 'error');
     });
 }
 
-function construirRelatorioFinal(alunos, colunasKeys, eventoId) {
+function construirRelatorioFinal(alunos, colunasKeys, eventoId, configSistema) {
     showLoading('Preparando Impressão...');
 
     const tituloEvento = eventoId ? (mapaEventos[eventoId] || 'Evento') : "Relatório Geral";
-    const dataHoje = new Date().toLocaleDateString('pt-BR');
+    const dataHoraHoje = new Date().toLocaleString('pt-BR');
 
     const grupos = {};
     alunos.forEach(aluno => {
@@ -320,27 +334,53 @@ function construirRelatorioFinal(alunos, colunasKeys, eventoId) {
 
     if (!colunasKeys.includes('Assinatura')) colunasKeys.push('Assinatura');
 
+    // Recupera dados do configSistema ou usa padrão
+    const logoUrl = configSistema.urlLogo ? formatarUrlDrive(configSistema.urlLogo) : URL_LOGO;
+    const nomeSistema = configSistema.nomeSistema || 'Sistema de Transporte';
+    const nomeSecretaria = configSistema.nomeSecretaria || 'Secretaria de Educação';
+
     let htmlContent = `
+        <style>
+            @page { size: landscape; margin: 10mm; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-family: sans-serif; }
+            .report-container { width: 100%; }
+            .report-header { display: flex; align-items: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
+            .header-logo { width: 80px; height: 80px; object-fit: contain; margin-right: 20px; }
+            .header-info { flex: 1; }
+            .header-info h1 { margin: 0; font-size: 18px; text-transform: uppercase; }
+            .header-info h2 { margin: 5px 0 0; font-size: 14px; font-weight: normal; }
+            .header-meta { text-align: right; font-size: 11px; }
+            
+            .group-header { background-color: #e5e7eb; border: 1px solid #000; border-bottom: none; padding: 5px 10px; font-weight: bold; font-size: 12px; margin-top: 15px; }
+            .report-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+            .report-table th, .report-table td { border: 1px solid #000; padding: 4px 6px; text-align: left; }
+            .report-table th { background-color: #f3f4f6; text-transform: uppercase; }
+            
+            .report-footer { margin-top: 30px; display: flex; justify-content: space-around; page-break-inside: avoid; }
+            .sign-box { text-align: center; width: 40%; }
+            .sign-line { border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 11px; font-weight: bold; }
+            .page-footer { text-align: right; font-size: 10px; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 5px; color: #555; }
+        </style>
+
         <div class="report-container">
             <div class="report-header">
-                <div class="header-left">
-                    <img src="${URL_LOGO}" alt="Logo" class="report-logo" onerror="this.style.opacity='0'">
-                    <div class="header-titles">
-                        <h1>Relatório de Transporte Escolar</h1>
-                        <p>${tituloEvento}</p>
-                    </div>
+                <img src="${logoUrl}" class="header-logo" onerror="this.style.display='none'">
+                <div class="header-info">
+                    <h1>${nomeSistema}</h1>
+                    <h2>${nomeSecretaria}</h2>
+                    <div style="margin-top: 5px; font-weight: bold;">${tituloEvento}</div>
                 </div>
-                <div class="header-right">
-                    Emitido em: ${dataHoje}<br>
-                    Total de Alunos: ${alunos.length}
+                <div class="header-meta">
+                    <strong>Total de Alunos:</strong> ${alunos.length}<br>
+                    <strong>Lista Oficial</strong>
                 </div>
             </div>
     `;
 
-    let thead = `<tr><th class="col-index">#</th>`;
+    let thead = `<tr><th style="width:30px; text-align:center;">#</th>`;
     colunasKeys.forEach(k => {
         const label = k === 'Assinatura' ? 'Assinatura' : (LABELS_TODOS_CAMPOS[k] || k);
-        const widthStyle = k === 'Assinatura' ? 'width: 25%;' : '';
+        const widthStyle = k === 'Assinatura' ? 'width: 150px;' : '';
         thead += `<th style="${widthStyle}">${label}</th>`;
     });
     thead += `</tr>`;
@@ -352,16 +392,16 @@ function construirRelatorioFinal(alunos, colunasKeys, eventoId) {
         listaAlunos.sort((a,b) => (a['NomeCompleto']||'').localeCompare(b['NomeCompleto']||''));
 
         htmlContent += `
-            <div class="group-header" style="margin-top: 20px; padding: 8px; font-weight: bold; background: #e5e7eb; border: 1px solid #000; border-bottom: none; font-size: 11px;">
+            <div class="group-header">
                 INSTITUIÇÃO: ${instNome.toUpperCase()} (${listaAlunos.length} ALUNOS)
             </div>
-            <table class="report-table" style="margin-top:0;">
+            <table class="report-table">
                 <thead>${thead}</thead>
                 <tbody>
         `;
 
         listaAlunos.forEach((dados, idx) => {
-            htmlContent += `<tr><td class="col-index">${idx + 1}</td>`;
+            htmlContent += `<tr><td style="text-align:center;">${idx + 1}</td>`;
             colunasKeys.forEach(key => {
                 if (key === 'Assinatura') {
                     htmlContent += `<td></td>`;
@@ -378,7 +418,11 @@ function construirRelatorioFinal(alunos, colunasKeys, eventoId) {
     htmlContent += `
             <div class="report-footer">
                 <div class="sign-box"><div class="sign-line">Responsável pelo Transporte</div></div>
-                <div class="sign-box"><div class="sign-line">Secretaria de Educação</div></div>
+                <div class="sign-box"><div class="sign-line">${nomeSecretaria}</div></div>
+            </div>
+            
+            <div class="page-footer">
+                Relatório gerado em: ${dataHoraHoje}
             </div>
         </div>
     `;
@@ -839,7 +883,7 @@ function abrirEdicaoInscricao(chave) {
         
         if (pedeDoc) htmlUploads += `
             <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
-                <label class="swal-label" style="font-size:0.75rem;"><i class="fa-solid fa-file-arrow-up"></i> Novo Documento</label>
+                <label class="swal-label" style="font-size:0.75rem;"><i class="fa-solid fa-file-arrow-up"></i> Nova Documento</label>
                 <input type="file" id="edit_upload_doc" accept="application/pdf" class="swal-input-custom" style="font-size:0.8rem;">
             </div>`;
         
