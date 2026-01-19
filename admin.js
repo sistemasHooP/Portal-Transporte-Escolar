@@ -475,10 +475,11 @@ function carregarEventosAdmin() {
 
         eventosValidos.sort((a,b) => b.id - a.id).forEach(ev => {
             let btnAction = ev.status === 'Ativo' ? 
-                `<button class="btn-icon" style="background:#eab308;" onclick="toggleStatusEvento('${ev.id}','Inativo')" title="Pausar"><i class="fa-solid fa-pause"></i></button>` : 
-                `<button class="btn-icon" style="background:#22c55e;" onclick="toggleStatusEvento('${ev.id}','Ativo')" title="Ativar"><i class="fa-solid fa-play"></i></button>`;
+                `<button class="btn-icon" style="background:#eab308; width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%;" onclick="toggleStatusEvento('${ev.id}','Inativo')" title="Pausar"><i class="fa-solid fa-pause"></i></button>` : 
+                `<button class="btn-icon" style="background:#22c55e; width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%;" onclick="toggleStatusEvento('${ev.id}','Ativo')" title="Ativar"><i class="fa-solid fa-play"></i></button>`;
             
-            // CORREÇÃO: Container flex seguro
+            let btnEdit = `<button class="btn-icon bg-edit" style="width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%;" onclick='abrirEdicaoEvento(${JSON.stringify(ev)})'><i class="fa-solid fa-pen"></i></button>`;
+
             tbody.innerHTML += `
                 <tr>
                     <td><strong>#${ev.id}</strong></td>
@@ -488,7 +489,7 @@ function carregarEventosAdmin() {
                     <td style="text-align:right;">
                         <div style="display:flex; gap:5px; justify-content:flex-end; align-items:center; width:100%;">
                             ${btnAction}
-                            <button class="btn-icon bg-edit" onclick='abrirEdicaoEvento(${JSON.stringify(ev)})'><i class="fa-solid fa-pen"></i></button>
+                            ${btnEdit}
                         </div>
                     </td>
                 </tr>`;
@@ -829,18 +830,24 @@ function renderizarProximaPagina() {
         let d = {}; try { d = JSON.parse(ins.dadosJson); } catch(e){}
         const checked = selecionados.has(ins.chave) ? 'checked' : '';
         
-        let btnFicha = `<button class="btn-icon bg-view" style="background:#6366f1;" onclick="gerarFicha('${ins.chave}')" title="Gerar Ficha"><i class="fa-solid fa-print"></i></button>`;
-        
-        let btnCartAdm = '';
+        let btnCartAdm = `<button class="btn-icon" style="visibility:hidden; width:35px; height:35px; padding:0; border:none; background:transparent; pointer-events:none;"></button>`; // Placeholder padrão
         const evento = cacheEventos[ins.eventoId];
         if (evento) {
             let config = {}; try { config = JSON.parse(evento.config); } catch(e) {}
             if (config.emiteCarteirinha) {
-                btnCartAdm = `<button class="btn-icon bg-view" style="background:#3b82f6;" onclick="imprimirCarteirinhaAdmin('${ins.chave}')" title="Carteirinha"><i class="fa-solid fa-id-card"></i></button>`;
+                btnCartAdm = `<button class="btn-icon bg-view" style="background:#3b82f6; width:35px; height:35px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%;" onclick="imprimirCarteirinhaAdmin('${ins.chave}')" title="Carteirinha"><i class="fa-solid fa-id-card"></i></button>`;
             }
         }
         
-        // CORREÇÃO: Container flex alinhado à direita para botões de ação
+        let btnDoc = `<button class="btn-icon" style="visibility:hidden; width:35px; height:35px; padding:0; border:none; background:transparent; pointer-events:none;"></button>`; // Placeholder Doc
+        if (ins.doc) {
+             btnDoc = `<a href="${ins.doc}" target="_blank" class="btn-icon bg-view" style="width:35px; height:35px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%; text-decoration:none;" title="Ver Documento"><i class="fa-solid fa-paperclip"></i></a>`;
+        }
+
+        // Botões fixos com tamanho definido para alinhar
+        let btnEdit = `<button class="btn-icon bg-edit" style="background:#f59e0b; width:35px; height:35px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%;" onclick="abrirEdicaoInscricao('${ins.chave}')" title="Detalhes"><i class="fa-solid fa-pen-to-square"></i></button>`;
+        let btnFicha = `<button class="btn-icon bg-view" style="background:#6366f1; width:35px; height:35px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%;" onclick="gerarFicha('${ins.chave}')" title="Gerar Ficha"><i class="fa-solid fa-print"></i></button>`;
+
         tbody.innerHTML += `<tr>
             <td style="text-align:center;"><input type="checkbox" class="bulk-check" value="${ins.chave}" ${checked} onclick="toggleCheck('${ins.chave}')"></td>
             <td>${safeDate(ins.data)}</td>
@@ -855,10 +862,10 @@ function renderizarProximaPagina() {
             <td><span class="badge ${ins.status.replace(/\s/g, '')}">${ins.status}</span></td>
             <td style="text-align:right;">
                 <div style="display:flex; gap:5px; justify-content:flex-end; align-items:center; width:100%;">
-                    <button class="btn-icon bg-edit" style="background:#f59e0b;" onclick="abrirEdicaoInscricao('${ins.chave}')" title="Detalhes"><i class="fa-solid fa-pen-to-square"></i></button>
+                    ${btnEdit}
                     ${btnCartAdm}
                     ${btnFicha}
-                    ${ins.doc ? `<a href="${ins.doc}" target="_blank" class="btn-icon bg-view" title="Ver Documento"><i class="fa-solid fa-paperclip"></i></a>` : ''}
+                    ${btnDoc}
                 </div>
             </td>
         </tr>`;
@@ -1075,7 +1082,7 @@ function acaoEmMassa(s) {
     });
 }
 
-// --- GERAR FICHA DE INSCRIÇÃO (REVERTIDO E AJUSTADO) ---
+// --- GERAR FICHA DE INSCRIÇÃO (DINÂMICA E REVISADA: TABELAS SEM BORDAS) ---
 function gerarFicha(chave) {
     showLoading('Gerando Ficha...');
 
@@ -1087,137 +1094,169 @@ function gerarFicha(chave) {
 
     let evento = cacheEventos[inscricao.eventoId] || { titulo: 'Documento Oficial' };
 
+    // Buscar configurações visuais atualizadas para o cabeçalho
     fetch(`${URL_API}?action=getPublicConfig`)
     .then(r => r.json())
     .then(jsonConfig => {
         const configSistema = jsonConfig.config || {};
+        
+        // Dados visuais do sistema (com fallback)
         const logoUrl = configSistema.urlLogo ? formatarUrlDrive(configSistema.urlLogo) : URL_LOGO;
         const nomeSistema = configSistema.nomeSistema || 'Sistema de Transporte';
         const nomeSecretaria = configSistema.nomeSecretaria || 'Secretaria de Educação';
 
+        // Foto do Aluno (URL)
         let fotoUrl = '';
         if(dados.linkFoto) {
             fotoUrl = formatarUrlDrive(dados.linkFoto);
         }
         
-        const imgTag = fotoUrl 
-            ? `<div class="ficha-photo-box" style="border:none;"><img src="${fotoUrl}" style="width:100px; height:130px; object-fit:cover; border:1px solid #000;"></div>`
-            : `<div class="ficha-photo-box">SEM FOTO</div>`;
+        // Foto HTML
+        const fotoHtml = fotoUrl 
+            ? `<img src="${fotoUrl}" style="width:100%; height:100%; object-fit:cover;">`
+            : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:10px;">SEM FOTO</div>`;
 
+        // Definição de Grupos para Organização Lógica
         const ordemPessoais = ['NomeCompleto', 'CPF', 'DataNascimento', 'Telefone', 'Email', 'Endereco', 'Cidade', 'Estado'];
         const ordemAcademicos = ['NomeInstituicao', 'NomeCurso', 'PeriodoCurso', 'Matricula', 'Turno'];
         
-        let htmlPessoais = '';
-        let htmlAcademicos = '';
-        let htmlOutros = '';
-
-        const camposExibidos = new Set();
-
-        ordemPessoais.forEach(key => {
-            if (dados[key]) { 
-                const label = LABELS_TODOS_CAMPOS[key] || key;
-                let val = dados[key];
-                if(key === 'DataNascimento' && val.includes('-') && val.length === 10) {
-                    const parts = val.split('-');
-                    if(parts.length === 3) val = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        // Helper para gerar linhas de tabela SEM BORDAS
+        const createTableRows = (keys) => {
+            let rows = '';
+            keys.forEach(key => {
+                if (dados[key]) {
+                    const label = LABELS_TODOS_CAMPOS[key] || key;
+                    let val = dados[key];
+                    if(key === 'DataNascimento' && val.includes('-') && val.length === 10) {
+                        const parts = val.split('-');
+                        if(parts.length === 3) val = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    }
+                    rows += `
+                        <tr>
+                            <td class="label-cell">${label.toUpperCase()}</td>
+                            <td class="value-cell">${val}</td>
+                        </tr>
+                    `;
                 }
-                htmlPessoais += `<div class="ficha-row"><span class="ficha-label">${label}:</span> <span class="ficha-value">${val}</span></div>`;
-                camposExibidos.add(key);
-            }
-        });
+            });
+            return rows;
+        };
 
-        ordemAcademicos.forEach(key => {
-            if (dados[key]) {
-                const label = LABELS_TODOS_CAMPOS[key] || key;
-                htmlAcademicos += `<div class="ficha-row"><span class="ficha-label">${label}:</span> <span class="ficha-value">${dados[key]}</span></div>`;
-                camposExibidos.add(key);
-            }
-        });
-
-        const ignorar = ['linkFoto', 'linkDoc', 'Assinatura', 'Observacoes'];
+        const rowsPessoais = createTableRows(ordemPessoais);
+        const rowsAcademicos = createTableRows(ordemAcademicos);
+        
+        // Outras Informações
+        let rowsOutros = '';
+        const ignorar = ['linkFoto', 'linkDoc', 'Assinatura', 'Observacoes', ...ordemPessoais, ...ordemAcademicos];
         for (const [key, val] of Object.entries(dados)) {
-            if (!ignorar.includes(key) && !camposExibidos.has(key)) {
-                htmlOutros += `<div class="ficha-row"><span class="ficha-label">${key}:</span> <span class="ficha-value">${val}</span></div>`;
+            if (!ignorar.includes(key)) {
+                rowsOutros += `
+                    <tr>
+                        <td class="label-cell">${key.toUpperCase()}</td>
+                        <td class="value-cell">${val}</td>
+                    </tr>`;
             }
         }
+        if(!rowsOutros) rowsOutros = '<tr><td colspan="2" style="padding:10px; color:#666; font-style:italic;">Nenhuma informação adicional.</td></tr>';
 
+        // HTML FINAL COM TABELAS LIMPAS (Igual Modelo PDF)
         const htmlFicha = `
             <style>
                 @media print {
                     @page { size: portrait; margin: 10mm; }
-                    body { -webkit-print-color-adjust: exact; }
+                    body { -webkit-print-color-adjust: exact; font-family: 'Arial', sans-serif; }
                 }
-                .ficha-container-print { width: 100%; max-width: 800px; margin: 0 auto; font-family: sans-serif; color: #000; }
-                .ficha-header { display: flex; align-items: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px; }
-                .ficha-logo { width: 80px; height: 80px; object-fit: contain; margin-right: 20px; }
-                .ficha-title { font-size: 24px; font-weight: 900; margin-bottom: 5px; }
-                .ficha-subtitle { font-size: 14px; text-transform: uppercase; color: #444; }
-                .ficha-event-title { font-size: 14px; font-weight: bold; margin-top: 5px; text-transform: uppercase; }
-                .ficha-key-box { text-align: center; border: 2px solid #000; padding: 5px; font-weight: bold; font-size: 12px; min-width: 120px; margin-top: 10px; }
+                .ficha-container { width: 100%; max-width: 800px; margin: 0 auto; padding: 2px; }
                 
-                .ficha-top-row { display: flex; gap: 20px; margin-bottom: 20px; }
-                .ficha-photo-wrapper { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-left: auto; }
-                .ficha-photo-box { width: 100px; height: 130px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666; background: #f0f0f0; }
+                /* HEADER TABLE - Clean */
+                .header-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; border-bottom: none; }
+                .header-table td { padding: 5px; vertical-align: top; }
                 
-                .ficha-section { margin-bottom: 20px; }
-                .ficha-section-header { background: #e0e0e0; font-weight: bold; padding: 5px 10px; border: 1px solid #000; border-bottom: none; font-size: 13px; text-transform: uppercase; }
-                .ficha-section-body { border: 1px solid #000; padding: 10px; }
+                .logo-cell img { width: 80px; height: 80px; object-fit: contain; }
+                .center-info { text-align: center; padding-top: 15px; }
+                .center-info h2 { margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+                .center-info h3 { margin: 5px 0 0; font-size: 14px; font-weight: normal; color: #444; }
                 
-                .ficha-row { margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 2px; }
-                .ficha-row:last-child { border-bottom: none; }
-                .ficha-label { font-weight: bold; font-size: 12px; text-transform: uppercase; margin-right: 5px; min-width: 150px; display: inline-block; }
-                .ficha-value { font-size: 13px; }
+                .key-cell { text-align: right; vertical-align: top; padding-right: 0; }
+                .key-text { font-size: 12px; font-weight: bold; margin-bottom: 5px; display: block; text-align: center; border: 1px solid #ccc; padding: 2px; background: #f0f0f0; margin-top: 5px; }
+                .photo-box { width: 80px; height: 100px; border: 1px solid #ccc; float: right; background: #f9f9f9; overflow: hidden; }
+
+                /* DATA SECTIONS - Clean & Spaced */
+                .section-title { 
+                    font-weight: bold; 
+                    font-size: 12px;
+                    text-transform: uppercase;
+                    margin-top: 25px; 
+                    margin-bottom: 10px;
+                    border-bottom: 1px solid #000;
+                    padding-bottom: 3px;
+                    width: 100%;
+                }
                 
-                .ficha-sign-area { margin-top: 60px; text-align: center; }
-                .ficha-sign-line { width: 60%; margin: 0 auto; border-top: 1px solid #000; }
+                .data-table { width: 100%; border-collapse: collapse; border: none; font-size: 11px; margin-bottom: 15px; }
+                .data-table td { padding: 6px 0; border: none; } /* SEM BORDAS NAS CÉLULAS */
                 
-                .ficha-footer { margin-top: 40px; font-size: 10px; text-align: center; color: #666; border-top: 1px solid #ccc; padding-top: 5px; }
+                .label-cell { 
+                    width: 25%; 
+                    font-weight: bold; 
+                    color: #000; 
+                    vertical-align: top; 
+                    padding-right: 10px;
+                }
+                .value-cell { 
+                    width: 75%; 
+                    color: #333;
+                    font-weight: normal;
+                }
+
+                /* SIGNATURE */
+                .sign-area { margin-top: 80px; text-align: left; }
+                .sign-label { font-weight: bold; font-size: 11px; margin-bottom: 40px; }
+                .sign-name { font-size: 12px; text-transform: uppercase; border-top: 1px solid #000; display: inline-block; padding-top: 5px; min-width: 300px; }
+
+                .footer-info { 
+                    margin-top: 60px;
+                    border-top: 1px solid #ccc; padding-top: 5px;
+                    font-size: 9px; color: #555;
+                }
             </style>
 
-            <div class="ficha-container-print">
-                <div class="ficha-header">
-                    <img src="${logoUrl}" alt="Logo" class="ficha-logo" onerror="this.style.opacity='0'">
-                    <div>
-                        <div class="ficha-title">FICHA DE INSCRIÇÃO</div>
-                        <div class="ficha-subtitle">${nomeSistema} - ${nomeSecretaria}</div>
-                        <div class="ficha-event-title">${evento.titulo}</div>
-                    </div>
+            <div class="ficha-container">
+                
+                <table class="header-table">
+                    <tr>
+                        <td width="100" class="logo-cell"><img src="${logoUrl}" onerror="this.style.display='none'"></td>
+                        <td class="center-info">
+                            <h2>FICHA DE INSCRIÇÃO</h2>
+                            <h3>${evento.titulo}</h3>
+                        </td>
+                        <td width="120" class="key-cell">
+                            <div class="photo-box">
+                                ${fotoHtml}
+                            </div>
+                             <div style="clear:both;"></div>
+                            <span class="key-text">CHAVE: ${chave}</span>
+                        </td>
+                    </tr>
+                </table>
+
+                ${rowsPessoais ? `<div class="section-title">DADOS PESSOAIS</div><table class="data-table">${rowsPessoais}</table>` : ''}
+                
+                ${rowsAcademicos ? `<div class="section-title">DADOS ACADÊMICOS</div><table class="data-table">${rowsAcademicos}</table>` : ''}
+                
+                <div class="section-title">OUTRAS INFORMAÇÕES</div>
+                <table class="data-table">${rowsOutros}</table>
+
+                <div class="sign-area">
+                    <div class="sign-label">ASSINATURA DO ALUNO(A)</div>
+                    <div class="sign-name">${dados.NomeCompleto || ''}</div>
                 </div>
 
-                <div class="ficha-top-row">
-                    <div style="flex:1;">
-                        <div class="ficha-section">
-                            <div class="ficha-section-header">DADOS PESSOAIS</div>
-                            <div class="ficha-section-body">${htmlPessoais}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="ficha-photo-wrapper">
-                        ${imgTag}
-                        <div class="ficha-key-box">CHAVE: ${chave}</div>
-                    </div>
+                <div class="footer-info">
+                    Documento oficial gerado em ${new Date().toLocaleString('pt-BR')}<br>
+                    ${nomeSecretaria} - ${nomeSistema}
                 </div>
 
-                <div class="ficha-section">
-                    <div class="ficha-section-header">DADOS ACADÊMICOS</div>
-                    <div class="ficha-section-body">${htmlAcademicos}</div>
-                </div>
-
-                <div class="ficha-section">
-                    <div class="ficha-section-header">OUTRAS INFORMAÇÕES</div>
-                    <div class="ficha-section-body">${htmlOutros}</div>
-                </div>
-
-                <div class="ficha-sign-area">
-                    <div class="ficha-sign-line"></div>
-                    <div style="font-weight:bold; font-size:12px; margin-top:5px;">ASSINATURA DO ALUNO(A) OU RESPONSÁVEL</div>
-                    <div style="font-size:11px; margin-top:3px;">${dados.NomeCompleto || ''}</div>
-                    <div style="font-size:10px; margin-top:2px; color:#666;">CPF: ${dados.CPF || ''}</div>
-                </div>
-
-                <div class="ficha-footer">
-                    Documento oficial gerado em ${new Date().toLocaleString('pt-BR')} • ${nomeSecretaria}
-                </div>
             </div>
         `;
 
