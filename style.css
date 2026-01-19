@@ -462,7 +462,7 @@ input[type="file"] { display: none; }
         grid-column: 2; grid-row: 2;
         text-align: left; margin-left: 2mm; margin-top: 1mm;
         display: flex; flex-direction: column; justify-content: center;
-        align-items: flex-start; /* Fix para o fundo do curso não esticar */
+        align-items: flex-start; /* FIX: Evita que o fundo estique até o final */
         margin-bottom: 1mm;
     }
     
@@ -476,6 +476,8 @@ input[type="file"] { display: none; }
         margin-bottom: 0; display: inline-block;
         background: rgba(255,255,255,0.2);
         white-space: normal;
+        /* Garante que o fundo não ocupe 100% da largura, mas apenas o texto */
+        width: fit-content; 
     }
 
     /* DETALHES EXTRAS (CPF, Nasc, Matrícula) - Alinhado ao topo */
