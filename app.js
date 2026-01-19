@@ -74,6 +74,9 @@ function aplicarConfiguracoes(config) {
                 el.style.display = 'block'; 
             }
         });
+        // Atualiza também a logo do loader se existir
+        const loaderImg = document.getElementById('loader-img-tag');
+        if(loaderImg) { loaderImg.src = logoUrl; loaderImg.style.display = 'block'; }
     }
 
     // 3. Capa (Background Hero)
@@ -213,7 +216,7 @@ async function comprimirImagem(file, maxWidth = 1000, quality = 0.7) {
     });
 }
 
-// --- LÓGICA DE EVENTOS ---
+// --- LÓGICA DE EVENTOS (ATUALIZADA: LIMITER) ---
 function carregarEventos() {
     toggleLoader(true, "Carregando eventos...");
     fetch(`${URL_API}?action=getEventosAtivos`)
@@ -233,9 +236,35 @@ function carregarEventos() {
             }
             
             json.data.forEach(ev => {
+                // Lógica de Vagas
+                const limite = parseInt(ev.limite || 0);
+                const inscritos = parseInt(ev.inscritos || 0);
+                let esgotado = false;
+                
+                if (limite > 0 && inscritos >= limite) {
+                    esgotado = true;
+                }
+
+                // Elementos Visuais
+                let statusBadge = '<div class="card-status status-ativo">Inscrições Abertas</div>';
+                let btnHtml = `
+                    <button class="btn-inscrever" onclick='abrirInscricao(${JSON.stringify(ev)})'>
+                        <span>Inscrever-se Agora</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>`;
+
+                if (esgotado) {
+                    statusBadge = '<div class="card-status" style="background:#fee2e2; color:#991b1b; border-color:#fecaca;"><i class="fa-solid fa-ban"></i> Vagas Esgotadas</div>';
+                    btnHtml = `
+                        <button class="btn-inscrever" style="background:#94a3b8; cursor:not-allowed; box-shadow:none; opacity:0.7;" disabled>
+                            <span>Encerrado</span>
+                            <i class="fa-solid fa-lock"></i>
+                        </button>`;
+                }
+
                 c.innerHTML += `
-                    <div class="card-event fade-in">
-                        <div class="card-status status-ativo">Inscrições Abertas</div>
+                    <div class="card-event fade-in" ${esgotado ? 'style="opacity:0.9;"' : ''}>
+                        ${statusBadge}
                         
                         <h3 class="card-title">${ev.titulo}</h3>
                         
@@ -243,12 +272,11 @@ function carregarEventos() {
                             <i class="fa-regular fa-calendar-days"></i> Até ${formatarData(ev.fim)}
                         </div>
                         
+                        ${limite > 0 ? `<p style="font-size:0.8rem; color:#64748b; margin-bottom:10px;"><i class="fa-solid fa-users"></i> ${inscritos} / ${limite} vagas preenchidas</p>` : ''}
+
                         <p class="card-desc">${ev.descricao}</p>
                         
-                        <button class="btn-inscrever" onclick='abrirInscricao(${JSON.stringify(ev)})'>
-                            <span>Inscrever-se Agora</span>
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </button>
+                        ${btnHtml}
                     </div>`;
             });
         })
@@ -510,15 +538,8 @@ function abrirCarteirinha(aluno) {
     // Forçar a src do elemento img caso o QRious renderize em canvas
     document.getElementById('cart-qrcode-img').src = qr.toDataURL();
 
-    // 5. Código Único (Para Impressão Oficial)
-    const elAuthCode = document.getElementById('cart-auth-code');
-    if(elAuthCode) elAuthCode.innerText = aluno.chave || '---';
-
-    // *** GARANTIA DE SEGURANÇA: SEMPRE REMOVER ASSINATURA NO PORTAL DO ALUNO ***
-    // Mesmo que o HTML tenha um container ou ID sobrando, limpamos aqui para garantir.
-    // Como não há elemento de ID 'cart-admin-assinatura-box' no index.html, ele já está seguro por estrutura,
-    // mas se houvesse algum elemento similar, limparíamos aqui.
-    // O Portal do Aluno (app.js) NÃO TEM lógica para buscar ou injetar assinatura.
+    // 5. Código Único removido da visualização do aluno para evitar cópias não oficiais
+    // Mas a estrutura HTML ainda pode existir, então limpamos ou deixamos vazio se necessário.
 
     // 6. Exibir Modal
     document.getElementById('modal-carteirinha').classList.remove('hidden');
