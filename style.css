@@ -462,6 +462,7 @@ input[type="file"] { display: none; }
         grid-column: 2; grid-row: 2;
         text-align: left; margin-left: 2mm; margin-top: 1mm;
         display: flex; flex-direction: column; justify-content: center;
+        align-items: flex-start; /* Fix para o fundo do curso não esticar */
         margin-bottom: 1mm;
     }
     
