@@ -219,7 +219,7 @@ input[type="file"] { display: none; }
 .modal-content {
     background: white; width: 90%; max-width: 480px; border-radius: var(--radius-lg);
     padding: 30px; box-shadow: var(--shadow-float); position: relative;
-    max-height: 100vh; overflow-y: auto;
+    max-height: 90vh; overflow-y: auto;
 }
 .modal-header-modern {
     display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
@@ -382,7 +382,7 @@ input[type="file"] { display: none; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-/* --- IMPRESSÃO PADRONIZADA (NOVO TAMANHO E LAYOUT HORIZONTAL) --- */
+/* --- IMPRESSÃO EXTENDIDA HORIZONTAL (120mm x 75mm) --- */
 @media print {
     /* Forçar orientação Paisagem (Horizontal) na página */
     @page { 
@@ -414,14 +414,14 @@ input[type="file"] { display: none; }
         display: flex; gap: 5mm;
     }
     
-    /* DIMENSÕES AUMENTADAS PARA ID-2 (105mm x 74mm) */
+    /* DIMENSÕES ESTICADAS HORIZONTALMENTE (120mm x 75mm) */
     .carteirinha-face {
         position: relative; transform: none !important;
-        width: 105mm; height: 74mm; 
+        width: 120mm; height: 75mm; /* Mais larga para atender ao pedido "esticar" */
         outline: 1px dashed #ccc; 
         box-sizing: border-box;
         -webkit-print-color-adjust: exact; print-color-adjust: exact;
-        font-size: 10pt; /* Fonte aumentada para legibilidade */
+        font-size: 11pt; /* Fonte aumentada proporcionalmente */
         margin-bottom: 0;
         color: white !important;
         background: linear-gradient(135deg, var(--card-color, #2563eb), #0f172a) !important;
@@ -431,30 +431,30 @@ input[type="file"] { display: none; }
 
     /* --- FRENTE --- */
     .carteirinha-front {
-        padding: 3mm !important;
+        padding: 4mm !important;
         display: grid;
-        grid-template-columns: 30mm 1fr; /* Foto maior à esquerda */
-        grid-template-rows: 14mm 1fr 8mm; /* Header | Corpo | Rodapé */
-        gap: 2mm;
+        grid-template-columns: 32mm 1fr; /* Foto ajustada e restante para texto */
+        grid-template-rows: 15mm 1fr 8mm; /* Header | Corpo | Rodapé */
+        gap: 3mm;
     }
 
     /* HEADER */
     .carteirinha-front .cart-header {
         grid-column: 1 / -1; grid-row: 1;
-        display: flex; align-items: center; gap: 3mm;
+        display: flex; align-items: center; gap: 4mm;
         border-bottom: 1pt solid rgba(255,255,255,0.4);
         margin: 0; padding-bottom: 1mm; height: 100%;
     }
-    .carteirinha-front .cart-logo { width: 10mm; height: 10mm; padding: 0.5mm; }
-    .carteirinha-front .cart-org-info h3 { font-size: 9pt; line-height: 1.1; margin: 0; font-weight: 800; white-space: normal; }
-    .carteirinha-front .cart-org-info small { font-size: 7pt; line-height: 1; display: block; margin-top: 1mm; white-space: normal; }
+    .carteirinha-front .cart-logo { width: 12mm; height: 12mm; padding: 0.5mm; }
+    .carteirinha-front .cart-org-info h3 { font-size: 10pt; line-height: 1.1; margin: 0; font-weight: 800; white-space: normal; }
+    .carteirinha-front .cart-org-info small { font-size: 8pt; line-height: 1; display: block; margin-top: 1mm; white-space: normal; }
 
     /* CORPO */
     .carteirinha-front .cart-body { display: contents; }
 
     /* FOTO À ESQUERDA */
     .carteirinha-front .cart-photo-frame {
-        width: 28mm; height: 36mm;
+        width: 30mm; height: 38mm;
         margin: 0; border: 1.5pt solid white;
         grid-column: 1; grid-row: 2;
         align-self: center; margin-top: 1mm;
@@ -468,12 +468,12 @@ input[type="file"] { display: none; }
     }
     
     .carteirinha-front .cart-info-main h2 { 
-        font-size: 11pt; margin-bottom: 1mm; line-height: 1.1; 
+        font-size: 13pt; margin-bottom: 1mm; line-height: 1.1; 
         text-transform: uppercase; font-weight: 800;
         white-space: normal; overflow: visible; 
     }
     .carteirinha-front .cart-info-main .cart-course { 
-        padding: 1mm 3mm; font-size: 8pt; border-radius: 3mm; 
+        padding: 1mm 4mm; font-size: 9pt; border-radius: 4mm; 
         margin-bottom: 3mm; display: inline-block;
         background: rgba(255,255,255,0.2);
         white-space: normal;
@@ -482,18 +482,18 @@ input[type="file"] { display: none; }
     /* LISTA DE DETALHES */
     .carteirinha-front .cart-details-grid {
         display: block; 
-        margin-top: 1mm;
+        margin-top: 2mm;
     }
     .carteirinha-front .detail-item {
         background: transparent; padding: 0; border: none; text-align: left;
-        margin-bottom: 1mm; display: flex; align-items: baseline;
+        margin-bottom: 1.5mm; display: flex; align-items: baseline;
     }
     .carteirinha-front .detail-label { 
-        font-size: 6.5pt; text-transform: uppercase; opacity: 0.8; 
-        width: 18mm; flex-shrink: 0; display: inline-block;
+        font-size: 7.5pt; text-transform: uppercase; opacity: 0.8; 
+        width: 22mm; flex-shrink: 0; display: inline-block;
     }
     .carteirinha-front .detail-value { 
-        font-size: 8.5pt; font-weight: 700; font-family: monospace;
+        font-size: 9.5pt; font-weight: 700; font-family: monospace;
         white-space: normal; 
     }
 
@@ -501,18 +501,18 @@ input[type="file"] { display: none; }
     .cart-print-auth {
         display: block !important;
         grid-column: 1 / -1; grid-row: 3;
-        text-align: center; font-family: monospace; font-size: 8pt;
+        text-align: center; font-family: monospace; font-size: 9pt;
         background: rgba(0,0,0,0.3); padding: 1.5mm; border-radius: 1.5mm;
         margin-top: auto; 
     }
-    .cart-print-auth span { opacity: 0.7; font-size: 7pt; margin-right: 4px; }
-    .cart-print-auth strong { font-size: 9pt; letter-spacing: 1.5px; color: #fff; }
+    .cart-print-auth span { opacity: 0.7; font-size: 8pt; margin-right: 5px; }
+    .cart-print-auth strong { font-size: 10pt; letter-spacing: 2px; color: #fff; }
 
     /* --- VERSO --- */
     .carteirinha-back {
-        padding: 3mm !important;
+        padding: 4mm !important;
         display: grid;
-        grid-template-columns: 35mm 1fr; /* QR Code | Validade */
+        grid-template-columns: 40mm 1fr; /* QR Code mais largo | Validade */
         grid-template-rows: 8mm 1fr 8mm; /* Header | Corpo | Footer */
         align-items: center;
     }
@@ -520,14 +520,14 @@ input[type="file"] { display: none; }
     /* Header Verso */
     .carteirinha-back .cart-back-header {
         grid-column: 1 / -1; grid-row: 1;
-        font-size: 7.5pt; border-bottom: 1pt solid rgba(255,255,255,0.3);
+        font-size: 8pt; border-bottom: 1pt solid rgba(255,255,255,0.3);
         margin: 0; padding-bottom: 1mm; position: static; white-space: nowrap;
     }
 
     /* QR Code */
     .carteirinha-back .qr-code-box {
         grid-column: 1; grid-row: 2;
-        width: 32mm; height: 32mm; padding: 2mm; background: white; margin: 0;
+        width: 35mm; height: 35mm; padding: 2mm; background: white; margin: 0;
     }
 
     /* Validade e Assinatura */
@@ -535,16 +535,16 @@ input[type="file"] { display: none; }
         grid-column: 2; grid-row: 2;
         text-align: center; margin: 0;
     }
-    .carteirinha-back .validity-label { font-size: 7.5pt; display: block; margin-bottom: 2mm; }
-    .carteirinha-back .validity-year { font-size: 32pt; font-weight: 900; line-height: 1; display: block; }
+    .carteirinha-back .validity-label { font-size: 8pt; display: block; margin-bottom: 2mm; }
+    .carteirinha-back .validity-year { font-size: 36pt; font-weight: 900; line-height: 1; display: block; }
 
     /* Footer Verso */
     .carteirinha-back .cart-footer {
         grid-column: 1 / -1; grid-row: 3;
         position: static; padding: 0; margin: 0; border: none;
-        font-size: 6.5pt; align-self: end;
+        font-size: 7.5pt; align-self: end;
     }
-    .carteirinha-back .cart-sec-name { font-size: 8.5pt; margin-bottom: 1mm; }
+    .carteirinha-back .cart-sec-name { font-size: 9.5pt; margin-bottom: 1mm; }
 
     /* Esconder botões na impressão */
     .modal-actions-row, .cart-actions, .btn-close-modern, .btn-action-pri, .btn-action-sec, .btn-flip { display: none !important; }
