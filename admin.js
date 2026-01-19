@@ -118,7 +118,7 @@ function switchTab(tabId) {
     }
 }
 
-// --- CONFIGURAÇÃO GERAL (Atualizado para salvar Cores e Nomes) ---
+// --- CONFIGURAÇÃO GERAL (Atualizado para salvar Assinatura) ---
 function carregarConfigGeral() {
     fetch(`${URL_API}?action=getConfigDrive&token=${sessionStorage.getItem('admin_token')}`)
     .then(r => r.json())
@@ -129,6 +129,7 @@ function carregarConfigGeral() {
             document.getElementById('config-cor-picker').value = json.corCard || '#2563eb';
             document.getElementById('config-nome-sec').value = json.nomeSec || '';
             document.getElementById('config-nome-resp').value = json.nomeResp || '';
+            document.getElementById('config-assinatura').value = json.assinatura || ''; // Novo campo
         }
     });
 }
@@ -138,6 +139,7 @@ function salvarConfigGeral() {
     const cor = document.getElementById('config-cor').value;
     const sec = document.getElementById('config-nome-sec').value;
     const resp = document.getElementById('config-nome-resp').value;
+    const ass = document.getElementById('config-assinatura').value; // Novo campo
 
     showLoading('Salvando...');
     fetch(URL_API, { 
@@ -148,7 +150,8 @@ function salvarConfigGeral() {
             idPasta: id,
             corCard: cor,
             nomeSec: sec,
-            nomeResp: resp
+            nomeResp: resp,
+            assinatura: ass
         }) 
     }).then(() => {
         Swal.fire({icon: 'success', title: 'Configurações Salvas!', timer: 1500, showConfirmButton: false});
@@ -1112,6 +1115,9 @@ function imprimirCarteirinhaAdmin(chave) {
         document.getElementById('cart-admin-cpf').innerText = aluno.cpf || '---';
         document.getElementById('cart-admin-mat').innerText = aluno.matricula || '---';
         
+        // Código Único na Frente (Visível na impressão)
+        document.getElementById('cart-admin-auth-code').innerText = aluno.chave || chave;
+
         // Formata Nascimento
         let nasc = aluno.nascimento || '--/--/----';
         if(nasc.includes('-')) { const p = nasc.split('-'); nasc = `${p[2]}/${p[1]}/${p[0]}`; }
@@ -1151,6 +1157,17 @@ function imprimirCarteirinhaAdmin(chave) {
         // Validade
         document.getElementById('cart-admin-validade-ano').innerText = aluno.ano_vigencia || new Date().getFullYear();
         
+        // ASSINATURA DIGITAL (INJEÇÃO)
+        const assinaturaBox = document.getElementById('cart-admin-assinatura-box');
+        if (assinaturaBox) {
+            if (config.urlAssinatura && config.urlAssinatura.trim() !== "") {
+                const assinaturaUrl = formatarUrlDrive(config.urlAssinatura);
+                assinaturaBox.innerHTML = `<img src="${assinaturaUrl}" alt="Assinatura">`;
+            } else {
+                assinaturaBox.innerHTML = ''; // Limpa se não houver
+            }
+        }
+
         // Geração do QR Code usando QRious (Client-side)
         const linkValidacao = `${URL_API}?action=validar&chave=${chave}`;
         const qr = new QRious({
