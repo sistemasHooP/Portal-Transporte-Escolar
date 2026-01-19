@@ -219,7 +219,7 @@ input[type="file"] { display: none; }
 .modal-content {
     background: white; width: 90%; max-width: 480px; border-radius: var(--radius-lg);
     padding: 30px; box-shadow: var(--shadow-float); position: relative;
-    max-height: 90vh; overflow-y: auto;
+    max-height: 100vh; overflow-y: auto;
 }
 .modal-header-modern {
     display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
@@ -382,7 +382,7 @@ input[type="file"] { display: none; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-/* --- IMPRESSÃO PADRONIZADA (NOVO TAMANHO ID-2: 105mm x 74mm) --- */
+/* --- IMPRESSÃO PADRONIZADA (NOVO TAMANHO E LAYOUT HORIZONTAL) --- */
 @media print {
     /* Forçar orientação Paisagem (Horizontal) na página */
     @page { 
