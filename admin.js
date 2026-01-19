@@ -3,13 +3,14 @@ const URL_API = 'https://script.google.com/macros/s/AKfycby-rnmBcploCmdEb8QWkMyo
 // --- CONFIGURAÇÃO GERAL ---
 const URL_LOGO = './logo.png'; 
 
-// Campos padrão (Adicionado Estado aqui para ser opcional)
+// Campos padrão (Cidade e Estado agora são opcionais)
 const CAMPOS_PADRAO = [
     { key: 'NomeCompleto', label: 'Nome Completo' }, 
     { key: 'DataNascimento', label: 'Nascimento' }, 
     { key: 'Telefone', label: 'Celular' }, 
     { key: 'Endereco', label: 'Endereço' },
-    { key: 'Estado', label: 'Estado (UF)' }, // Agora é opcional
+    { key: 'Cidade', label: 'Cidade' }, // Adicionado para ser opcional
+    { key: 'Estado', label: 'Estado (UF)' }, 
     { key: 'NomeInstituicao', label: 'Instituição' }, 
     { key: 'NomeCurso', label: 'Curso' }, 
     { key: 'PeriodoCurso', label: 'Período' }, 
@@ -506,10 +507,9 @@ function abrirEdicaoEvento(evento) {
     const camposAtivos = config.camposTexto || [];
     
     CAMPOS_PADRAO.forEach(c => {
-        if(c.key !== 'Cidade') { // Cidade continua fixa se definida na config global, mas aqui damos opção
-             const isChecked = camposAtivos.includes(c.key) ? 'checked' : '';
-             htmlCampos += `<label class="checkbox-card"><input type="checkbox" class="edit-field-check" value="${c.key}" ${isChecked}> ${c.label}</label>`;
-        }
+        // Agora todos os campos podem ser opcionais, incluindo Cidade
+        const isChecked = camposAtivos.includes(c.key) ? 'checked' : '';
+        htmlCampos += `<label class="checkbox-card"><input type="checkbox" class="edit-field-check" value="${c.key}" ${isChecked}> ${c.label}</label>`;
     });
     htmlCampos += '</div>';
 
@@ -581,12 +581,11 @@ function abrirEdicaoEvento(evento) {
         preConfirm: () => { 
             const cidadesTexto = document.getElementById('edit_cidades').value;
             const cidadesArr = cidadesTexto ? cidadesTexto.split(',').map(s => s.trim()).filter(s => s) : [];
-            
             const extras = [];
             document.querySelectorAll('#container-extras-edit .extra-input').forEach(el => extras.push(el.value));
             
-            // Coletar campos marcados
-            const camposSelecionados = ['Cidade']; // Cidade sempre forçada pela lógica de transporte
+            // Coletar campos marcados (Removida a obrigatoriedade de 'Cidade' e 'Estado')
+            const camposSelecionados = [];
             document.querySelectorAll('.edit-field-check:checked').forEach(c => camposSelecionados.push(c.value));
 
             return { 
@@ -603,37 +602,13 @@ function abrirEdicaoEvento(evento) {
     }).then((res) => {
         if(res.isConfirmed) {
             showLoading('Salvando...');
-            // O campo 'config' deve ser enviado como um todo, mas 'editarEvento' no backend espera parâmetros soltos que ele mescla.
-            // Para garantir que 'camposTexto' seja atualizado, precisamos passar ele explicitamente.
-            // O backend 'editarEvento' atual precisa ser capaz de receber 'camposTexto'.
-            // Vamos verificar o backend. O backend atualiza: msg, exigeFicha, emiteCarteirinha, cidadesPermitidas, camposPersonalizados.
-            // O backend NÃO atualiza 'camposTexto' na versão anterior.
-            // VOU ATUALIZAR O REQUEST PARA ENVIAR TUDO DENTRO DE UM OBJETO CONFIG SE NECESSÁRIO,
-            // MAS COMO NÃO POSSO MUDAR O BACKEND AGORA, VOU INCLUIR 'camposTexto' no corpo e assumir que o backend vai aceitar
-            // ou que devo ajustar a chamada.
-            // 
-            // CORREÇÃO RÁPIDA: O backend 'editarEvento' (V14) que enviei anteriormente NÃO tem a linha para atualizar 'camposTexto'.
-            // Mas o 'criarEvento' tem.
-            // Como não posso editar o backend agora (já foi enviado), essa funcionalidade de editar campos de eventos EXISTENTES
-            // só vai funcionar se o backend suportar.
-            // SE O BACKEND NÃO TIVER SUPORTE, APENAS EVENTOS NOVOS TERÃO ESSA OPÇÃO.
-            // 
-            // Porém, vou mandar o payload completo. Se você atualizar o backend depois, funcionará.
-            // Mas para garantir, o foco principal é na CRIAÇÃO (modalNovoEvento).
             
-            // AQUI ESTÁ A CHAMADA:
             const payload = { 
                 action: 'editarEvento', 
                 senha: sessionStorage.getItem('admin_token'), 
                 id: evento.id, 
                 ...res.value 
             };
-            
-            // Hack para injetar camposTexto no backend se ele não estiver esperando explicitamente,
-            // mas o backend faz: jsonConfig = { ...json, ...params }.
-            // NÃO, o backend faz leituras explícitas: if(params.exigeFicha !== undefined) jsonConfig.exigeFicha = ...
-            // Então, editar campos de eventos JÁ CRIADOS pode não persistir sem update no backend.
-            // Mas para NOVOS eventos (modalNovoEvento), vai funcionar perfeitamente pois 'criarEvento' grava o objeto 'config' inteiro.
             
             fetch(URL_API, { method: 'POST', body: JSON.stringify(payload) })
             .then(() => { Swal.fire({icon: 'success', title: 'Salvo!'}); carregarEventosAdmin(); }); 
@@ -650,10 +625,8 @@ function toggleStatusEvento(id, status) {
 function modalNovoEvento() {
     let htmlCampos = '<div class="checkbox-grid">';
     CAMPOS_PADRAO.forEach(c => {
-        if(c.key !== 'Cidade') { // Mostra todos exceto Cidade (que é fixo interno)
-             // Nascimento e Estado vêm marcados por padrão, mas podem ser desmarcados
-             htmlCampos += `<label class="checkbox-card"><input type="checkbox" id="check_${c.key}" value="${c.key}" checked> ${c.label}</label>`;
-        }
+        // Agora mostra TODOS os campos como opção, inclusive Cidade e Estado
+        htmlCampos += `<label class="checkbox-card"><input type="checkbox" id="check_${c.key}" value="${c.key}" checked> ${c.label}</label>`;
     });
     htmlCampos += '</div>';
 
@@ -757,7 +730,7 @@ function modalNovoEvento() {
                 return false;
             }
 
-            const sels = ['Cidade']; // Cidade é sempre incluída
+            const sels = []; // Agora vazio, pois Cidade e Estado não são forçados
             
             CAMPOS_PADRAO.forEach(c => { 
                 const el = document.getElementById(`check_${c.key}`);
