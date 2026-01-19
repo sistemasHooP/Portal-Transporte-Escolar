@@ -148,6 +148,10 @@ function carregarConfigGeral() {
             document.getElementById('config-nome-sec').value = json.nomeSec || '';
             document.getElementById('config-nome-resp').value = json.nomeResp || '';
             document.getElementById('config-assinatura').value = json.assinatura || ''; 
+            // Carrega valor da logo verso se existir (para exibição no input)
+            if(document.getElementById('config-logo-verso')) {
+                document.getElementById('config-logo-verso').value = json.logoVerso || '';
+            }
         }
     });
 }
@@ -158,6 +162,7 @@ function salvarConfigGeral() {
     const sec = document.getElementById('config-nome-sec').value;
     const resp = document.getElementById('config-nome-resp').value;
     const ass = document.getElementById('config-assinatura').value; 
+    const logoV = document.getElementById('config-logo-verso').value;
 
     showLoading('Salvando...');
     fetch(URL_API, { 
@@ -169,7 +174,8 @@ function salvarConfigGeral() {
             corCard: cor,
             nomeSec: sec,
             nomeResp: resp,
-            assinatura: ass
+            assinatura: ass,
+            logoVerso: logoV
         }) 
     }).then(() => {
         Swal.fire({icon: 'success', title: 'Configurações Salvas!', timer: 1500, showConfirmButton: false});
@@ -848,6 +854,7 @@ function renderizarProximaPagina() {
         let btnEdit = `<button class="btn-icon bg-edit" style="background:#f59e0b; width:35px; height:35px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%;" onclick="abrirEdicaoInscricao('${ins.chave}')" title="Detalhes"><i class="fa-solid fa-pen-to-square"></i></button>`;
         let btnFicha = `<button class="btn-icon bg-view" style="background:#6366f1; width:35px; height:35px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%;" onclick="gerarFicha('${ins.chave}')" title="Gerar Ficha"><i class="fa-solid fa-print"></i></button>`;
 
+        // AQUI: Justify-content agora é Flex-End, mas os botões invisíveis garantem o "espaço reservado"
         tbody.innerHTML += `<tr>
             <td style="text-align:center;"><input type="checkbox" class="bulk-check" value="${ins.chave}" ${checked} onclick="toggleCheck('${ins.chave}')"></td>
             <td>${safeDate(ins.data)}</td>
@@ -1365,6 +1372,28 @@ function imprimirCarteirinhaAdmin(chave) {
                 assinaturaBox.innerHTML = `<img src="${assinaturaUrl}" alt="Assinatura">`;
             } else {
                 assinaturaBox.innerHTML = ''; // Limpa se não houver
+            }
+        }
+
+        // NOVO CÓDIGO PARA A LOGO NO VERSO
+        // CORREÇÃO: A classe no HTML é 'cart-back-header', não 'carteirinha-back-header'
+        const backHeader = document.querySelector('#modal-carteirinha-admin .cart-back-header');
+        if (backHeader) {
+            const urlLogoVerso = config.urlLogoVerso; 
+
+            if (urlLogoVerso && urlLogoVerso.trim() !== "") {
+                const logoVersoUrl = formatarUrlDrive(urlLogoVerso);
+                // Limpa o conteúdo atual e insere a imagem
+                backHeader.innerHTML = `<img src="${logoVersoUrl}" alt="Logo Verso" class="cart-back-logo" style="max-height: 100%; max-width: 100%; object-fit: contain;">`;
+                // Adiciona estilos para centralizar
+                backHeader.style.display = 'flex';
+                backHeader.style.justifyContent = 'center';
+                backHeader.style.alignItems = 'center';
+                backHeader.style.padding = '5px';
+            } else {
+                // Se não tiver logo, reseta para o texto padrão (caso o modal seja reutilizado)
+                backHeader.innerHTML = 'Documento de Identificação Estudantil';
+                backHeader.style = ''; // Reseta estilos inline
             }
         }
 
