@@ -478,7 +478,7 @@ function carregarEventosAdmin() {
                 `<button class="btn-icon" style="background:#eab308;" onclick="toggleStatusEvento('${ev.id}','Inativo')" title="Pausar"><i class="fa-solid fa-pause"></i></button>` : 
                 `<button class="btn-icon" style="background:#22c55e;" onclick="toggleStatusEvento('${ev.id}','Ativo')" title="Ativar"><i class="fa-solid fa-play"></i></button>`;
             
-            // CORREÇÃO: Botões alinhados com display flex e align-items center
+            // CORREÇÃO: Container flex seguro
             tbody.innerHTML += `
                 <tr>
                     <td><strong>#${ev.id}</strong></td>
@@ -486,7 +486,7 @@ function carregarEventosAdmin() {
                     <td><div style="font-size:0.85rem; color:var(--text-secondary);">${safeDate(ev.inicio)} - ${safeDate(ev.fim)}</div></td>
                     <td><span class="badge ${ev.status === 'Ativo' ? 'success' : 'danger'}">${ev.status}</span></td>
                     <td style="text-align:right;">
-                        <div style="display:flex; gap:5px; justify-content:flex-end; align-items:center;">
+                        <div style="display:flex; gap:5px; justify-content:flex-end; align-items:center; width:100%;">
                             ${btnAction}
                             <button class="btn-icon bg-edit" onclick='abrirEdicaoEvento(${JSON.stringify(ev)})'><i class="fa-solid fa-pen"></i></button>
                         </div>
@@ -840,7 +840,7 @@ function renderizarProximaPagina() {
             }
         }
         
-        // CORREÇÃO: Botões alinhados com display flex e align-items center
+        // CORREÇÃO: Container flex seguro com largura definida
         tbody.innerHTML += `<tr>
             <td style="text-align:center;"><input type="checkbox" class="bulk-check" value="${ins.chave}" ${checked} onclick="toggleCheck('${ins.chave}')"></td>
             <td>${safeDate(ins.data)}</td>
@@ -854,7 +854,7 @@ function renderizarProximaPagina() {
             <td><div class="badge" style="background:#f1f5f9; color:#334155; font-weight:600; font-size:0.85rem; padding: 6px 12px; border: 1px solid #cbd5e1;">${mapaEventos[ins.eventoId]||ins.eventoId}</div></td>
             <td><span class="badge ${ins.status.replace(/\s/g, '')}">${ins.status}</span></td>
             <td style="text-align:right;">
-                <div style="display:flex; gap:4px; justify-content:flex-end; align-items:center;">
+                <div style="display:flex; gap:5px; justify-content:flex-end; align-items:center; width:100%;">
                     <button class="btn-icon bg-edit" style="background:#f59e0b;" onclick="abrirEdicaoInscricao('${ins.chave}')" title="Detalhes"><i class="fa-solid fa-pen-to-square"></i></button>
                     ${btnCartAdm}
                     ${btnFicha}
@@ -1075,7 +1075,7 @@ function acaoEmMassa(s) {
     });
 }
 
-// --- GERAR FICHA DE INSCRIÇÃO (REVERTIDO PARA MODELO ORIGINAL + ESTILO CORRIGIDO) ---
+// --- GERAR FICHA DE INSCRIÇÃO (REVERTIDO E AJUSTADO) ---
 function gerarFicha(chave) {
     showLoading('Gerando Ficha...');
 
@@ -1087,29 +1087,23 @@ function gerarFicha(chave) {
 
     let evento = cacheEventos[inscricao.eventoId] || { titulo: 'Documento Oficial' };
 
-    // Buscar configurações visuais atualizadas para o cabeçalho
     fetch(`${URL_API}?action=getPublicConfig`)
     .then(r => r.json())
     .then(jsonConfig => {
         const configSistema = jsonConfig.config || {};
-        
-        // Dados visuais do sistema (com fallback)
         const logoUrl = configSistema.urlLogo ? formatarUrlDrive(configSistema.urlLogo) : URL_LOGO;
         const nomeSistema = configSistema.nomeSistema || 'Sistema de Transporte';
         const nomeSecretaria = configSistema.nomeSecretaria || 'Secretaria de Educação';
 
-        // Foto do Aluno (URL)
         let fotoUrl = '';
         if(dados.linkFoto) {
             fotoUrl = formatarUrlDrive(dados.linkFoto);
         }
         
-        // Foto HTML
         const imgTag = fotoUrl 
             ? `<div class="ficha-photo-box" style="border:none;"><img src="${fotoUrl}" style="width:100px; height:130px; object-fit:cover; border:1px solid #000;"></div>`
             : `<div class="ficha-photo-box">SEM FOTO</div>`;
 
-        // Definição de Grupos para Organização Lógica
         const ordemPessoais = ['NomeCompleto', 'CPF', 'DataNascimento', 'Telefone', 'Email', 'Endereco', 'Cidade', 'Estado'];
         const ordemAcademicos = ['NomeInstituicao', 'NomeCurso', 'PeriodoCurso', 'Matricula', 'Turno'];
         
@@ -1119,7 +1113,6 @@ function gerarFicha(chave) {
 
         const camposExibidos = new Set();
 
-        // 1. Processar Pessoais (VOLTANDO AO MODELO DIV)
         ordemPessoais.forEach(key => {
             if (dados[key]) { 
                 const label = LABELS_TODOS_CAMPOS[key] || key;
@@ -1133,7 +1126,6 @@ function gerarFicha(chave) {
             }
         });
 
-        // 2. Processar Acadêmicos
         ordemAcademicos.forEach(key => {
             if (dados[key]) {
                 const label = LABELS_TODOS_CAMPOS[key] || key;
@@ -1142,7 +1134,6 @@ function gerarFicha(chave) {
             }
         });
 
-        // 3. Processar Outros
         const ignorar = ['linkFoto', 'linkDoc', 'Assinatura', 'Observacoes'];
         for (const [key, val] of Object.entries(dados)) {
             if (!ignorar.includes(key) && !camposExibidos.has(key)) {
@@ -1150,23 +1141,22 @@ function gerarFicha(chave) {
             }
         }
 
-        // Montagem das Seções HTML com Estilo Seguro (Scoped)
         const htmlFicha = `
             <style>
                 @media print {
                     @page { size: portrait; margin: 10mm; }
                     body { -webkit-print-color-adjust: exact; }
                 }
-                /* Estilos ESPECÍFICOS para a ficha para não vazar para o admin */
                 .ficha-container-print { width: 100%; max-width: 800px; margin: 0 auto; font-family: sans-serif; color: #000; }
                 .ficha-header { display: flex; align-items: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px; }
                 .ficha-logo { width: 80px; height: 80px; object-fit: contain; margin-right: 20px; }
                 .ficha-title { font-size: 24px; font-weight: 900; margin-bottom: 5px; }
                 .ficha-subtitle { font-size: 14px; text-transform: uppercase; color: #444; }
                 .ficha-event-title { font-size: 14px; font-weight: bold; margin-top: 5px; text-transform: uppercase; }
-                .ficha-key-box { margin-left: auto; border: 2px solid #000; padding: 5px 10px; font-weight: bold; font-size: 14px; }
+                .ficha-key-box { text-align: center; border: 2px solid #000; padding: 5px; font-weight: bold; font-size: 12px; min-width: 120px; }
                 
                 .ficha-top-row { display: flex; gap: 20px; margin-bottom: 20px; }
+                .ficha-photo-wrapper { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-left: auto; }
                 .ficha-photo-box { width: 100px; height: 130px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666; background: #f0f0f0; }
                 
                 .ficha-section { margin-bottom: 20px; }
@@ -1192,7 +1182,6 @@ function gerarFicha(chave) {
                         <div class="ficha-subtitle">${nomeSistema} - ${nomeSecretaria}</div>
                         <div class="ficha-event-title">${evento.titulo}</div>
                     </div>
-                    <div class="ficha-key-box">CHAVE: ${chave}</div>
                 </div>
 
                 <div class="ficha-top-row">
@@ -1202,7 +1191,11 @@ function gerarFicha(chave) {
                             <div class="ficha-section-body">${htmlPessoais}</div>
                         </div>
                     </div>
-                    ${imgTag}
+                    
+                    <div class="ficha-photo-wrapper">
+                        ${imgTag}
+                        <div class="ficha-key-box">CHAVE: ${chave}</div>
+                    </div>
                 </div>
 
                 <div class="ficha-section">
@@ -1233,7 +1226,6 @@ function gerarFicha(chave) {
         if(!pl.parentElement) document.body.appendChild(pl);
         pl.innerHTML = htmlFicha;
         
-        // Espera imagens carregarem
         const images = pl.querySelectorAll('img');
         let loaded = 0;
         const checkPrint = () => {
@@ -1264,7 +1256,6 @@ function gerarFicha(chave) {
 function imprimirCarteirinhaAdmin(chave) {
     showLoading('Gerando Carteirinha...');
     
-    // Busca dados detalhados + configurações em paralelo
     Promise.all([
         fetch(`${URL_API}?action=consultarInscricao&chave=${chave}`).then(r => r.json()),
         fetch(`${URL_API}?action=getPublicConfig`).then(r => r.json())
@@ -1276,22 +1267,18 @@ function imprimirCarteirinhaAdmin(chave) {
         const aluno = jsonDados.data.aluno;
         const config = jsonConfig.config || {};
         
-        // 1. Preenche Frente
         document.getElementById('cart-admin-nome').innerText = aluno.nome || 'Aluno';
         document.getElementById('cart-admin-inst').innerText = aluno.instituicao || '-';
         document.getElementById('cart-admin-course').innerText = aluno.curso || 'Curso não informado';
         document.getElementById('cart-admin-cpf').innerText = aluno.cpf || '---';
         document.getElementById('cart-admin-mat').innerText = aluno.matricula || '---';
         
-        // Código Único na Frente (Visível na impressão)
         document.getElementById('cart-admin-auth-code').innerText = aluno.chave || chave;
 
-        // Formata Nascimento
         let nasc = aluno.nascimento || '--/--/----';
         if(nasc.includes('-')) { const p = nasc.split('-'); nasc = `${p[2]}/${p[1]}/${p[0]}`; }
         document.getElementById('cart-admin-nasc').innerText = nasc;
 
-        // Foto
         const img = document.getElementById('cart-admin-img');
         img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNlMmU4ZjAiLz48L3N2Zz4=';
         if (aluno.foto) {
@@ -1301,42 +1288,35 @@ function imprimirCarteirinhaAdmin(chave) {
         }
         img.onerror = function() { this.src = 'https://via.placeholder.com/150?text=FOTO'; };
 
-        // 2. Preenche Verso & Estilo
         if(config.nomeSistema) document.getElementById('cart-admin-sys-name').innerText = config.nomeSistema.toUpperCase();
         
         const secName = config.nomeSecretario || "Secretário";
         const deptName = config.nomeSecretaria || "Secretaria de Educação";
         
         document.getElementById('cart-admin-sec-name').innerText = secName;
-        // Atualiza legenda da secretaria
         const orgInfoSmall = document.querySelector('#cart-admin-sys-name + small');
         if(orgInfoSmall) orgInfoSmall.innerText = deptName;
         
-        // Logo
         if(config.urlLogo) {
             document.getElementById('cart-admin-logo').src = formatarUrlDrive(config.urlLogo);
         }
 
-        // Cor Dinâmica
         if(config.corCarteirinha) {
             document.documentElement.style.setProperty('--card-color', config.corCarteirinha);
         }
 
-        // Validade
         document.getElementById('cart-admin-validade-ano').innerText = aluno.ano_vigencia || new Date().getFullYear();
         
-        // ASSINATURA DIGITAL (INJEÇÃO)
         const assinaturaBox = document.getElementById('cart-admin-assinatura-box');
         if (assinaturaBox) {
             if (config.urlAssinatura && config.urlAssinatura.trim() !== "") {
                 const assinaturaUrl = formatarUrlDrive(config.urlAssinatura);
                 assinaturaBox.innerHTML = `<img src="${assinaturaUrl}" alt="Assinatura">`;
             } else {
-                assinaturaBox.innerHTML = ''; // Limpa se não houver
+                assinaturaBox.innerHTML = ''; 
             }
         }
 
-        // Geração do QR Code usando QRious (Client-side)
         const linkValidacao = `${URL_API}?action=validar&chave=${chave}`;
         const qr = new QRious({
           element: document.getElementById('cart-admin-qr-img'), 
@@ -1345,12 +1325,10 @@ function imprimirCarteirinhaAdmin(chave) {
           backgroundAlpha: 0,
           foreground: 'black'
         });
-        // Atualiza a imagem com o DataURL gerado pelo canvas do QRious
         document.getElementById('cart-admin-qr-img').src = qr.toDataURL();
 
-        // Exibe o Modal
         document.getElementById('modal-carteirinha-admin').classList.remove('hidden');
-        document.getElementById('cart-admin-flip-container').classList.remove('is-flipped'); // Reseta posição
+        document.getElementById('cart-admin-flip-container').classList.remove('is-flipped');
         
     }).catch(err => {
         Swal.close();
