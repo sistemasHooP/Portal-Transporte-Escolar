@@ -324,10 +324,16 @@
                                     <input type="text" id="config-nome-resp" class="swal-input-custom" placeholder="João da Silva">
                                 </div>
 
-                                <!-- NOVO CAMPO: Link da Assinatura -->
+                                <!-- Campo de Assinatura -->
                                 <div style="margin-bottom: 15px;">
                                     <label class="swal-label">Link da Assinatura (Imagem PNG transparente)</label>
                                     <input type="text" id="config-assinatura" class="swal-input-custom" placeholder="https://...">
+                                </div>
+
+                                <!-- NOVO CAMPO: Logo do Verso -->
+                                <div style="margin-bottom: 15px;">
+                                    <label class="swal-label" style="color:var(--primary);">Link da Logo Verso (Canto Superior Direito)</label>
+                                    <input type="text" id="config-logo-verso" class="swal-input-custom" placeholder="https://... (PNG/JPG)">
                                 </div>
 
                                 <div style="margin-bottom: 15px;">
@@ -419,6 +425,11 @@
 
                     <!-- VERSO -->
                     <div class="carteirinha-face carteirinha-back">
+                        <!-- NOVO: LOGO VERSO OVERLAY -->
+                        <div class="cart-logo-verso-overlay" id="cart-admin-logo-verso-box">
+                            <!-- Imagem injetada via JS -->
+                        </div>
+
                         <div class="cart-back-header">
                             Documento de Identificação Estudantil
                         </div>
