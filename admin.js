@@ -71,7 +71,16 @@ function toggleSenha() {
 function realizarLogin(e) {
     e.preventDefault();
     const pass = document.getElementById('admin-pass').value;
+    
+    // Animação no Botão
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Entrando...';
+
+    // Mostra também o loading overlay para garantir
     showLoading('Autenticando...');
+
     fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'loginAdmin', senha: pass }) })
     .then(res => res.json()).then(json => {
         Swal.close();
@@ -80,8 +89,20 @@ function realizarLogin(e) {
             document.getElementById('admin-panel').classList.remove('hidden');
             sessionStorage.setItem('admin_token', pass);
             carregarDashboard();
-        } else { Swal.fire({icon: 'error', title: 'Acesso Negado', text: 'Senha incorreta.'}); }
-    }).catch(() => Swal.fire('Erro de Conexão', 'Verifique sua internet.', 'error'));
+            // Não precisa restaurar o botão pois a tela de login vai sumir
+        } else { 
+            // Restaura o botão em caso de erro
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            Swal.fire({icon: 'error', title: 'Acesso Negado', text: 'Senha incorreta.'}); 
+        }
+    }).catch(() => {
+        Swal.close();
+        // Restaura o botão em caso de erro de conexão
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        Swal.fire('Erro de Conexão', 'Verifique sua internet.', 'error');
+    });
 }
 
 function logout() { 
