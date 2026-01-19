@@ -36,7 +36,7 @@ const LABELS_TODOS_CAMPOS = {
 let mapaEventos = {}; 
 let cacheEventos = {}; 
 let chartEventosInstance = null; let chartStatusInstance = null;
-let todasInscricoes = [];         
+let todasInscricoes = [];          
 let inscricoesFiltradas = []; 
 let dashboardData = []; 
 let paginaAtual = 1;
@@ -148,6 +148,8 @@ function carregarConfigGeral() {
             document.getElementById('config-nome-sec').value = json.nomeSec || '';
             document.getElementById('config-nome-resp').value = json.nomeResp || '';
             document.getElementById('config-assinatura').value = json.assinatura || ''; 
+            // Novo Campo Logo Verso
+            document.getElementById('config-logo-verso').value = json.logoVerso || '';
         }
     });
 }
@@ -158,6 +160,7 @@ function salvarConfigGeral() {
     const sec = document.getElementById('config-nome-sec').value;
     const resp = document.getElementById('config-nome-resp').value;
     const ass = document.getElementById('config-assinatura').value; 
+    const logoVerso = document.getElementById('config-logo-verso').value;
 
     showLoading('Salvando...');
     fetch(URL_API, { 
@@ -169,7 +172,8 @@ function salvarConfigGeral() {
             corCard: cor,
             nomeSec: sec,
             nomeResp: resp,
-            assinatura: ass
+            assinatura: ass,
+            logoVerso: logoVerso // Envia para o Back-end
         }) 
     }).then(() => {
         Swal.fire({icon: 'success', title: 'Configurações Salvas!', timer: 1500, showConfirmButton: false});
@@ -1320,7 +1324,7 @@ function imprimirCarteirinhaAdmin(chave) {
         img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNlMmU4ZjAiLz48L3N2Zz4=';
         if (aluno.foto) {
              if (aluno.foto.startsWith('data:image') || aluno.foto.startsWith('http')) {
-                  img.src = formatarUrlDrive(aluno.foto);
+                 img.src = formatarUrlDrive(aluno.foto);
              }
         }
         img.onerror = function() { this.src = 'https://via.placeholder.com/150?text=FOTO'; };
@@ -1339,6 +1343,17 @@ function imprimirCarteirinhaAdmin(chave) {
         // Logo
         if(config.urlLogo) {
             document.getElementById('cart-admin-logo').src = formatarUrlDrive(config.urlLogo);
+        }
+
+        // NOVO: LOGO VERSO OVERLAY
+        const logoVersoBox = document.getElementById('cart-admin-logo-verso-box');
+        if(logoVersoBox) {
+            if(config.urlLogoVerso && config.urlLogoVerso.trim() !== "") {
+                const logoVersoUrl = formatarUrlDrive(config.urlLogoVerso);
+                logoVersoBox.innerHTML = `<img src="${logoVersoUrl}" alt="Logo Verso">`;
+            } else {
+                logoVersoBox.innerHTML = ''; // Limpa se não houver
+            }
         }
 
         // Cor Dinâmica
