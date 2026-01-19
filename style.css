@@ -204,57 +204,97 @@ input[type="file"] { display: none; }
     position: fixed; bottom: 25px; right: 25px; background: var(--primary-dark);
     color: white; border-radius: var(--radius-pill); padding: 16px 28px;
     display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-float);
-    z-index: 1000; transition: transform 0.2s;
+    z-index: 1000; transition: transform 0.2s; cursor: pointer;
 }
 #fab-consulta:hover { transform: translateY(-3px); background: var(--primary); }
 .fab-text { font-weight: 600; font-size: 1rem; }
 .fab-icon { font-size: 1.3rem; }
 
-/* --- MODAIS MODERNOS --- */
+/* --- MODAIS MODERNOS (REDESENHADO) --- */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(5px); z-index: 2000;
+    background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); z-index: 2000;
     display: flex; align-items: center; justify-content: center;
 }
 .modal-content {
-    background: white; width: 90%; max-width: 480px; border-radius: var(--radius-lg);
-    padding: 30px; box-shadow: var(--shadow-float); position: relative;
-    max-height: 90vh; overflow-y: auto;
+    background: white; width: 90%; max-width: 420px; border-radius: 24px;
+    padding: 30px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); position: relative;
+    max-height: 90vh; overflow-y: auto; text-align: center;
 }
 .modal-header-modern {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+    position: absolute; top: 20px; right: 20px; width: auto; left: auto;
 }
-.modal-header-modern h3 { font-size: 1.4rem; color: var(--primary); font-weight: 700; }
+/* Esconder título do header pois já está no corpo centralizado */
+.modal-header-modern h3 { display: none; }
+
 .btn-close-modern {
-    background: #f1f5f9; width: 40px; height: 40px; border-radius: 50%;
+    background: #f1f5f9; width: 36px; height: 36px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center; color: var(--text-muted);
-    transition: background 0.2s; font-size: 1.2rem;
+    transition: all 0.2s; font-size: 1.1rem; border: none; cursor: pointer;
 }
-.btn-close-modern:hover { background: #e2e8f0; color: var(--text-main); }
-.modal-body-centered { text-align: center; }
+.btn-close-modern:hover { background: #e2e8f0; color: #ef4444; transform: rotate(90deg); }
+
+.modal-body-centered { padding-top: 10px; }
+
 .icon-circle {
-    width: 90px; height: 90px; background: var(--primary-light); color: var(--primary);
-    font-size: 2.5rem; border-radius: 50%; display: flex; align-items: center;
-    justify-content: center; margin: 0 auto 25px;
+    width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary-light), #fff); 
+    color: var(--primary); font-size: 2rem; border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center; 
+    margin: 0 auto 20px; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
+    border: 1px solid #dbeafe;
 }
-.input-group-modern { display: flex; margin-top: 25px; gap: 10px; }
-.input-group-modern input { border-radius: var(--radius-md); padding: 16px; border: 2px solid #e2e8f0; }
-.input-group-modern input:focus { border-color: var(--primary); }
+
+.modal-body-centered h3 { margin-bottom: 10px; color: var(--text-main); }
+.modal-body-centered p { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 25px; line-height: 1.6; }
+
+/* INPUT GROUP MODERNO (FUSIONADO) */
+.input-group-modern {
+    position: relative; display: flex; width: 100%; margin-top: 20px;
+}
+.input-group-modern input {
+    width: 100%; padding: 16px 20px; padding-right: 60px; /* Espaço para o botão */
+    border-radius: 50px; border: 2px solid #e2e8f0;
+    font-size: 1.1rem; background: #f8fafc; outline: none;
+    transition: all 0.3s ease; text-transform: uppercase;
+    letter-spacing: 2px; font-weight: 600; color: var(--primary-dark);
+    text-align: center;
+}
+.input-group-modern input::placeholder { text-transform: none; letter-spacing: normal; font-weight: 400; font-size: 1rem; }
+.input-group-modern input:focus {
+    border-color: var(--primary); background: white;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
 .input-group-modern button {
-    background: var(--primary); color: white; border-radius: var(--radius-md);
-    padding: 0 25px; font-size: 1.4rem;
+    position: absolute; right: 6px; top: 6px; bottom: 6px;
+    width: 48px; border-radius: 50%;
+    background: var(--primary); color: white; border: none;
+    font-size: 1.2rem; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; padding: 0;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
 }
+.input-group-modern button:hover { background: var(--primary-dark); transform: scale(1.05); }
+.input-group-modern button:active { transform: scale(0.95); }
+
+/* RESULT AREA */
+.result-area { min-height: 20px; margin-top: 20px; }
 .result-card {
-    margin-top: 25px; padding: 20px; border-radius: var(--radius-md); text-align: left;
-    background: #f8fafc; border-left: 6px solid #ccc; box-shadow: var(--shadow-sm);
+    padding: 20px; border-radius: 16px; text-align: left;
+    background: white; border: 1px solid #e2e8f0; 
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    animation: fadeInUp 0.4s ease-out;
 }
-.result-success { border-color: #10b981; background: #ecfdf5; }
-.result-pending { border-color: #f59e0b; background: #fffbeb; }
+.result-success { border-left: 5px solid #10b981; background: #f0fdf4; }
+.result-pending { border-left: 5px solid #f59e0b; background: #fffbeb; }
+
 .btn-ver-cart {
-    width: 100%; margin-top: 15px; padding: 12px; background: #2563eb; color: white;
-    border-radius: 10px; font-weight: 600; transition: background 0.2s;
+    width: 100%; margin-top: 15px; padding: 14px; 
+    background: linear-gradient(90deg, #2563eb, #3b82f6); color: white;
+    border-radius: 12px; font-weight: 600; transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
 }
-.btn-ver-cart:hover { background: #1e40af; }
+.btn-ver-cart:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3); }
 
 /* --- CARTEIRINHA DIGITAL (ESTRUTURA DE VISUALIZAÇÃO WEB) --- */
 .transparent-modal { background: transparent !important; box-shadow: none !important; padding: 0; }
