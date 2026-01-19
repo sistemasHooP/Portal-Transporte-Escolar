@@ -372,25 +372,13 @@ input[type="file"] { display: none; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
-/* Animações */
-.fade-in { animation: fadeIn 0.6s ease-out forwards; opacity: 0; }
-.fade-in-down { animation: fadeInDown 0.8s ease-out forwards; opacity: 0; }
-.fade-in-up { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
-.zoom-in { animation: zoomIn 0.3s ease-out forwards; }
-@keyframes fadeIn { to { opacity: 1; } }
-@keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-
-/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + DETALHES ALINHADOS --- */
+/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + DETALHES ALINHADOS + ESPAÇO OTIMIZADO --- */
 @media print {
-    /* Forçar orientação Retrato na folha para empilhar os cards largos */
     @page { 
         size: portrait; 
         margin: 0; 
     }
 
-    /* Esconder tudo exceto os modais de carteirinha */
     body > *:not(#modal-carteirinha):not(#modal-carteirinha-admin) { display: none !important; }
     
     #modal-carteirinha, #modal-carteirinha-admin {
@@ -433,91 +421,94 @@ input[type="file"] { display: none; }
         display: block; 
     }
 
-    /* --- FRENTE (Layout 4 Linhas para incluir Detalhes) --- */
+    /* --- FRENTE (Layout Compacto) --- */
     .carteirinha-front {
-        padding: 4mm !important;
+        padding: 2.5mm !important; /* Margem interna reduzida para caber tudo */
         display: grid;
-        grid-template-columns: 32mm 1fr; /* Coluna Foto | Coluna Dados */
-        /* Grid de 4 linhas: Cabeçalho | Nome/Curso | DETALHES (CPF/Nasc) | Rodapé (Código) */
-        grid-template-rows: 15mm auto 1fr 8mm; 
-        gap: 3mm;
+        grid-template-columns: 30mm 1fr; /* Coluna Foto | Coluna Dados */
+        /* Row 1: Header (13mm)
+           Row 2: Nome/Curso (Auto)
+           Row 3: Detalhes (1fr - ocupa o resto)
+           Row 4: Rodapé (5mm) */
+        grid-template-rows: 13mm auto 1fr 6mm; 
+        gap: 1mm; /* Gaps mínimos */
         align-items: center;
     }
 
     /* HEADER FRENTE */
     .carteirinha-front .cart-header {
         grid-column: 1 / -1; grid-row: 1;
-        display: flex; align-items: center; gap: 4mm;
+        display: flex; align-items: center; gap: 3mm;
         border-bottom: 1pt solid rgba(255,255,255,0.4);
-        margin: 0; padding-bottom: 1mm; height: 100%;
+        margin: 0; padding-bottom: 0.5mm; height: 100%;
     }
-    .carteirinha-front .cart-logo { width: 12mm; height: 12mm; padding: 0.5mm; }
-    .carteirinha-front .cart-org-info h3 { font-size: 10pt; line-height: 1.1; margin: 0; font-weight: 800; white-space: normal; }
-    .carteirinha-front .cart-org-info small { font-size: 8pt; line-height: 1; display: block; margin-top: 1mm; white-space: normal; }
+    .carteirinha-front .cart-logo { width: 10mm; height: 10mm; padding: 0.5mm; }
+    .carteirinha-front .cart-org-info h3 { font-size: 9pt; line-height: 1.1; margin: 0; font-weight: 800; white-space: normal; }
+    .carteirinha-front .cart-org-info small { font-size: 7pt; line-height: 1; display: block; margin-top: 0.5mm; white-space: normal; }
 
-    /* CORPO FRENTE (Remove wrapper flex) */
+    /* CORPO FRENTE */
     .carteirinha-front .cart-body { display: contents; }
 
-    /* FOTO À ESQUERDA (Ocupa Linha 2 e 3) */
+    /* FOTO À ESQUERDA */
     .carteirinha-front .cart-photo-frame {
-        width: 30mm; height: 38mm;
+        width: 28mm; height: 36mm;
         margin: 0; border: 1.5pt solid white;
-        grid-column: 1; grid-row: 2 / span 2; /* Ocupa Nome E Detalhes */
+        grid-column: 1; grid-row: 2 / span 2; 
         align-self: center; margin-top: 1mm;
     }
 
-    /* DADOS À DIREITA (Linha 2: Nome e Curso) */
+    /* DADOS À DIREITA (Nome e Curso) */
     .carteirinha-front .cart-info-main { 
         grid-column: 2; grid-row: 2;
         text-align: left; margin-left: 2mm; margin-top: 1mm;
-        display: flex; flex-direction: column; justify-content: flex-end; /* Alinha ao fundo da célula */
-        margin-bottom: 2mm;
+        display: flex; flex-direction: column; justify-content: center;
+        margin-bottom: 1mm;
     }
     
     .carteirinha-front .cart-info-main h2 { 
-        font-size: 13pt; margin-bottom: 1mm; line-height: 1.1; 
+        font-size: 12pt; margin-bottom: 0.5mm; line-height: 1.1; 
         text-transform: uppercase; font-weight: 800;
         white-space: normal; overflow: visible; 
     }
     .carteirinha-front .cart-info-main .cart-course { 
-        padding: 1mm 4mm; font-size: 9pt; border-radius: 4mm; 
+        padding: 0.5mm 3mm; font-size: 8pt; border-radius: 3mm; 
         margin-bottom: 0; display: inline-block;
         background: rgba(255,255,255,0.2);
         white-space: normal;
     }
 
-    /* DETALHES EXTRAS (Linha 3: CPF, Nasc, Matrícula) */
+    /* DETALHES EXTRAS (CPF, Nasc, Matrícula) - Alinhado ao topo */
     .carteirinha-front .cart-details-grid {
-        display: grid; /* Ativa o Grid */
-        grid-template-columns: 1fr 1fr; /* 2 Colunas */
-        gap: 2mm;
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 1mm;
         grid-column: 2; grid-row: 3;
-        margin-left: 2mm;
-        align-self: flex-start; /* Alinha ao topo da célula */
+        margin-left: 2mm; margin-top: 1mm;
+        align-self: flex-start;
     }
     .carteirinha-front .detail-item {
         background: transparent; padding: 0; border: none; text-align: left;
-        margin-bottom: 1mm; display: flex; flex-direction: column; /* Label em cima do Valor */
+        margin-bottom: 0.5mm; display: flex; flex-direction: column;
     }
     .carteirinha-front .detail-label { 
-        font-size: 6pt; text-transform: uppercase; opacity: 0.8; 
+        font-size: 5.5pt; text-transform: uppercase; opacity: 0.8; 
         display: block; margin-bottom: 0.5mm;
     }
     .carteirinha-front .detail-value { 
-        font-size: 8pt; font-weight: 700; font-family: monospace;
+        font-size: 7.5pt; font-weight: 700; font-family: monospace;
         white-space: nowrap; 
     }
 
-    /* CÓDIGO ÚNICO (RODAPÉ) */
+    /* CÓDIGO ÚNICO (RODAPÉ) - Compactado */
     .cart-print-auth {
         display: block !important;
         grid-column: 1 / -1; grid-row: 4;
-        text-align: center; font-family: monospace; font-size: 9pt;
-        background: rgba(0,0,0,0.3); padding: 1.5mm; border-radius: 1.5mm;
-        margin-top: auto; 
+        text-align: center; font-family: monospace; font-size: 8pt;
+        background: rgba(0,0,0,0.3); padding: 1mm; border-radius: 1mm;
+        margin-top: 0; align-self: end;
     }
-    .cart-print-auth span { opacity: 0.7; font-size: 8pt; margin-right: 5px; }
-    .cart-print-auth strong { font-size: 10pt; letter-spacing: 2px; color: #fff; }
+    .cart-print-auth span { opacity: 0.7; font-size: 7pt; margin-right: 4px; }
+    .cart-print-auth strong { font-size: 9pt; letter-spacing: 1.5px; color: #fff; }
 
     /* --- VERSO (Layout Horizontal Interno) --- */
     .carteirinha-back {
