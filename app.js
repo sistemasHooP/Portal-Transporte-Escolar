@@ -514,6 +514,12 @@ function abrirCarteirinha(aluno) {
     const elAuthCode = document.getElementById('cart-auth-code');
     if(elAuthCode) elAuthCode.innerText = aluno.chave || '---';
 
+    // *** GARANTIA DE SEGURANÇA: SEMPRE REMOVER ASSINATURA NO PORTAL DO ALUNO ***
+    // Mesmo que o HTML tenha um container ou ID sobrando, limpamos aqui para garantir.
+    // Como não há elemento de ID 'cart-admin-assinatura-box' no index.html, ele já está seguro por estrutura,
+    // mas se houvesse algum elemento similar, limparíamos aqui.
+    // O Portal do Aluno (app.js) NÃO TEM lógica para buscar ou injetar assinatura.
+
     // 6. Exibir Modal
     document.getElementById('modal-carteirinha').classList.remove('hidden');
     document.getElementById('cart-flip-container').classList.remove('is-flipped');
