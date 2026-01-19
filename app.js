@@ -193,7 +193,8 @@ function previewArquivo(input) {
     }
 }
 
-async function comprimirImagem(file, maxWidth = 1000, quality = 0.7) {
+// --- COMPRESSÃO DE IMAGEM OTIMIZADA ---
+async function comprimirImagem(file, maxWidth = 600, quality = 0.5) {
     if(file.type === 'application/pdf') return toBase64(file);
     return new Promise((resolve, reject) => {
         const reader = new FileReader(); 
@@ -208,6 +209,7 @@ async function comprimirImagem(file, maxWidth = 1000, quality = 0.7) {
                 c.width = w; c.height = h; 
                 const ctx = c.getContext('2d'); 
                 ctx.drawImage(img, 0, 0, w, h);
+                // Comprime agressivamente para JPEG 50%
                 resolve(c.toDataURL('image/jpeg', quality).split(',')[1]);
             }; 
             img.onerror = (e) => reject(e);
@@ -216,7 +218,7 @@ async function comprimirImagem(file, maxWidth = 1000, quality = 0.7) {
     });
 }
 
-// --- LÓGICA DE EVENTOS (ATUALIZADA: LIMITER) ---
+// --- LÓGICA DE EVENTOS ---
 function carregarEventos() {
     toggleLoader(true, "Carregando eventos...");
     fetch(`${URL_API}?action=getEventosAtivos`)
@@ -397,6 +399,16 @@ async function enviarInscricao(e) {
     const iCPF = document.querySelector('input[name="CPF"]');
     if(!validarCPF(iCPF.value)) return showError('CPF Inválido', 'Por favor, verifique o CPF digitado.');
     
+    // Validação de Tamanho de Arquivo (PDF)
+    const fileDoc = document.getElementById('file-doc');
+    if (fileDoc && fileDoc.files.length > 0) {
+        const file = fileDoc.files[0];
+        // 2MB em bytes = 2 * 1024 * 1024 = 2097152 bytes
+        if (file.size > 2 * 1024 * 1024) {
+            return showError('Arquivo Muito Grande', 'O PDF do comprovante deve ter no máximo 2MB. Por favor, comprima o arquivo e tente novamente.');
+        }
+    }
+
     const r = await Swal.fire({ 
         title: 'Confirmar envio?', 
         text: 'Verifique se todos os dados estão corretos.',
@@ -420,6 +432,7 @@ async function enviarInscricao(e) {
     const arqs = {};
     
     try {
+        // Compressão ajustada (maxWidth: 600, quality: 0.5)
         if(config.arquivos?.foto) { arqs.foto = { data: await comprimirImagem(document.getElementById('file-foto').files[0]), mime: 'image/jpeg' }; }
         if(config.arquivos?.doc) { const f = document.getElementById('file-doc').files[0]; arqs.doc = { data: await toBase64(f), mime: f.type }; }
         
