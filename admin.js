@@ -478,6 +478,7 @@ function carregarEventosAdmin() {
                 `<button class="btn-icon" style="background:#eab308;" onclick="toggleStatusEvento('${ev.id}','Inativo')" title="Pausar"><i class="fa-solid fa-pause"></i></button>` : 
                 `<button class="btn-icon" style="background:#22c55e;" onclick="toggleStatusEvento('${ev.id}','Ativo')" title="Ativar"><i class="fa-solid fa-play"></i></button>`;
             
+            // CORREÇÃO: Container flex alinhado à direita para botões de ação
             tbody.innerHTML += `
                 <tr>
                     <td><strong>#${ev.id}</strong></td>
@@ -485,8 +486,10 @@ function carregarEventosAdmin() {
                     <td><div style="font-size:0.85rem; color:var(--text-secondary);">${safeDate(ev.inicio)} - ${safeDate(ev.fim)}</div></td>
                     <td><span class="badge ${ev.status === 'Ativo' ? 'success' : 'danger'}">${ev.status}</span></td>
                     <td style="text-align:right;">
-                        ${btnAction}
-                        <button class="btn-icon bg-edit" onclick='abrirEdicaoEvento(${JSON.stringify(ev)})'><i class="fa-solid fa-pen"></i></button>
+                        <div style="display:flex; gap:5px; justify-content:flex-end;">
+                            ${btnAction}
+                            <button class="btn-icon bg-edit" onclick='abrirEdicaoEvento(${JSON.stringify(ev)})'><i class="fa-solid fa-pen"></i></button>
+                        </div>
                     </td>
                 </tr>`;
         });
@@ -837,6 +840,7 @@ function renderizarProximaPagina() {
             }
         }
         
+        // CORREÇÃO: Container flex alinhado à direita para botões de ação
         tbody.innerHTML += `<tr>
             <td style="text-align:center;"><input type="checkbox" class="bulk-check" value="${ins.chave}" ${checked} onclick="toggleCheck('${ins.chave}')"></td>
             <td>${safeDate(ins.data)}</td>
@@ -1071,7 +1075,7 @@ function acaoEmMassa(s) {
     });
 }
 
-// --- GERAR FICHA DE INSCRIÇÃO (DINÂMICA E REVISADA: TABELAS) ---
+// --- GERAR FICHA DE INSCRIÇÃO (DINÂMICA E REVISADA: TABELAS SEM BORDAS) ---
 function gerarFicha(chave) {
     showLoading('Gerando Ficha...');
 
@@ -1109,7 +1113,7 @@ function gerarFicha(chave) {
         const ordemPessoais = ['NomeCompleto', 'CPF', 'DataNascimento', 'Telefone', 'Email', 'Endereco', 'Cidade', 'Estado'];
         const ordemAcademicos = ['NomeInstituicao', 'NomeCurso', 'PeriodoCurso', 'Matricula', 'Turno'];
         
-        // Helper para gerar linhas de tabela
+        // Helper para gerar linhas de tabela SEM BORDAS
         const createTableRows = (keys) => {
             let rows = '';
             keys.forEach(key => {
@@ -1148,103 +1152,103 @@ function gerarFicha(chave) {
         }
         if(!rowsOutros) rowsOutros = '<tr><td colspan="2" style="padding:10px; color:#666; font-style:italic;">Nenhuma informação adicional.</td></tr>';
 
-        // HTML FINAL COM TABELAS
+        // HTML FINAL COM TABELAS LIMPAS (Igual Modelo PDF)
         const htmlFicha = `
             <style>
                 @media print {
                     @page { size: portrait; margin: 10mm; }
                     body { -webkit-print-color-adjust: exact; font-family: 'Arial', sans-serif; }
                 }
-                .ficha-container { width: 100%; max-width: 800px; margin: 0 auto; border: 2px solid #000; padding: 2px; }
-                .inner-border { border: 1px solid #000; padding: 15px; min-height: 900px; position: relative; }
+                .ficha-container { width: 100%; max-width: 800px; margin: 0 auto; padding: 2px; }
                 
-                /* HEADER TABLE */
-                .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border-bottom: 2px solid #000; }
-                .header-table td { padding: 5px; vertical-align: middle; }
+                /* HEADER TABLE - Clean */
+                .header-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; border-bottom: none; }
+                .header-table td { padding: 5px; vertical-align: top; }
                 
                 .logo-cell img { width: 80px; height: 80px; object-fit: contain; }
-                .center-info { text-align: center; }
-                .center-info h2 { margin: 0; font-size: 18px; font-weight: 900; text-transform: uppercase; }
-                .center-info h3 { margin: 5px 0 0; font-size: 14px; font-weight: normal; }
-                .center-info h4 { margin: 2px 0 0; font-size: 12px; font-weight: bold; color: #444; }
+                .center-info { text-align: center; padding-top: 15px; }
+                .center-info h2 { margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+                .center-info h3 { margin: 5px 0 0; font-size: 14px; font-weight: normal; color: #444; }
                 
-                .key-cell { text-align: center; border-left: 1px solid #000; }
-                .key-box { border: 1px solid #000; padding: 5px; margin-bottom: 5px; background: #eee; }
-                .key-box small { font-size: 9px; display: block; }
-                .key-box strong { font-size: 14px; font-family: monospace; display: block; }
-                .photo-box { width: 80px; height: 100px; border: 1px solid #000; margin: 0 auto; background: #f0f0f0; overflow: hidden; }
+                .key-cell { text-align: right; vertical-align: top; padding-right: 0; }
+                .key-text { font-size: 12px; font-weight: bold; margin-bottom: 10px; display: block; }
+                .photo-box { width: 80px; height: 100px; border: 1px solid #ccc; float: right; background: #f9f9f9; overflow: hidden; }
 
-                /* DATA SECTIONS */
+                /* DATA SECTIONS - Clean & Spaced */
                 .section-title { 
-                    background: #ddd; 
                     font-weight: bold; 
-                    padding: 5px 10px; 
-                    border: 1px solid #000; 
-                    border-bottom: none; 
-                    margin-top: 20px; 
                     font-size: 12px;
+                    text-transform: uppercase;
+                    margin-top: 25px; 
+                    margin-bottom: 10px;
+                    border-bottom: 1px solid #000;
+                    padding-bottom: 3px;
+                    width: 100%;
                 }
                 
-                .data-table { width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 12px; }
-                .data-table td { border: 1px solid #000; padding: 6px 8px; }
-                .label-cell { width: 30%; font-weight: bold; background: #f9f9f9; }
-                .value-cell { width: 70%; }
+                .data-table { width: 100%; border-collapse: collapse; border: none; font-size: 11px; margin-bottom: 15px; }
+                .data-table td { padding: 6px 0; border: none; } /* SEM BORDAS NAS CÉLULAS */
+                
+                .label-cell { 
+                    width: 25%; 
+                    font-weight: bold; 
+                    color: #000; 
+                    vertical-align: top; 
+                    padding-right: 10px;
+                }
+                .value-cell { 
+                    width: 75%; 
+                    color: #333;
+                    font-weight: normal;
+                }
 
                 /* SIGNATURE */
-                .sign-area { margin-top: 60px; text-align: center; }
-                .sign-line { width: 60%; margin: 0 auto; border-top: 1px solid #000; }
-                .sign-text { font-size: 11px; margin-top: 5px; font-weight: bold; }
-                .sign-sub { font-size: 10px; margin-top: 2px; }
+                .sign-area { margin-top: 80px; text-align: left; }
+                .sign-label { font-weight: bold; font-size: 11px; margin-bottom: 40px; }
+                .sign-name { font-size: 12px; text-transform: uppercase; border-top: 1px solid #000; display: inline-block; padding-top: 5px; min-width: 300px; }
 
                 .footer-info { 
-                    position: absolute; bottom: 10px; left: 15px; right: 15px;
+                    margin-top: 60px;
                     border-top: 1px solid #ccc; padding-top: 5px;
-                    font-size: 9px; color: #555; text-align: right; 
+                    font-size: 9px; color: #555;
                 }
             </style>
 
             <div class="ficha-container">
-                <div class="inner-border">
-                    
-                    <table class="header-table">
-                        <tr>
-                            <td width="100" class="logo-cell"><img src="${logoUrl}" onerror="this.style.display='none'"></td>
-                            <td class="center-info">
-                                <h2>FICHA DE INSCRIÇÃO</h2>
-                                <h3>${nomeSistema}</h3>
-                                <h4>${evento.titulo}</h4>
-                            </td>
-                            <td width="120" class="key-cell">
-                                <div class="key-box">
-                                    <small>CHAVE DE ACESSO</small>
-                                    <strong>${chave}</strong>
-                                </div>
-                                <div class="photo-box">
-                                    ${fotoHtml}
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+                
+                <table class="header-table">
+                    <tr>
+                        <td width="100" class="logo-cell"><img src="${logoUrl}" onerror="this.style.display='none'"></td>
+                        <td class="center-info">
+                            <h2>FICHA DE INSCRIÇÃO</h2>
+                            <h3>${evento.titulo}</h3>
+                        </td>
+                        <td width="120" class="key-cell">
+                            <span class="key-text">CHAVE: ${chave}</span>
+                            <div class="photo-box">
+                                ${fotoHtml}
+                            </div>
+                        </td>
+                    </tr>
+                </table>
 
-                    ${rowsPessoais ? `<div class="section-title">DADOS PESSOAIS</div><table class="data-table">${rowsPessoais}</table>` : ''}
-                    
-                    ${rowsAcademicos ? `<div class="section-title">DADOS ACADÊMICOS</div><table class="data-table">${rowsAcademicos}</table>` : ''}
-                    
-                    <div class="section-title">OUTRAS INFORMAÇÕES</div>
-                    <table class="data-table">${rowsOutros}</table>
+                ${rowsPessoais ? `<div class="section-title">DADOS PESSOAIS</div><table class="data-table">${rowsPessoais}</table>` : ''}
+                
+                ${rowsAcademicos ? `<div class="section-title">DADOS ACADÊMICOS</div><table class="data-table">${rowsAcademicos}</table>` : ''}
+                
+                <div class="section-title">OUTRAS INFORMAÇÕES</div>
+                <table class="data-table">${rowsOutros}</table>
 
-                    <div class="sign-area">
-                        <div class="sign-line"></div>
-                        <div class="sign-text">ASSINATURA DO ALUNO(A)</div>
-                        <div class="sign-sub">${dados.NomeCompleto || ''}</div>
-                    </div>
-
-                    <div class="footer-info">
-                        Documento oficial gerado em ${new Date().toLocaleString('pt-BR')}<br>
-                        ${nomeSecretaria}
-                    </div>
-
+                <div class="sign-area">
+                    <div class="sign-label">ASSINATURA DO ALUNO(A)</div>
+                    <div class="sign-name">${dados.NomeCompleto || ''}</div>
                 </div>
+
+                <div class="footer-info">
+                    Documento oficial gerado em ${new Date().toLocaleString('pt-BR')}<br>
+                    ${nomeSecretaria} - ${nomeSistema}
+                </div>
+
             </div>
         `;
 
