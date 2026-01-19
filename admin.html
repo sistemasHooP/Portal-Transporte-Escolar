@@ -324,6 +324,12 @@
                                     <input type="text" id="config-nome-resp" class="swal-input-custom" placeholder="João da Silva">
                                 </div>
 
+                                <!-- NOVO CAMPO: Link da Assinatura -->
+                                <div style="margin-bottom: 15px;">
+                                    <label class="swal-label">Link da Assinatura (Imagem PNG transparente)</label>
+                                    <input type="text" id="config-assinatura" class="swal-input-custom" placeholder="https://...">
+                                </div>
+
                                 <div style="margin-bottom: 15px;">
                                     <label class="swal-label">ID da Pasta Google Drive</label>
                                     <input type="text" id="config-drive-id" class="swal-input-custom" placeholder="ID da Pasta (ex: 1AbCd...)">
@@ -356,7 +362,7 @@
         </button>
     </div>
 
-    <!-- MODAL CARTEIRINHA ADMIN (NOVO V2.0) -->
+    <!-- MODAL CARTEIRINHA ADMIN (ATUALIZADO V3.0) -->
     <div id="modal-carteirinha-admin" class="modal-overlay hidden" style="z-index: 3000;">
         <div class="modal-content-cart transparent-modal">
             
@@ -403,6 +409,12 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- CÓDIGO ÚNICO (VISÍVEL APENAS NA IMPRESSÃO) -->
+                        <div class="cart-print-auth">
+                            <span>CÓDIGO:</span>
+                            <strong id="cart-admin-auth-code">---</strong>
+                        </div>
                     </div>
 
                     <!-- VERSO -->
@@ -422,6 +434,10 @@
                         </div>
 
                         <div class="cart-footer">
+                            <!-- Elemento para Assinatura (Imagem ou Texto) -->
+                            <div id="cart-admin-assinatura-box" class="assinatura-box-print">
+                                <!-- Imagem será injetada aqui -->
+                            </div>
                             <span class="cart-sec-name" id="cart-admin-sec-name">Secretário</span>
                             Secretário(a) de Educação
                         </div>
