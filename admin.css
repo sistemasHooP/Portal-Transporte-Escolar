@@ -1,0 +1,813 @@
+/* --- VARIÁVEIS GLOBAIS (Tema Profissional) --- */
+:root {
+    /* Cores Institucionais */
+    --primary: #2563eb;        
+    --primary-dark: #1e40af; 
+    --primary-light: #eff6ff;
+    --accent: #f59e0b;        
+
+    /* Variável Dinâmica da Carteirinha (Padrão) */
+    --card-color: #2563eb;
+
+    /* Estrutura */
+    --sidebar-width: 260px;   
+    --header-height: 60px;    
+
+    /* Superfícies */
+    --bg-body: #f3f4f6;        
+    --bg-card: #ffffff;        
+    --bg-sidebar: #0f172a;      
+
+    /* Texto */
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+
+    /* Bordas e Sombras */
+    --border: 1px solid #e2e8f0;
+    --radius: 8px;
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    
+    /* Status Colors */
+    --green-bg: #dcfce7; --green-text: #166534;
+    --amber-bg: #fef3c7; --amber-text: #92400e;
+    --red-bg: #fee2e2;   --red-text: #991b1b;
+    --blue-bg: #dbeafe;  --blue-text: #1e40af;
+}
+
+/* --- RESET ESTRUTURAL (Zero Scroll na Janela) --- */
+* { box-sizing: border-box; outline: none; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    overflow: hidden; /* A janela nunca rola */
+    font-size: 14px;
+}
+
+/* --- UTILS --- */
+.hidden { display: none !important; }
+
+/* --- GRID MESTRE (APP SHELL) --- */
+#app-container {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    grid-template-rows: 100vh;
+    width: 100%;
+    height: 100%;
+}
+
+/* --- COLUNA 1: SIDEBAR --- */
+.sidebar {
+    background-color: var(--bg-sidebar);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    border-right: 1px solid #1e293b;
+    z-index: 10;
+}
+
+.brand {
+    font-size: 1.1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    padding-bottom: 2rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.brand i { color: var(--primary); font-size: 1.4rem; }
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
+
+.nav-item {
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    padding: 12px 15px;
+    border-radius: var(--radius);
+    color: var(--text-light);
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+.nav-item.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); }
+
+.nav-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.btn-logout {
+    width: 100%;
+    padding: 10px;
+    background: rgba(220, 38, 38, 0.1);
+    color: #fca5a5;
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.btn-logout:hover { background: rgba(220, 38, 38, 0.2); color: white; }
+
+/* --- COLUNA 2: CONTEÚDO PRINCIPAL --- */
+.main-content {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg-body);
+}
+
+/* Scroll Area ÚNICA */
+.scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 2rem;
+    height: 100%;
+}
+
+/* Abas (Conteúdo) */
+.tab-content {
+    display: block;
+    width: 100%;
+    animation: fadeIn 0.3s ease-in-out;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Header de Página */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+.page-title h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin: 0; }
+.page-title p { color: var(--text-muted); margin: 5px 0 0 0; font-size: 0.9rem; }
+
+/* Grid de Cards (Dashboard) */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.card-widget {
+    background: var(--bg-card);
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    border: var(--border);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+}
+.card-widget h3 { font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); margin: 0 0 10px 0; }
+.card-widget .value { font-size: 2rem; font-weight: 700; color: var(--text-main); line-height: 1; }
+
+/* Gráficos */
+.charts-wrapper {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    height: 400px;
+}
+.chart-card {
+    background: var(--bg-card);
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    border: var(--border);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* --- TABELAS --- */
+.table-container {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: var(--border);
+    box-shadow: var(--shadow);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.table-toolbar {
+    padding: 1rem;
+    border-bottom: var(--border);
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    background: #f8fafc;
+    flex-wrap: wrap;
+}
+
+.search-input-group {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: white;
+    border: var(--border);
+    border-radius: var(--radius);
+    padding: 0 10px;
+}
+.search-input-group i { color: var(--text-muted); }
+.search-input-group input { border: none; padding: 10px; width: 100%; font-size: 0.9rem; }
+
+.filter-select {
+    padding: 10px;
+    border: var(--border);
+    border-radius: var(--radius);
+    background: white;
+    color: var(--text-main);
+    min-width: 150px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.data-table th {
+    background: #f1f5f9;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    border-bottom: var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.data-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: var(--text-main); vertical-align: middle; }
+.data-table tr:hover { background-color: #f8fafc; }
+
+/* Badges e Botões */
+.badge { padding: 4px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+.badge.success { background: var(--green-bg); color: var(--green-text); }
+.badge.warning { background: var(--amber-bg); color: var(--amber-text); }
+.badge.danger { background: var(--red-bg); color: var(--red-text); }
+.badge.info { background: var(--blue-bg); color: var(--blue-text); }
+
+.btn { padding: 10px 20px; border-radius: var(--radius); font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; font-size: 0.9rem; border: none; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-secondary { background: white; border: var(--border); color: var(--text-main); }
+.btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+
+.btn-icon { width: 32px; height: 32px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; border: none; cursor: pointer; color: white; transition: transform 0.1s; }
+.btn-icon:hover { transform: scale(1.1); }
+.bg-edit { background: var(--primary); }
+.bg-view { background: var(--secondary); }
+.bg-delete { background: var(--red-bg); color: var(--red-text); }
+.bg-print { background: var(--accent); color: #fff; }
+
+/* --- BARRA FLUTUANTE --- */
+.bulk-bar {
+    position: absolute;
+    bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: var(--text-main); color: white;
+    padding: 10px 20px; border-radius: 50px;
+    display: flex; align-items: center; gap: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 100;
+    transition: transform 0.3s;
+}
+.bulk-bar.hidden { transform: translate(-50%, 150%); }
+
+/* --- LOGIN --- */
+.login-wrapper {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    display: flex; justify-content: center; align-items: center; z-index: 9999;
+}
+.login-box {
+    background: white; padding: 40px; border-radius: var(--radius);
+    width: 100%; max-width: 400px; text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+.input-wrapper { position: relative; margin-bottom: 1.5rem; }
+.input-wrapper i.icon-left { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+.input-wrapper i.password-toggle { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; padding: 5px; }
+#admin-pass { width: 100%; padding: 12px 40px; border: var(--border); border-radius: 50px; font-size: 1rem; background: #f8fafc; transition: all 0.2s; }
+#admin-pass:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+.btn-back-login { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-weight: 500; margin-top: 1rem; font-size: 0.9rem; }
+.btn-back-login:hover { color: var(--primary); }
+
+/* --- MODAIS CUSTOM (SweetAlert) --- */
+.swal-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; text-align: left; }
+.grid-sidebar { display: grid; grid-template-columns: 240px 1fr; gap: 2rem; align-items: start; text-align: left; }
+.swal-full { margin-bottom: 15px; text-align: left; }
+.swal-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 5px; text-transform: uppercase; }
+.swal-input-custom { width: 100%; padding: 10px; border: var(--border); border-radius: var(--radius); font-size: 0.95rem; box-sizing: border-box; }
+.swal-input-custom:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+
+/* Checkboxes */
+.checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 5px; }
+.checkbox-card { background: #fff; border: var(--border); padding: 10px; border-radius: var(--radius); display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s; text-align: left; }
+.checkbox-card:hover { border-color: var(--primary); background: #f8fafc; }
+.checkbox-card input { accent-color: var(--primary); transform: scale(1.1); }
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+/* --- ESTILOS DE CARTEIRINHA ADMIN (3D FLIP & QR CODE) --- */
+/* Overlay Modal para Carteirinha */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 2000;
+    display: flex; align-items: center; justify-content: center;
+}
+.modal-content-cart {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+}
+.transparent-modal { background: transparent !important; box-shadow: none !important; padding: 0; }
+
+.carteirinha-wrapper {
+    width: 100%;
+    max-width: 350px;
+    height: 520px; /* Altura fixa */
+    margin: 0 auto;
+    perspective: 1200px;
+    /* Correção para iPhone/Safari */
+    -webkit-perspective: 1200px;
+}
+
+.carteirinha-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+    /* Correção Crítica para Mobile: */
+    -webkit-transform-style: preserve-3d;
+    cursor: pointer;
+}
+
+.carteirinha-card-inner.is-flipped {
+    transform: rotateY(180deg);
+    -webkit-transform: rotateY(180deg);
+}
+
+.carteirinha-face {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    /* Correção Crítica: Ocultar o verso em todos os browsers */
+    -webkit-backface-visibility: hidden; 
+    backface-visibility: hidden;
+    /* Hack para estabilidade no iOS */
+    transform: translateZ(0); 
+    -webkit-transform: translateZ(0);
+    
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.4);
+    background-color: #0f172a; 
+    color: white;
+}
+
+/* Frente - CORREÇÃO DE FUNDO */
+.carteirinha-front {
+    /* Z-index maior para garantir que ela começa na frente */
+    z-index: 2;
+    /* Gradiente de pontos E Gradiente de cor juntos */
+    background: 
+        radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+        linear-gradient(135deg, var(--card-color, #2563eb), #0f172a);
+    background-size: 15px 15px, 100% 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    /* Rotação inicial explicita */
+    transform: rotateY(0deg);
+    -webkit-transform: rotateY(0deg);
+}
+
+.cart-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 2;
+    text-align: left;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.cart-logo {
+    width: 45px; height: 45px;
+    background: white;
+    border-radius: 50%;
+    padding: 3px;
+    object-fit: contain;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.cart-org-info h3 { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2; text-transform: uppercase; margin: 0; }
+.cart-org-info small { font-size: 0.7rem; text-transform: uppercase; opacity: 0.9; font-weight: 300; display: block; margin-top: 2px;}
+
+.cart-body { 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center;
+    justify-content: center;
+    position: relative; 
+    z-index: 2; 
+    gap: 15px;
+}
+
+.cart-photo-frame {
+    width: 110px; height: 140px;
+    background: #e2e8f0;
+    border: 3px solid white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    margin-bottom: 5px;
+}
+.cart-photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+
+.cart-info-main { width: 100%; text-align: center; }
+.cart-info-main h2 { 
+    font-size: 1.1rem; 
+    text-transform: uppercase; 
+    font-weight: 700;
+    margin-bottom: 5px; 
+    line-height: 1.2; 
+    text-shadow: 0 2px 2px rgba(0,0,0,0.2);
+}
+.cart-info-main .cart-course {
+    font-size: 0.85rem;
+    background: rgba(255,255,255,0.15);
+    padding: 4px 10px;
+    border-radius: 15px;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.cart-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.detail-item {
+    background: rgba(0,0,0,0.2);
+    padding: 5px;
+    border-radius: 6px;
+    text-align: center;
+}
+.detail-label { display: block; font-size: 0.6rem; text-transform: uppercase; opacity: 0.7; }
+.detail-value { display: block; font-size: 0.75rem; font-weight: 600; font-family: monospace; }
+
+/* Verso */
+.carteirinha-back {
+    transform: rotateY(180deg);
+    -webkit-transform: rotateY(180deg);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--card-color, #1e293b), #000000);
+}
+
+.cart-back-header {
+    text-align: center;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.6;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+}
+
+.qr-code-box {
+    width: 160px; height: 160px;
+    background: white;
+    padding: 10px;
+    border-radius: 12px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.qr-code-box img { width: 100%; height: 100%; object-fit: contain; }
+
+.validity-box {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.validity-label { font-size: 0.8rem; opacity: 0.8; text-transform: uppercase; display: block; }
+.validity-year { 
+    font-size: 3.5rem; 
+    font-weight: 800; 
+    line-height: 1;
+    color: var(--accent); /* Destaque no ano */
+    text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    display: block;
+}
+
+.cart-footer {
+    margin-top: auto;
+    text-align: center;
+    font-size: 0.65rem;
+    opacity: 0.6;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 10px;
+}
+.cart-sec-name { font-weight: 600; display: block; margin-bottom: 2px; text-transform: uppercase; }
+
+/* Botões do Modal Admin (REDONDOS E BONITOS) */
+.cart-actions { margin-top: 25px; display: flex; justify-content: center; gap: 15px; }
+
+.btn-action-pri { 
+    background: white; color: var(--primary); padding: 12px 24px; border-radius: 30px; 
+    font-weight: 700; box-shadow: var(--shadow-md); border: none; cursor: pointer; 
+    display: flex; align-items: center; gap: 8px;
+}
+.btn-action-sec { 
+    background: rgba(255,255,255,0.1); color: white; padding: 12px 24px; border-radius: 30px; 
+    border: 1px solid rgba(255,255,255,0.3); cursor: pointer; 
+    display: flex; align-items: center; gap: 8px;
+}
+.btn-flip {
+    background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px;
+    font-weight: 700; border: none; cursor: pointer; box-shadow: var(--shadow-md);
+    display: flex; align-items: center; gap: 8px;
+}
+
+/* Ocultar elementos exclusivos de impressão na visualização Web */
+.cart-print-auth, .assinatura-box-print { display: none; }
+
+/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + DETALHES ALINHADOS + ASSINATURA BAIXA --- */
+@media print {
+    /* Forçar orientação Retrato na folha para empilhar os cards largos */
+    @page { 
+        size: portrait; 
+        margin: 0; 
+    }
+
+    /* Oculta tudo por padrão */
+    body > * { display: none !important; }
+    
+    /* Regra A: Se o print-layer estiver ativo (Fichas/Relatórios) */
+    #print-layer { 
+        display: block !important; 
+        position: absolute; top: 0; left: 0; width: 100%; 
+        background: white; 
+        padding: 0; margin: 0; 
+    }
+    #print-layer * { visibility: visible; }
+
+    /* Regra B: Se o Modal de Carteirinha Admin estiver aberto */
+    #modal-carteirinha-admin:not(.hidden) {
+        display: block !important; 
+        position: absolute; top: 0; left: 0; 
+        width: 100%; background: white; z-index: 9999; margin: 0; padding: 0;
+        visibility: visible;
+    }
+    #modal-carteirinha-admin:not(.hidden) * { visibility: visible; }
+    .modal-content, .modal-content-cart { box-shadow: none; padding: 0; margin: 0; background: transparent; }
+    
+    /* WRAPPER EMPILHADO */
+    .carteirinha-wrapper {
+        perspective: none; height: auto; margin-top: 10mm;
+        display: flex; 
+        flex-direction: column; /* EMPILHADO VERTICALMENTE */
+        gap: 5mm; 
+        align-items: center; /* Centraliza na folha */
+        justify-content: start;
+        width: 100% !important; 
+    }
+    
+    .carteirinha-card-inner {
+        transform: none !important; position: relative; height: auto;
+        display: contents; 
+    }
+    
+    /* DIMENSÕES HORIZONTAIS DO CARTÃO (120mm x 75mm) */
+    .carteirinha-face {
+        position: relative; transform: none !important;
+        width: 120mm; height: 75mm; /* Formato LARGO */
+        outline: 1px dashed #ccc; 
+        box-sizing: border-box;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        font-size: 11pt; 
+        margin-bottom: 0;
+        color: white !important;
+        background: linear-gradient(135deg, var(--card-color, #2563eb), #0f172a) !important;
+        overflow: hidden; 
+        border-radius: 4mm;
+        display: block; 
+    }
+
+    /* --- FRENTE (Layout Compacto) --- */
+    .carteirinha-front {
+        padding: 2.5mm !important; /* Margem interna reduzida para caber tudo */
+        display: grid;
+        grid-template-columns: 30mm 1fr; /* Coluna Foto | Coluna Dados */
+        /* Row 1: Header (13mm)
+           Row 2: Nome/Curso (Auto)
+           Row 3: Detalhes (1fr - ocupa o resto)
+           Row 4: Rodapé (5mm) */
+        grid-template-rows: 13mm auto 1fr 6mm; 
+        gap: 1mm; /* Gaps mínimos */
+        align-items: center;
+    }
+
+    /* HEADER FRENTE */
+    .carteirinha-front .cart-header {
+        grid-column: 1 / -1; grid-row: 1;
+        display: flex; align-items: center; gap: 3mm;
+        border-bottom: 1pt solid rgba(255,255,255,0.4);
+        margin: 0; padding-bottom: 0.5mm; height: 100%;
+    }
+    .carteirinha-front .cart-logo { width: 10mm; height: 10mm; padding: 0.5mm; }
+    .carteirinha-front .cart-org-info h3 { font-size: 9pt; line-height: 1.1; margin: 0; font-weight: 800; white-space: normal; }
+    .carteirinha-front .cart-org-info small { font-size: 7pt; line-height: 1; display: block; margin-top: 0.5mm; white-space: normal; }
+
+    /* CORPO FRENTE */
+    .carteirinha-front .cart-body { display: contents; }
+
+    /* FOTO À ESQUERDA */
+    .carteirinha-front .cart-photo-frame {
+        width: 28mm; height: 36mm;
+        margin: 0; border: 1.5pt solid white;
+        grid-column: 1; grid-row: 2 / span 2; 
+        align-self: center; margin-top: 1mm;
+    }
+
+    /* DADOS À DIREITA (Nome e Curso) */
+    .carteirinha-front .cart-info-main { 
+        grid-column: 2; grid-row: 2;
+        text-align: left; margin-left: 2mm; margin-top: 1mm;
+        display: flex; flex-direction: column; justify-content: center;
+        align-items: flex-start; /* FIX: Evita que o fundo estique até o final */
+        margin-bottom: 1mm;
+    }
+    
+    .carteirinha-front .cart-info-main h2 { 
+        font-size: 12pt; margin-bottom: 0.5mm; line-height: 1.1; 
+        text-transform: uppercase; font-weight: 800;
+        white-space: normal; overflow: visible; 
+    }
+    .carteirinha-front .cart-info-main .cart-course { 
+        padding: 0.5mm 3mm; font-size: 8pt; border-radius: 3mm; 
+        margin-bottom: 0; display: inline-block;
+        background: rgba(255,255,255,0.2);
+        white-space: normal;
+        /* Garante que o fundo não ocupe 100% da largura, mas apenas o texto */
+        width: fit-content; 
+    }
+
+    /* DETALHES EXTRAS (CPF, Nasc, Matrícula) - Alinhado ao topo */
+    .carteirinha-front .cart-details-grid {
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 1mm;
+        grid-column: 2; grid-row: 3;
+        margin-left: 2mm; margin-top: 1mm;
+        align-self: flex-start;
+    }
+    .carteirinha-front .detail-item {
+        background: transparent; padding: 0; border: none; text-align: left;
+        margin-bottom: 0.5mm; display: flex; flex-direction: column;
+    }
+    .carteirinha-front .detail-label { 
+        font-size: 5.5pt; text-transform: uppercase; opacity: 0.8; 
+        display: block; margin-bottom: 0.5mm;
+    }
+    .carteirinha-front .detail-value { 
+        font-size: 7.5pt; font-weight: 700; font-family: monospace;
+        white-space: nowrap; 
+    }
+
+    /* CÓDIGO ÚNICO (RODAPÉ) - Compactado */
+    .cart-print-auth {
+        display: block !important;
+        grid-column: 1 / -1; grid-row: 4;
+        text-align: center; font-family: monospace; font-size: 8pt;
+        background: rgba(0,0,0,0.3); padding: 1mm; border-radius: 1mm;
+        margin-top: 0; align-self: end;
+    }
+    .cart-print-auth span { opacity: 0.7; font-size: 7pt; margin-right: 4px; }
+    .cart-print-auth strong { font-size: 9pt; letter-spacing: 1.5px; color: #fff; }
+
+    /* --- VERSO (Layout Horizontal Interno) --- */
+    .carteirinha-back {
+        padding: 4mm !important;
+        display: grid;
+        grid-template-columns: 40mm 1fr; 
+        grid-template-rows: 8mm 1fr 8mm; 
+        align-items: center;
+    }
+
+    /* Header Verso */
+    .carteirinha-back .cart-back-header {
+        grid-column: 1 / -1; grid-row: 1;
+        font-size: 8pt; border-bottom: 1pt solid rgba(255,255,255,0.3);
+        margin: 0; padding-bottom: 1mm; position: static; white-space: nowrap;
+    }
+
+    /* QR Code */
+    .carteirinha-back .qr-code-box {
+        grid-column: 1; grid-row: 2;
+        width: 35mm; height: 35mm; padding: 2mm; background: white; margin: 0;
+    }
+
+    /* Validade e Assinatura */
+    .carteirinha-back .validity-box {
+        grid-column: 2; grid-row: 2;
+        text-align: center; margin: 0;
+    }
+    .carteirinha-back .validity-label { font-size: 8pt; display: block; margin-bottom: 2mm; }
+    .carteirinha-back .validity-year { font-size: 36pt; font-weight: 900; line-height: 1; display: block; }
+
+    /* Footer Verso COM ASSINATURA BAIXA */
+    .carteirinha-back .cart-footer {
+        grid-column: 1 / -1; grid-row: 3;
+        position: static; padding: 0; margin: 0; border: none;
+        font-size: 7.5pt; align-self: end;
+        display: flex; flex-direction: column; align-items: center;
+    }
+    /* AJUSTE CRÍTICO: MARGEM NEGATIVA PARA DESCER A ASSINATURA */
+    .assinatura-box-print {
+        display: block !important; /* Exibe apenas na impressão */
+        width: 45mm; 
+        height: 15mm; 
+        margin-bottom: -8mm; /* Puxa para baixo, sobrepondo levemente o nome se necessário */
+        position: relative;
+        z-index: 5;
+    }
+    .assinatura-box-print img {
+        width: 100%; 
+        height: 100%; 
+        object-fit: contain; 
+        object-position: bottom center; /* Alinha a imagem na base da caixa */
+        filter: invert(1); /* Inverte se fundo for escuro */
+    }
+    .carteirinha-back .cart-sec-name { font-size: 9.5pt; margin-bottom: 1mm; }
+
+    /* Esconder botões na impressão */
+    .modal-actions-row, .cart-actions, .btn-close-modern, .btn-action-pri, .btn-action-sec, .btn-flip { display: none !important; }
+
+    /* Layout da Ficha A4 (Mantido) */
+    .ficha-container { font-family: Arial, sans-serif; color: #000; width: 100%; max-width: 210mm; margin: 0 auto; }
+    /* ... restante dos estilos de ficha mantidos ... */
+}
+
+@media (max-width: 1200px) {
+    .charts-wrapper { grid-template-columns: 1fr; height: auto; }
+}
