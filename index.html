@@ -166,7 +166,7 @@
         </div>
     </div>
 
-    <!-- MODAL DA CARTEIRINHA DIGITAL (ATUALIZADO V2.0 - ESTRUTURA PARA IMPRESSÃO OFICIAL) -->
+    <!-- MODAL DA CARTEIRINHA DIGITAL (ATUALIZADO V2.0 - APENAS VISUALIZAÇÃO) -->
     <div id="modal-carteirinha" class="modal-overlay hidden" style="z-index: 3000;">
         <div class="modal-content zoom-in transparent-modal">
             
@@ -213,12 +213,7 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- NOVO: Container para Código Único (Visível principalmente na Impressão) -->
-                        <div class="cart-print-auth">
-                            <span>CÓDIGO:</span>
-                            <strong id="cart-auth-code">---</strong>
-                        </div>
+                        <!-- Código Único removido da versão do aluno -->
                     </div>
 
                     <!-- VERSO -->
@@ -253,9 +248,7 @@
                 <button class="btn-flip" onclick="document.getElementById('cart-flip-container').classList.toggle('is-flipped')">
                     <i class="fa-solid fa-rotate"></i> Virar
                 </button>
-                <button class="btn-action-pri" onclick="window.print()">
-                    <i class="fa-solid fa-print"></i> Imprimir
-                </button>
+                <!-- Botão Imprimir REMOVIDO -->
             </div>
 
         </div>
