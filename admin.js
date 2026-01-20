@@ -62,6 +62,21 @@ function safeDate(val) {
     try { const d = new Date(val); return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('pt-BR'); } catch(e) { return '-'; }
 }
 
+// Helper para converter data DD/MM/YYYY ou ISO para YYYY-MM-DD (Formato do Input Date)
+function formatarDataParaInput(dataStr) {
+    if (!dataStr) return '';
+    // Se já estiver em ISO (contém T ou - na posição 4)
+    if (dataStr.includes('T')) return dataStr.split('T')[0];
+    if (dataStr.match(/^\d{4}-\d{2}-\d{2}$/)) return dataStr;
+    
+    // Tenta converter de PT-BR ou string simples
+    const d = new Date(dataStr);
+    if (!isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
+    }
+    return '';
+}
+
 // --- AUTENTICAÇÃO ---
 function toggleSenha() {
     const input = document.getElementById('admin-pass');
@@ -933,7 +948,16 @@ function abrirEdicaoInscricao(chave) {
     for (const [key, val] of Object.entries(dados)) {
         if (!ignorar.includes(key)) {
             const label = LABELS_TODOS_CAMPOS[key] || key;
-            const inputHtml = `<div style="margin-bottom:10px;"><label class="swal-label">${label}</label><input type="text" id="edit_aluno_${key}" value="${val}" class="swal-input-custom"></div>`;
+            
+            // CORREÇÃO DATA NASCIMENTO: Exibir como input date
+            let inputType = 'text';
+            let valorInput = val;
+            if (key === 'DataNascimento') {
+                inputType = 'date';
+                valorInput = formatarDataParaInput(val);
+            }
+
+            const inputHtml = `<div style="margin-bottom:10px;"><label class="swal-label">${label}</label><input type="${inputType}" id="edit_aluno_${key}" value="${valorInput}" class="swal-input-custom"></div>`;
             
             if (camposAcad.includes(key) || key.startsWith('Inst') || key.includes('Curso')) {
                 htmlCamposDireita += inputHtml;
@@ -997,6 +1021,12 @@ function abrirEdicaoInscricao(chave) {
                         </select>
                     </div>
 
+                    <!-- NOVO: Área de Motivo de Rejeição (inicialmente oculta) -->
+                    <div id="area-motivo-rejeicao" style="text-align: left; margin-bottom: 20px; display: none;">
+                        <label class="swal-label" style="color: #dc2626;">Motivo da Rejeição (Será enviado por e-mail)</label>
+                        <textarea id="motivo_rejeicao" class="swal-input-custom" style="height: 80px; border-color: #fecaca; background: #fef2f2;" placeholder="Explique o motivo da rejeição para o aluno..."></textarea>
+                    </div>
+
                     <!-- Cartão de Documento (se existir) -->
                     ${htmlDocCard}
                 </div>
@@ -1027,6 +1057,25 @@ function abrirEdicaoInscricao(chave) {
             </div>
         `,
         showCancelButton: true, confirmButtonText: 'Salvar Alterações', confirmButtonColor: '#2563eb',
+        didOpen: () => {
+            // Lógica para mostrar/esconder o campo de motivo
+            const selectStatus = document.getElementById('novo_status_modal');
+            const areaMotivo = document.getElementById('area-motivo-rejeicao');
+            
+            function toggleMotivo() {
+                if (selectStatus.value === 'Rejeitada') {
+                    areaMotivo.style.display = 'block';
+                } else {
+                    areaMotivo.style.display = 'none';
+                }
+            }
+            
+            // Checa inicialmente
+            toggleMotivo();
+            
+            // Adiciona listener
+            selectStatus.addEventListener('change', toggleMotivo);
+        },
         preConfirm: async () => {
             const novosDados = {};
             for (const key of Object.keys(dados)) { 
@@ -1037,6 +1086,13 @@ function abrirEdicaoInscricao(chave) {
             }
             
             const novoStatus = document.getElementById('novo_status_modal').value;
+            const motivoRejeicao = document.getElementById('motivo_rejeicao').value;
+
+            // Validação simples: Se rejeitar, exigir motivo? (Opcional, mas recomendado)
+            if (novoStatus === 'Rejeitada' && !motivoRejeicao.trim()) {
+                Swal.showValidationMessage('Por favor, informe o motivo da rejeição para o aluno.');
+                return false;
+            }
             
             // Coleta Arquivos
             const arqs = {};
@@ -1052,14 +1108,28 @@ function abrirEdicaoInscricao(chave) {
                 arqs.doc = { data: await toBase64(f), mime: 'application/pdf' };
             }
 
-            return { novosDados, status: novoStatus, arquivos: Object.keys(arqs).length > 0 ? arqs : null };
+            return { 
+                novosDados, 
+                status: novoStatus, 
+                motivo: motivoRejeicao, // Passa o motivo para o backend
+                arquivos: Object.keys(arqs).length > 0 ? arqs : null 
+            };
         }
     }).then((result) => {
         if (result.isConfirmed) {
             showLoading('Salvando...');
             
             const promiseStatus = (result.value.status !== inscricao.status) ? 
-                fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'atualizarStatus', senha: sessionStorage.getItem('admin_token'), chave: chave, novoStatus: result.value.status }) }) : 
+                fetch(URL_API, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ 
+                        action: 'atualizarStatus', 
+                        senha: sessionStorage.getItem('admin_token'), 
+                        chave: chave, 
+                        novoStatus: result.value.status,
+                        motivo: result.value.motivo // Envia motivo se houver
+                    }) 
+                }) : 
                 Promise.resolve();
 
             promiseStatus.then(() => {
