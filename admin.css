@@ -813,17 +813,15 @@ html, body {
     .carteirinha-back .cart-sec-name { font-size: 9.5pt; margin-bottom: 1mm; }
 
     /* --- LOGO CARIMBO OVERLAY (IMPRESSÃO) --- */
-    /* CORREÇÃO DEFINITIVA: POSIÇÃO INFERIOR DIREITA ("AO LADO DA ASSINATURA") */
     .cart-logo-verso-overlay {
         display: block !important;
         position: absolute !important;
+        /* AJUSTE SOLICITADO: Descer mais (aprox 4.5cm a 5cm do topo) */
+        top: 48mm !important;  
         
-        /* Remover top para usar bottom */
-        top: auto !important;
-        bottom: 8mm !important;  /* Alinhado na parte inferior */
-        right: 5mm !important;   /* Alinhado a direita */
+        right: 5mm !important;
         
-        /* Tamanho Ajustado para 25mm (Grande mas seguro) */
+        /* Tamanho 25mm */
         width: 25mm !important;
         height: 25mm !important;
         
