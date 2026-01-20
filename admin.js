@@ -521,6 +521,9 @@ function abrirEdicaoEvento(evento) {
         </div>`;
     });
 
+    // COR ATUAL DA CARTEIRINHA
+    const corAtual = config.corCarteirinha || '#2563eb';
+
     Swal.fire({
         title: 'Editar Evento',
         width: '900px',
@@ -541,7 +544,14 @@ function abrirEdicaoEvento(evento) {
                     <label class="swal-label">Limite de Vagas (Opcional)</label>
                     <input type="number" id="edit_limite" class="swal-input-custom" placeholder="0 para ilimitado" value="${limite}">
                 </div>
-                <div></div>
+                <div>
+                    <!-- NOVO: Cor da Carteirinha deste Evento -->
+                    <label class="swal-label">Cor da Carteirinha</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="color" id="edit_cor_picker" class="swal-input-custom" style="width:50px; padding:0; height:38px;" value="${corAtual}" onchange="document.getElementById('edit_cor').value = this.value">
+                        <input type="text" id="edit_cor" class="swal-input-custom" value="${corAtual}" placeholder="#2563eb">
+                    </div>
+                </div>
             </div>
             
             <div class="swal-full" style="margin-top:10px;">
@@ -594,7 +604,8 @@ function abrirEdicaoEvento(evento) {
                 cidadesPermitidas: cidadesArr,
                 camposPersonalizados: extras,
                 limiteInscricoes: document.getElementById('edit_limite').value,
-                camposTexto: camposSelecionados 
+                camposTexto: camposSelecionados,
+                corCarteirinha: document.getElementById('edit_cor').value // Salva a cor
             }; 
         }
     }).then((res) => {
@@ -674,6 +685,18 @@ function modalNovoEvento() {
                         <input type="number" id="swal-limite" class="swal-input-custom" placeholder="0 para ilimitado">
                     </div>
                 </div>
+
+                <div class="swal-grid-2" style="margin-top: 10px;">
+                    <div>
+                        <!-- NOVO: Cor da Carteirinha ao Criar -->
+                        <label class="swal-label">Cor da Carteirinha</label>
+                        <div style="display:flex; gap:10px;">
+                            <input type="color" id="swal-cor-picker" class="swal-input-custom" style="width:50px; padding:0; height:38px;" value="#2563eb" onchange="document.getElementById('swal-cor').value = this.value">
+                            <input type="text" id="swal-cor" class="swal-input-custom" value="#2563eb" placeholder="#2563eb">
+                        </div>
+                    </div>
+                    <div></div>
+                </div>
                 
                 <div class="swal-full" style="margin-top:10px;">
                     <label class="swal-label">Observações (Somente Leitura)</label>
@@ -726,7 +749,6 @@ function modalNovoEvento() {
             }
 
             const sels = []; 
-            
             CAMPOS_PADRAO.forEach(c => { 
                 const el = document.getElementById(`check_${c.key}`);
                 if(el && el.checked) sels.push(c.key); 
@@ -749,7 +771,8 @@ function modalNovoEvento() {
                     exigeFicha: document.getElementById('req_ficha').checked,
                     emiteCarteirinha: document.getElementById('emitir_carteirinha').checked,
                     cidadesPermitidas: cidadesArr,
-                    limiteInscricoes: document.getElementById('swal-limite').value
+                    limiteInscricoes: document.getElementById('swal-limite').value,
+                    corCarteirinha: document.getElementById('swal-cor').value // Salva a cor
                 }, 
                 status: 'Ativo'
             }
@@ -828,8 +851,6 @@ function renderizarProximaPagina() {
         let d = {}; try { d = JSON.parse(ins.dadosJson); } catch(e){}
         const checked = selecionados.has(ins.chave) ? 'checked' : '';
         
-        // --- AQUI ESTÁ A LÓGICA DA NOVA FICHA ---
-        // Ao clicar neste botão, chamamos a nova função gerarFicha(chave)
         let btnFicha = `<button class="btn-icon bg-view" style="background:#6366f1;" onclick="gerarFicha('${ins.chave}')" title="Gerar Ficha"><i class="fa-solid fa-print"></i></button>`;
         
         let btnCartAdm = '';
@@ -1442,6 +1463,13 @@ function imprimirCarteirinhaAdmin(chave) {
         document.getElementById('cart-admin-cpf').innerText = aluno.cpf || '---';
         document.getElementById('cart-admin-mat').innerText = aluno.matricula || '---';
         
+        // NOVO: Exibe Nome do Evento (se disponível)
+        if (aluno.nome_evento) {
+            document.getElementById('cart-admin-sys-name').innerText = aluno.nome_evento.toUpperCase();
+        } else if(config.nomeSistema) {
+            document.getElementById('cart-admin-sys-name').innerText = config.nomeSistema.toUpperCase();
+        }
+
         // Código Único na Frente (Visível na impressão)
         document.getElementById('cart-admin-auth-code').innerText = aluno.chave || chave;
 
@@ -1461,13 +1489,12 @@ function imprimirCarteirinhaAdmin(chave) {
         img.onerror = function() { this.src = 'https://via.placeholder.com/150?text=FOTO'; };
 
         // 2. Preenche Verso & Estilo
-        if(config.nomeSistema) document.getElementById('cart-admin-sys-name').innerText = config.nomeSistema.toUpperCase();
-        
         const secName = config.nomeSecretario || "Secretário";
         const deptName = config.nomeSecretaria || "Secretaria de Educação";
         
         document.getElementById('cart-admin-sec-name').innerText = secName;
-        // Atualiza legenda da secretaria
+        
+        // Atualiza legenda da secretaria (Small)
         const orgInfoSmall = document.querySelector('#cart-admin-sys-name + small');
         if(orgInfoSmall) orgInfoSmall.innerText = deptName;
         
@@ -1476,10 +1503,9 @@ function imprimirCarteirinhaAdmin(chave) {
             document.getElementById('cart-admin-logo').src = formatarUrlDrive(config.urlLogo);
         }
 
-        // Cor Dinâmica
-        if(config.corCarteirinha) {
-            document.documentElement.style.setProperty('--card-color', config.corCarteirinha);
-        }
+        // Cor Dinâmica (Prioridade: Evento > Sistema)
+        const corFinal = aluno.cor_evento || config.corCarteirinha || '#2563eb';
+        document.documentElement.style.setProperty('--card-color', corFinal);
 
         // Validade
         document.getElementById('cart-admin-validade-ano').innerText = aluno.ano_vigencia || new Date().getFullYear();
