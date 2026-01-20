@@ -817,13 +817,13 @@ html, body {
         display: block !important;
         position: absolute !important;
         /* AJUSTE SOLICITADO: Descer mais (aprox 4.5cm a 5cm do topo) */
-        top: 53mm !important;  
+        top: 48mm !important;  
         
         right: 5mm !important;
         
         /* Tamanho 25mm */
-        width: 50mm !important;
-        height: 50mm !important;
+        width: 30mm !important;
+        height: 30mm !important;
         
         z-index: 100 !important;
         pointer-events: none;
@@ -843,4 +843,5 @@ html, body {
 @media (max-width: 1200px) {
     .charts-wrapper { grid-template-columns: 1fr; height: auto; }
 }
+
 
