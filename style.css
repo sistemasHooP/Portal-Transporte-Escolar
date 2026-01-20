@@ -644,7 +644,7 @@ input[type="file"] { display: none; }
         justify-content: center;
         align-items: center;
         align-self: flex-end; /* Joga para baixo */
-        height: 18mm; /* Altura fixa para logo */
+        height: 36mm; /* Altura fixa para logo */
     }
     .logo-sme-virtual {
         max-height: 100%; width: auto; object-fit: contain;
@@ -685,3 +685,4 @@ input[type="file"] { display: none; }
     .hero-header { height: 260px; }
     .text-container h1 { font-size: 1.4rem; }
 }
+
