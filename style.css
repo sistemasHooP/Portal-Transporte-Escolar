@@ -326,17 +326,46 @@ input[type="file"] { display: none; }
     display: flex; flex-direction: column; padding: 20px;
     transform: rotateY(0deg); -webkit-transform: rotateY(0deg);
 }
-.cart-header {
-    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+
+/* NOVO HEADER: 3 LINHAS */
+.cart-header-novo {
+    display: flex;
+    align-items: flex-start; /* Topo para caber as 3 linhas */
+    gap: 12px;
+    margin-bottom: 15px;
     position: relative; z-index: 2; text-align: left; padding-bottom: 10px;
     border-bottom: 1px solid rgba(255,255,255,0.2);
 }
+
 .cart-logo {
-    width: 45px; height: 45px; background: white; border-radius: 50%;
+    width: 48px; height: 48px; background: white; border-radius: 50%;
     padding: 3px; object-fit: contain; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    flex-shrink: 0;
 }
-.cart-org-info h3 { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2; text-transform: uppercase; margin: 0; }
-.cart-org-info small { font-size: 0.7rem; text-transform: uppercase; opacity: 0.9; font-weight: 300; display: block; margin-top: 2px;}
+
+/* Container de Textos do Novo Header */
+.cart-org-info-novo {
+    display: flex; flex-direction: column; justify-content: center;
+}
+
+.linha-1-sistema {
+    font-size: 0.8rem; font-weight: 800; text-transform: uppercase;
+    line-height: 1.1; margin-bottom: 2px; color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.linha-2-secretaria {
+    font-size: 0.65rem; font-weight: 400; text-transform: uppercase;
+    opacity: 0.9; line-height: 1.1; margin-bottom: 2px;
+}
+
+.linha-3-evento {
+    font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+    color: #fbbf24; /* Destaque Amarelo */
+    line-height: 1.1;
+}
+
+/* Restante do Corpo da Frente */
 .cart-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 2; gap: 15px; }
 .cart-photo-frame {
     width: 110px; height: 140px; background: #e2e8f0; border: 3px solid white;
@@ -361,7 +390,7 @@ input[type="file"] { display: none; }
 .carteirinha-back {
     transform: rotateY(180deg); -webkit-transform: rotateY(180deg);
     display: flex; flex-direction: column; padding: 20px;
-    background: linear-gradient(135deg, var(--card-color, #1e293b), #000000);
+    background: linear-gradient(135deg, var(--card-color, #2563eb), #000000);
 }
 .cart-back-header {
     text-align: center; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px;
@@ -505,43 +534,31 @@ input[type="file"] { display: none; }
 .skeleton-text { width: 100%; height: 60px; }
 .skeleton-btn { width: 100%; height: 50px; margin-top: auto; border-radius: 50px; }
 
-/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + DETALHES ALINHADOS + ASSINATURA + LOGO CENTRAL --- */
+/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO --- */
 @media print {
-    /* Forçar orientação Retrato na folha para empilhar os cards largos */
     @page { 
         size: portrait; 
         margin: 10mm; 
     }
 
-    /* Oculta tudo por padrão */
-    body > * { display: none !important; }
+    body > *:not(#modal-carteirinha-admin) { display: none !important; }
     
-    /* Regra A: Se o print-layer estiver ativo (Fichas/Relatórios) */
-    #print-layer { 
-        display: block !important; 
-        position: absolute; top: 0; left: 0; width: 100%; 
-        background: white; 
-        padding: 0; margin: 0; 
-    }
-    #print-layer * { visibility: visible; }
-
-    /* Regra B: Se o Modal de Carteirinha Admin estiver aberto */
-    #modal-carteirinha-admin:not(.hidden) {
-        display: block !important; 
-        position: absolute; top: 0; left: 0; 
+    #modal-carteirinha-admin {
+        display: block !important; position: absolute; top: 0; left: 0; 
         width: 100%; background: white; z-index: 9999; margin: 0; padding: 0;
         visibility: visible;
     }
     #modal-carteirinha-admin:not(.hidden) * { visibility: visible; }
+    #modal-carteirinha { display: none !important; }
+
     .modal-content, .modal-content-cart { box-shadow: none; padding: 0; margin: 0; background: transparent; }
     
-    /* WRAPPER EMPILHADO */
     .carteirinha-wrapper {
         perspective: none; height: auto; margin-top: 10mm;
         display: flex; 
-        flex-direction: column; /* EMPILHADO VERTICALMENTE */
+        flex-direction: column; 
         gap: 5mm; 
-        align-items: center; /* Centraliza na folha */
+        align-items: center; 
         justify-content: start;
         width: 100% !important; 
     }
@@ -551,7 +568,6 @@ input[type="file"] { display: none; }
         display: contents; 
     }
     
-    /* DIMENSÕES HORIZONTAIS DO CARTÃO (120mm x 75mm) */
     .carteirinha-face {
         position: relative; transform: none !important;
         width: 120mm; height: 75mm; /* Formato LARGO */
@@ -575,15 +591,11 @@ input[type="file"] { display: none; }
 
     /* --- FRENTE (Layout Compacto) --- */
     .carteirinha-front {
-        padding: 2.5mm !important; /* Margem interna reduzida para caber tudo */
+        padding: 2.5mm !important; 
         display: grid;
-        grid-template-columns: 30mm 1fr; /* Coluna Foto | Coluna Dados */
-        /* Row 1: Header (13mm)
-           Row 2: Nome/Curso (Auto)
-           Row 3: Detalhes (1fr - ocupa o resto)
-           Row 4: Rodapé (5mm) */
+        grid-template-columns: 30mm 1fr; 
         grid-template-rows: 13mm auto 1fr 6mm; 
-        gap: 1mm; /* Gaps mínimos */
+        gap: 1mm; 
         align-items: center;
     }
 
@@ -614,10 +626,9 @@ input[type="file"] { display: none; }
         grid-column: 2; grid-row: 2;
         text-align: left; margin-left: 2mm; margin-top: 1mm;
         display: flex; flex-direction: column; justify-content: center;
-        align-items: flex-start; /* FIX: Evita que o fundo estique até o final */
+        align-items: flex-start; 
         margin-bottom: 1mm;
     }
-    
     .carteirinha-front .cart-info-main h2 { 
         font-size: 12pt; margin-bottom: 0.5mm; line-height: 1.1; 
         text-transform: uppercase; font-weight: 800;
@@ -628,7 +639,6 @@ input[type="file"] { display: none; }
         margin-bottom: 0; display: inline-block;
         background: rgba(255,255,255,0.2);
         white-space: normal;
-        /* Garante que o fundo não ocupe 100% da largura, mas apenas o texto */
         width: fit-content; 
     }
 
