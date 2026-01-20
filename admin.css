@@ -460,7 +460,7 @@ html, body {
     justify-content: center;
 }
 
-/* AS 3 NOVAS CLASSES (Adicionadas ao Admin) */
+/* AS 3 NOVAS CLASSES (Adicionadas ao Admin para visualização correta) */
 .line-1-sistema {
     font-size: 0.8rem;
     font-weight: 800;
@@ -695,7 +695,7 @@ html, body {
         display: grid;
         grid-template-columns: 40mm 1fr;
         /* Rows: Header | QR+Ano | Footer Area */
-        grid-template-rows: 8mm 1fr 25mm; /* Rodapé aumentado para 25mm */
+        grid-template-rows: 18mm auto 25mm; /* Rodapé aumentado para 25mm */
         padding: 4mm;
         align-items: center;
     }
@@ -810,7 +810,11 @@ html, body {
 
     /* --- VERSO (Layout Horizontal Interno) --- */
     .carteirinha-back {
-        /* O Grid principal já foi definido na classe .carteirinha-face acima para impressão */
+        padding: 4mm !important;
+        display: grid;
+        grid-template-columns: 40mm 1fr;
+        grid-template-rows: 8mm 1fr 22mm; /* Rodapé reduzido para equilibrar */
+        align-items: center;
     }
 
     /* Header Verso */
@@ -825,6 +829,7 @@ html, body {
         grid-column: 1; grid-row: 2;
         width: 35mm; height: 35mm; padding: 2mm; background: white; margin: 0;
         align-self: center; justify-self: center;
+        margin-top: 3mm; /* Empurrãozinho para centralizar visualmente */
     }
 
     /* Validade */
