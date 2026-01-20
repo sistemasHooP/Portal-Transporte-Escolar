@@ -16,7 +16,7 @@
     /* Superfícies */
     --bg-body: #f3f4f6;        
     --bg-card: #ffffff;        
-    --bg-sidebar: #0f172a;      
+    --bg-sidebar: #0f172a;       
 
     /* Texto */
     --text-main: #1e293b;
@@ -375,7 +375,6 @@ html, body {
     height: 520px; /* Altura fixa */
     margin: 0 auto;
     perspective: 1200px;
-    /* Correção para iPhone/Safari */
     -webkit-perspective: 1200px;
 }
 
@@ -386,7 +385,6 @@ html, body {
     text-align: center;
     transition: transform 0.8s;
     transform-style: preserve-3d;
-    /* Correção Crítica para Mobile: */
     -webkit-transform-style: preserve-3d;
     cursor: pointer;
 }
@@ -400,10 +398,8 @@ html, body {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    /* Correção Crítica: Ocultar o verso em todos os browsers */
     -webkit-backface-visibility: hidden; 
     backface-visibility: hidden;
-    /* Hack para estabilidade no iOS */
     transform: translateZ(0); 
     -webkit-transform: translateZ(0);
     
@@ -416,9 +412,7 @@ html, body {
 
 /* Frente - CORREÇÃO DE FUNDO */
 .carteirinha-front {
-    /* Z-index maior para garantir que ela começa na frente */
     z-index: 2;
-    /* Gradiente de pontos E Gradiente de cor juntos */
     background: 
         radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
         linear-gradient(135deg, var(--card-color, #2563eb), #0f172a);
@@ -426,7 +420,6 @@ html, body {
     display: flex;
     flex-direction: column;
     padding: 20px;
-    /* Rotação inicial explicita */
     transform: rotateY(0deg);
     -webkit-transform: rotateY(0deg);
 }
@@ -514,6 +507,8 @@ html, body {
 
 /* Verso */
 .carteirinha-back {
+    /* CORREÇÃO CRÍTICA: Position Relative para que o filho absolute funcione dentro */
+    position: relative !important;
     transform: rotateY(180deg);
     -webkit-transform: rotateY(180deg);
     display: flex;
@@ -569,6 +564,21 @@ html, body {
 }
 .cart-sec-name { font-weight: 600; display: block; margin-bottom: 2px; text-transform: uppercase; }
 
+/* LOGO VERSO OVERLAY - ESTILOS BASE (Admin) */
+.cart-logo-verso-overlay {
+    /* Mostra na tela do Admin para preview, mas com posição fixa */
+    position: absolute;
+    top: 20px; 
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    z-index: 50;
+    pointer-events: none;
+}
+.cart-logo-verso-overlay img {
+    width: 100%; height: 100%; object-fit: contain;
+}
+
 /* Botões do Modal Admin (REDONDOS E BONITOS) */
 .cart-actions { margin-top: 25px; display: flex; justify-content: center; gap: 15px; }
 
@@ -596,7 +606,7 @@ html, body {
     /* Forçar orientação Retrato na folha para empilhar os cards largos */
     @page { 
         size: portrait; 
-        margin: 0; 
+        margin: 10mm; /* Margem segura para não cortar */
     }
 
     /* Oculta tudo por padrão */
@@ -639,7 +649,7 @@ html, body {
     
     /* DIMENSÕES HORIZONTAIS DO CARTÃO (120mm x 75mm) */
     .carteirinha-face {
-        position: relative; transform: none !important;
+        position: relative !important; transform: none !important;
         width: 120mm; height: 75mm; /* Formato LARGO */
         outline: 1px dashed #ccc; 
         box-sizing: border-box;
@@ -752,6 +762,8 @@ html, body {
         grid-template-columns: 40mm 1fr; 
         grid-template-rows: 8mm 1fr 8mm; 
         align-items: center;
+        /* GARANTE QUE O PAI DO CARIMBO SEJA RELATIVO */
+        position: relative !important;
     }
 
     /* Header Verso */
@@ -800,12 +812,22 @@ html, body {
     }
     .carteirinha-back .cart-sec-name { font-size: 9.5pt; margin-bottom: 1mm; }
 
+    /* --- LOGO CARIMBO OVERLAY (IMPRESSÃO) --- */
+    .cart-logo-verso-overlay {
+        display: block !important;
+        position: absolute !important;
+        top: 2mm !important; 
+        right: 2mm !important;
+        width: 15mm !important;
+        height: 15mm !important;
+        z-index: 100 !important; /* Z-INDEX ALTO PARA FICAR POR CIMA */
+    }
+
     /* Esconder botões na impressão */
     .modal-actions-row, .cart-actions, .btn-close-modern, .btn-action-pri, .btn-action-sec, .btn-flip { display: none !important; }
 
     /* Layout da Ficha A4 (Mantido) */
     .ficha-container { font-family: Arial, sans-serif; color: #000; width: 100%; max-width: 210mm; margin: 0 auto; }
-    /* ... restante dos estilos de ficha mantidos ... */
 }
 
 @media (max-width: 1200px) {
