@@ -16,7 +16,7 @@
     /* Superfícies */
     --bg-body: #f3f4f6;        
     --bg-card: #ffffff;        
-    --bg-sidebar: #0f172a;      
+    --bg-sidebar: #0f172a;       
 
     /* Texto */
     --text-main: #1e293b;
@@ -431,9 +431,10 @@ html, body {
     -webkit-transform: rotateY(0deg);
 }
 
+/* --- ATUALIZAÇÃO: CABEÇALHO 3 LINHAS (Estilos Admin) --- */
 .cart-header {
     display: flex;
-    align-items: center;
+    align-items: center; /* Centraliza verticalmente com a logo */
     gap: 12px;
     margin-bottom: 20px;
     position: relative;
@@ -444,16 +445,49 @@ html, body {
 }
 
 .cart-logo {
-    width: 45px; height: 45px;
+    width: 50px; height: 50px;
     background: white;
     border-radius: 50%;
     padding: 3px;
     object-fit: contain;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    flex-shrink: 0;
 }
 
-.cart-org-info h3 { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2; text-transform: uppercase; margin: 0; }
-.cart-org-info small { font-size: 0.7rem; text-transform: uppercase; opacity: 0.9; font-weight: 300; display: block; margin-top: 2px;}
+.cart-org-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* AS 3 NOVAS CLASSES (Adicionadas ao Admin) */
+.line-1-sistema {
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    line-height: 1.1;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    color: #ffffff;
+}
+
+.line-2-secretaria {
+    font-size: 0.65rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    opacity: 0.9;
+    line-height: 1.1;
+    margin-bottom: 2px;
+}
+
+.line-3-evento {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #fbbf24; /* Amarelo destaque */
+    line-height: 1.1;
+}
+/* ----------------------------------------------- */
 
 .cart-body { 
     flex: 1; 
@@ -671,11 +705,11 @@ html, body {
         padding: 2.5mm !important; /* Margem interna reduzida para caber tudo */
         display: grid;
         grid-template-columns: 30mm 1fr; /* Coluna Foto | Coluna Dados */
-        /* Row 1: Header (13mm)
+        /* Row 1: Header (AUMENTADO DE 13mm PARA 18mm PARA NÃO ESTOURAR)
            Row 2: Nome/Curso (Auto)
            Row 3: Detalhes (1fr - ocupa o resto)
            Row 4: Rodapé (5mm) */
-        grid-template-rows: 13mm auto 1fr 6mm; 
+        grid-template-rows: 18mm auto 1fr 6mm; 
         gap: 1mm; /* Gaps mínimos */
         align-items: center;
     }
@@ -688,26 +722,43 @@ html, body {
         margin: 0; padding-bottom: 0.5mm; height: 100%;
     }
     .carteirinha-front .cart-logo { width: 10mm; height: 10mm; padding: 0.5mm; }
-    .carteirinha-front .cart-org-info h3 { font-size: 9pt; line-height: 1.1; margin: 0; font-weight: 800; white-space: normal; }
-    .carteirinha-front .cart-org-info small { font-size: 7pt; line-height: 1; display: block; margin-top: 0.5mm; white-space: normal; }
+    
+    /* --- CORREÇÃO DE IMPRESSÃO DO HEADER 3 LINHAS --- */
+    .carteirinha-front .cart-org-info {
+        display: flex; flex-direction: column; justify-content: center;
+    }
+    /* Força Estilos Iguais ao Virtual */
+    .carteirinha-front .line-1-sistema {
+        font-size: 8pt; line-height: 1.1; font-weight: 800; margin-bottom: 1px;
+        color: white !important; -webkit-text-stroke: 0.3px white; /* Trick para mais negrito */
+    }
+    .carteirinha-front .line-2-secretaria {
+        font-size: 6.5pt; line-height: 1; opacity: 0.9; margin-bottom: 1px;
+        color: white !important;
+    }
+    .carteirinha-front .line-3-evento {
+        font-size: 7pt; line-height: 1.1; font-weight: 700; color: #fbbf24 !important;
+        -webkit-text-stroke: 0.2px #fbbf24; /* Trick para mais negrito */
+    }
+    /* ------------------------------------------------ */
 
     /* CORPO FRENTE */
     .carteirinha-front .cart-body { display: contents; }
 
-    /* FOTO À ESQUERDA */
+    /* FOTO À ESQUERDA - Empurrada um pouco para baixo se precisar */
     .carteirinha-front .cart-photo-frame {
         width: 28mm; height: 36mm;
         margin: 0; border: 1.5pt solid white;
         grid-column: 1; grid-row: 2 / span 2; 
-        align-self: center; margin-top: 1mm;
+        align-self: flex-start; margin-top: 2mm; /* Aumentado margin top */
     }
 
-    /* DADOS À DIREITA (Nome e Curso) */
+    /* DADOS À DIREITA (Nome e Curso) - Empurrado para baixo */
     .carteirinha-front .cart-info-main { 
         grid-column: 2; grid-row: 2;
-        text-align: left; margin-left: 2mm; margin-top: 1mm;
+        text-align: left; margin-left: 2mm; margin-top: 2mm; /* Aumentado margin top */
         display: flex; flex-direction: column; justify-content: center;
-        align-items: flex-start; /* FIX: Evita que o fundo estique até o final */
+        align-items: flex-start;
         margin-bottom: 1mm;
     }
     
@@ -721,11 +772,10 @@ html, body {
         margin-bottom: 0; display: inline-block;
         background: rgba(255,255,255,0.2);
         white-space: normal;
-        /* Garante que o fundo não ocupe 100% da largura, mas apenas o texto */
         width: fit-content; 
     }
 
-    /* DETALHES EXTRAS (CPF, Nasc, Matrícula) - Alinhado ao topo */
+    /* DETALHES EXTRAS */
     .carteirinha-front .cart-details-grid {
         display: grid; 
         grid-template-columns: 1fr 1fr; 
