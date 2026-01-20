@@ -822,7 +822,7 @@ html, body {
         right: 8mm !important;
         
         /* Tamanho 25mm */
-        width: 25mm !important;
+        width: 50mm !important;
         height: 25mm !important;
         
         z-index: 100 !important;
@@ -843,6 +843,7 @@ html, body {
 @media (max-width: 1200px) {
     .charts-wrapper { grid-template-columns: 1fr; height: auto; }
 }
+
 
 
 
