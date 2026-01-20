@@ -11,7 +11,7 @@
     --primary: #2563eb;        
     --primary-dark: #1e40af;    
     --primary-light: #eff6ff; 
-    --secondary: #0ea5e9;       
+    --secondary: #0ea5e9;        
     --accent: #f59e0b;        
     
     /* Variável Dinâmica da Carteirinha (Padrão) */
@@ -20,8 +20,8 @@
     /* Cores de Fundo e Texto */
     --bg-body: #f1f5f9;        
     --bg-card: #ffffff;        
-    --text-main: #1e293b;       
-    --text-muted: #64748b;      
+    --text-main: #1e293b;        
+    --text-muted: #64748b;       
     
     /* Sombras e Bordas */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -365,19 +365,33 @@ input[type="file"] { display: none; }
 }
 .cart-back-header {
     text-align: center; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px;
-    opacity: 0.6; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;
+    opacity: 0.6; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;
 }
 .qr-code-box {
-    width: 160px; height: 160px; background: white; padding: 10px;
-    border-radius: 12px; margin: 0 auto 20px; display: flex; align-items: center;
+    width: 130px; height: 130px; background: white; padding: 10px;
+    border-radius: 12px; margin: 0 auto 10px; display: flex; align-items: center;
     justify-content: center;
 }
 .qr-code-box img { width: 100%; height: 100%; object-fit: contain; }
-.validity-box { text-align: center; margin-bottom: 20px; }
+.validity-box { text-align: center; margin-bottom: 0; }
 .validity-label { font-size: 0.8rem; opacity: 0.8; text-transform: uppercase; display: block; }
-.validity-year { font-size: 3.5rem; font-weight: 800; line-height: 1; color: var(--accent); text-shadow: 0 4px 10px rgba(0,0,0,0.3); display: block; }
-.cart-footer { margin-top: auto; text-align: center; font-size: 0.65rem; opacity: 0.6; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
+.validity-year { font-size: 3rem; font-weight: 800; line-height: 1; color: var(--accent); text-shadow: 0 4px 10px rgba(0,0,0,0.3); display: block; }
+
+/* LOGO CENTRALIZADA */
+.logo-center-container {
+    display: flex; justify-content: center; align-items: center;
+    flex: 1; padding: 10px 0;
+}
+.logo-sme-virtual {
+    max-height: 50px; width: auto; object-fit: contain;
+}
+
+.cart-footer { 
+    margin-top: 0; text-align: center; font-size: 0.65rem; opacity: 0.6; 
+    border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; 
+}
 .cart-sec-name { font-weight: 600; display: block; margin-bottom: 2px; text-transform: uppercase; }
+.cart-sec-role { font-size: 0.65rem; opacity: 0.7; text-transform: uppercase; display: block; }
 
 /* BOTÕES DO MODAL */
 .modal-actions-row { margin-top: 25px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
@@ -457,39 +471,33 @@ input[type="file"] { display: none; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + CENTRALIZADO + MARGEM SEGURA --- */
+/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO --- */
 @media print {
     @page { 
         size: portrait; 
-        margin: 10mm; /* MARGEM DE SEGURANÇA ADICIONADA */
+        margin: 10mm; 
     }
 
-    /* ESCONDE TUDO EXCETO O MODAL DO ADMIN */
     body > *:not(#modal-carteirinha-admin) { display: none !important; }
     
-    /* MODAL ADMIN: VISÍVEL NA IMPRESSÃO */
     #modal-carteirinha-admin {
         display: block !important; position: absolute; top: 0; left: 0; 
         width: 100%; background: white; z-index: 9999; margin: 0; padding: 0;
         visibility: visible;
     }
     #modal-carteirinha-admin * { visibility: visible; }
-    
-    /* GARANTE QUE O MODAL DO ALUNO NÃO SEJA IMPRESSO */
     #modal-carteirinha { display: none !important; }
 
     .modal-content, .modal-content-cart { box-shadow: none; padding: 0; margin: 0; background: transparent; }
     
-    /* WRAPPER EMPILHADO E CENTRALIZADO */
     .carteirinha-wrapper {
         perspective: none; height: auto; margin-top: 10mm;
         display: flex; 
-        flex-direction: column; /* EMPILHADO VERTICALMENTE */
+        flex-direction: column; 
         gap: 5mm; 
-        align-items: center; /* Centraliza na folha */
+        align-items: center; 
         justify-content: start;
-        width: auto !important; /* Deixa a largura automática para respeitar o centro */
-        margin-left: auto; margin-right: auto; /* Centralização horizontal clássica */
+        width: 100% !important; 
     }
     
     .carteirinha-card-inner {
@@ -497,7 +505,6 @@ input[type="file"] { display: none; }
         display: contents; 
     }
     
-    /* DIMENSÕES HORIZONTAIS DO CARTÃO (120mm x 75mm) */
     .carteirinha-face {
         position: relative; transform: none !important;
         width: 120mm; height: 75mm; /* Formato LARGO */
@@ -515,15 +522,11 @@ input[type="file"] { display: none; }
 
     /* --- FRENTE (Layout Compacto) --- */
     .carteirinha-front {
-        padding: 2.5mm !important; /* Margem interna reduzida para caber tudo */
+        padding: 2.5mm !important; 
         display: grid;
-        grid-template-columns: 30mm 1fr; /* Coluna Foto | Coluna Dados */
-        /* Row 1: Header (13mm)
-           Row 2: Nome/Curso (Auto)
-           Row 3: Detalhes (1fr - ocupa o resto)
-           Row 4: Rodapé (5mm) */
+        grid-template-columns: 30mm 1fr; 
         grid-template-rows: 13mm auto 1fr 6mm; 
-        gap: 1mm; /* Gaps mínimos */
+        gap: 1mm; 
         align-items: center;
     }
 
@@ -554,10 +557,9 @@ input[type="file"] { display: none; }
         grid-column: 2; grid-row: 2;
         text-align: left; margin-left: 2mm; margin-top: 1mm;
         display: flex; flex-direction: column; justify-content: center;
-        align-items: flex-start; /* FIX: Evita que o fundo estique até o final */
+        align-items: flex-start; 
         margin-bottom: 1mm;
     }
-    
     .carteirinha-front .cart-info-main h2 { 
         font-size: 12pt; margin-bottom: 0.5mm; line-height: 1.1; 
         text-transform: uppercase; font-weight: 800;
@@ -568,7 +570,6 @@ input[type="file"] { display: none; }
         margin-bottom: 0; display: inline-block;
         background: rgba(255,255,255,0.2);
         white-space: normal;
-        /* Garante que o fundo não ocupe 100% da largura, mas apenas o texto */
         width: fit-content; 
     }
 
@@ -610,7 +611,7 @@ input[type="file"] { display: none; }
         padding: 4mm !important;
         display: grid;
         grid-template-columns: 40mm 1fr; 
-        grid-template-rows: 8mm 1fr 8mm; 
+        grid-template-rows: 8mm 1fr 15mm; 
         align-items: center;
     }
 
@@ -627,31 +628,56 @@ input[type="file"] { display: none; }
         width: 35mm; height: 35mm; padding: 2mm; background: white; margin: 0;
     }
 
-    /* Validade e Assinatura */
+    /* Validade */
     .carteirinha-back .validity-box {
         grid-column: 2; grid-row: 2;
         text-align: center; margin: 0;
+        align-self: flex-start; /* Joga para cima */
     }
     .carteirinha-back .validity-label { font-size: 8pt; display: block; margin-bottom: 2mm; }
-    .carteirinha-back .validity-year { font-size: 36pt; font-weight: 900; line-height: 1; display: block; }
+    .carteirinha-back .validity-year { font-size: 32pt; font-weight: 900; line-height: 1; display: block; }
 
-    /* Footer Verso COM ASSINATURA */
+    /* LOGO CENTRALIZADA NA IMPRESSÃO */
+    .logo-center-container {
+        grid-column: 2; grid-row: 2;
+        display: flex !important;
+        justify-content: center;
+        align-items: center;
+        align-self: flex-end; /* Joga para baixo */
+        height: 18mm; /* Altura fixa para logo */
+    }
+    .logo-sme-virtual {
+        max-height: 100%; width: auto; object-fit: contain;
+    }
+
+    /* Footer Verso */
     .carteirinha-back .cart-footer {
         grid-column: 1 / -1; grid-row: 3;
         position: static; padding: 0; margin: 0; border: none;
         font-size: 7.5pt; align-self: end;
         display: flex; flex-direction: column; align-items: center;
+        width: 100%;
+        border-top: 1pt solid rgba(255,255,255,0.2);
+        padding-top: 1mm;
     }
+
+    /* Ajuste na caixa de assinatura */
     .assinatura-box-print {
-        display: block !important; /* Exibe apenas na impressão */
-        width: 40mm; height: 15mm; margin-bottom: 1mm;
+        display: block !important; 
+        width: 35mm; height: 10mm; margin-bottom: 0;
+        position: relative; z-index: 5;
     }
     .assinatura-box-print img {
-        width: 100%; height: 100%; object-fit: contain; filter: invert(1); /* Inverte se fundo for escuro */
+        width: 100%; height: 100%; object-fit: contain; 
+        object-position: bottom center; filter: invert(1);
     }
-    .carteirinha-back .cart-sec-name { font-size: 9.5pt; margin-bottom: 1mm; }
 
-    /* Esconder botões na impressão */
+    .carteirinha-back .cart-sec-name { font-size: 9pt; margin-bottom: 0.5mm; line-height: 1; }
+    .carteirinha-back .cart-sec-role { 
+        display: block !important; 
+        font-size: 6.5pt; text-transform: uppercase; opacity: 0.8; 
+    }
+
     .modal-actions-row, .cart-actions, .btn-close-modern, .btn-action-pri, .btn-action-sec, .btn-flip { display: none !important; }
 }
 
