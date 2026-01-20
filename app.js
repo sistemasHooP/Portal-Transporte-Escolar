@@ -1,5 +1,9 @@
 const URL_API = 'https://script.google.com/macros/s/AKfycby-rnmBcploCmdEb8QWkMyo1tEanCcPkmNOA_QMlujH0XQvjLeiCCYhkqe7Hqhi6-mo8A/exec';
 
+// --- CONFIGURAÇÃO DE CACHE ---
+const CACHE_EVENTOS_KEY = 'sys_eventos_v2';
+const CACHE_CONFIG_KEY = 'sys_config_v2';
+
 // Definição dos campos padrão
 const CAMPO_DEFS = {
     'NomeCompleto': { label: 'Nome Completo', type: 'text', placeholder: 'Digite seu nome completo' },
@@ -17,75 +21,78 @@ const CAMPO_DEFS = {
 };
 
 let listaInstituicoesCache = [];
-let configSistemaCache = null; // Cache para guardar nome, logo, cores, etc.
+let configSistemaCache = null;
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => { 
+    // Carrega instantaneamente do cache se existir
     carregarConfiguracoesVisuais();
     carregarEventos(); 
 });
 
-// --- CARREGAR CONFIGURAÇÕES VISUAIS (CAPA, LOGO, NOME, CORES) ---
+// --- CARREGAR CONFIGURAÇÕES VISUAIS (Estratégia: Cache First) ---
 function carregarConfiguracoesVisuais() {
-    const cached = sessionStorage.getItem('sys_config');
+    // 1. Tenta pegar do LocalStorage (Persistente)
+    const cached = localStorage.getItem(CACHE_CONFIG_KEY);
+    
     if(cached) {
-        configSistemaCache = JSON.parse(cached);
-        aplicarConfiguracoes(configSistemaCache);
+        try {
+            configSistemaCache = JSON.parse(cached);
+            aplicarConfiguracoes(configSistemaCache);
+        } catch(e) { console.error("Cache config inválido"); }
     }
 
+    // 2. Busca atualização silenciosa em background
     fetch(`${URL_API}?action=getPublicConfig`)
         .then(res => res.json())
         .then(json => {
             if(json.status === 'success') {
-                sessionStorage.setItem('sys_config', JSON.stringify(json.config));
-                configSistemaCache = json.config;
-                aplicarConfiguracoes(json.config);
+                const novoConfigStr = JSON.stringify(json.config);
+                // Só reaplica se mudou algo para evitar reflow desnecessário
+                if (novoConfigStr !== cached) {
+                    localStorage.setItem(CACHE_CONFIG_KEY, novoConfigStr);
+                    configSistemaCache = json.config;
+                    aplicarConfiguracoes(json.config);
+                }
             }
         })
-        .catch(e => console.error("Erro config visual:", e));
+        .catch(e => console.warn("Modo offline ou erro config:", e));
 }
 
 function aplicarConfiguracoes(config) {
     if(!config) return;
 
-    // 1. Textos
     if(config.nomeSistema) {
-        document.getElementById('sys-name').innerText = config.nomeSistema;
-        document.getElementById('footer-sys-name').innerText = config.nomeSistema;
+        const els = ['sys-name', 'footer-sys-name', 'cart-sys-name'];
+        els.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.innerText = id === 'cart-sys-name' ? config.nomeSistema.toUpperCase() : config.nomeSistema;
+        });
         document.title = config.nomeSistema;
-        
-        // Nome na carteirinha digital
-        const cartSys = document.getElementById('cart-sys-name');
-        if(cartSys) cartSys.innerText = config.nomeSistema.toUpperCase();
     }
     
     if(config.fraseMotivacional) {
-        document.getElementById('sys-phrase').innerText = config.fraseMotivacional;
+        const fr = document.getElementById('sys-phrase');
+        if(fr) fr.innerText = config.fraseMotivacional;
     }
 
-    // 2. Logo (Hero e Carteirinha)
     if(config.urlLogo && config.urlLogo.trim() !== "") {
         const logoUrl = formatarUrlDrive(config.urlLogo);
         const logoEls = ['sys-logo', 'cart-logo-img'];
         logoEls.forEach(id => {
             const el = document.getElementById(id);
-            if(el) { 
-                el.src = logoUrl; 
-                el.style.display = 'block'; 
-            }
+            if(el) { el.src = logoUrl; el.style.display = 'block'; }
         });
-        // Atualiza também a logo do loader se existir
         const loaderImg = document.getElementById('loader-img-tag');
         if(loaderImg) { loaderImg.src = logoUrl; loaderImg.style.display = 'block'; }
     }
 
-    // 3. Capa (Background Hero)
     if(config.urlCapa && config.urlCapa.trim() !== "") {
         const capaUrl = formatarUrlDrive(config.urlCapa);
-        document.getElementById('hero-section').style.backgroundImage = `url('${capaUrl}')`;
+        const hero = document.getElementById('hero-section');
+        if(hero) hero.style.backgroundImage = `url('${capaUrl}')`;
     }
 
-    // 4. Cor da Carteirinha (NOVO)
     if(config.corCarteirinha) {
         document.documentElement.style.setProperty('--card-color', config.corCarteirinha);
     }
@@ -104,22 +111,13 @@ function toggleLoader(show, msg = "Processando...") {
 
 function showSuccess(titulo, html, callback) {
     Swal.fire({ 
-        icon: 'success', 
-        title: titulo, 
-        html: html, 
-        confirmButtonColor: '#2563eb', 
-        confirmButtonText: 'OK',
-        allowOutsideClick: false
+        icon: 'success', title: titulo, html: html, 
+        confirmButtonColor: '#2563eb', confirmButtonText: 'OK', allowOutsideClick: false
     }).then(() => { if(callback) callback(); });
 }
 
 function showError(titulo, text) {
-    Swal.fire({ 
-        icon: 'error', 
-        title: titulo, 
-        text: text, 
-        confirmButtonColor: '#d33' 
-    });
+    Swal.fire({ icon: 'error', title: titulo, text: text, confirmButtonColor: '#d33' });
 }
 
 // --- MODAIS ---
@@ -143,149 +141,151 @@ function validarCPF(cpf) {
     cpf = cpf.replace(/[^\d]+/g, '');
     if (cpf == '') return false;
     if (cpf.length != 11 || cpf == "00000000000" || cpf == "11111111111") return false;
-    let add = 0; 
-    for (let i = 0; i < 9; i++) add += parseInt(cpf.charAt(i)) * (10 - i);
-    let rev = 11 - (add % 11); 
-    if (rev == 10 || rev == 11) rev = 0; 
+    let add = 0; for (let i = 0; i < 9; i++) add += parseInt(cpf.charAt(i)) * (10 - i);
+    let rev = 11 - (add % 11); if (rev == 10 || rev == 11) rev = 0; 
     if (rev != parseInt(cpf.charAt(9))) return false;
-    add = 0; 
-    for (let i = 0; i < 10; i++) add += parseInt(cpf.charAt(i)) * (11 - i);
-    rev = 11 - (add % 11); 
-    if (rev == 10 || rev == 11) rev = 0; 
+    add = 0; for (let i = 0; i < 10; i++) add += parseInt(cpf.charAt(i)) * (11 - i);
+    rev = 11 - (add % 11); if (rev == 10 || rev == 11) rev = 0; 
     if (rev != parseInt(cpf.charAt(10))) return false;
     return true;
 }
 
-function aplicarMascaraCPF(v) { 
-    return v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').replace(/(-\d{2})\d+?$/, '$1'); 
-}
-
-function aplicarMascaraTelefone(v) { 
-    return v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2').replace(/(-\d{4})\d+?$/, '$1'); 
-}
+function aplicarMascaraCPF(v) { return v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').replace(/(-\d{2})\d+?$/, '$1'); }
+function aplicarMascaraTelefone(v) { return v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2').replace(/(-\d{4})\d+?$/, '$1'); }
 
 function ativarMascaras() {
     const iC = document.querySelector('input[name="CPF"]');
-    if(iC) { 
-        iC.maxLength=14; 
-        iC.addEventListener('input', e=>e.target.value=aplicarMascaraCPF(e.target.value)); 
-    }
+    if(iC) { iC.maxLength=14; iC.addEventListener('input', e=>e.target.value=aplicarMascaraCPF(e.target.value)); }
     const iT = document.querySelector('input[name="Telefone"]');
-    if(iT) { 
-        iT.maxLength=15; 
-        iT.addEventListener('input', e=>e.target.value=aplicarMascaraTelefone(e.target.value)); 
-    }
+    if(iT) { iT.maxLength=15; iT.addEventListener('input', e=>e.target.value=aplicarMascaraTelefone(e.target.value)); }
 }
 
 // --- UPLOAD PREVIEW ---
 function previewArquivo(input) {
     const label = input.parentElement.querySelector('label');
     const statusIcon = label.querySelector('.status-icon');
-    
     if(input.files && input.files[0]) {
-        label.style.borderColor = '#10b981'; // Verde
-        label.style.backgroundColor = '#ecfdf5';
+        label.style.borderColor = '#10b981'; label.style.backgroundColor = '#ecfdf5';
         statusIcon.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#10b981"></i>';
     } else {
-        label.style.borderColor = '#e2e8f0';
-        label.style.backgroundColor = 'white';
+        label.style.borderColor = '#e2e8f0'; label.style.backgroundColor = 'white';
         statusIcon.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i>';
     }
 }
 
-// --- COMPRESSÃO DE IMAGEM OTIMIZADA ---
+// --- COMPRESSÃO DE IMAGEM ---
 async function comprimirImagem(file, maxWidth = 600, quality = 0.5) {
     if(file.type === 'application/pdf') return toBase64(file);
     return new Promise((resolve, reject) => {
-        const reader = new FileReader(); 
-        reader.readAsDataURL(file);
+        const reader = new FileReader(); reader.readAsDataURL(file);
         reader.onload = (event) => {
-            const img = new Image(); 
-            img.src = event.target.result;
+            const img = new Image(); img.src = event.target.result;
             img.onload = () => {
                 const c = document.createElement('canvas'); 
                 let w = img.width, h = img.height;
                 if (w > maxWidth) { h *= maxWidth / w; w = maxWidth; }
-                c.width = w; c.height = h; 
-                const ctx = c.getContext('2d'); 
+                c.width = w; c.height = h; const ctx = c.getContext('2d'); 
                 ctx.drawImage(img, 0, 0, w, h);
-                // Comprime agressivamente para JPEG 50%
                 resolve(c.toDataURL('image/jpeg', quality).split(',')[1]);
-            }; 
-            img.onerror = (e) => reject(e);
-        }; 
-        reader.onerror = (e) => reject(e);
+            }; img.onerror = (e) => reject(e);
+        }; reader.onerror = (e) => reject(e);
     });
 }
 
-// --- LÓGICA DE EVENTOS ---
+// --- EVENTOS: ESTRATÉGIA STALE-WHILE-REVALIDATE ---
 function carregarEventos() {
-    toggleLoader(true, "Carregando eventos...");
+    // 1. Renderiza IMEDIATAMENTE do cache (se existir)
+    const cachedData = localStorage.getItem(CACHE_EVENTOS_KEY);
+    let cacheUsado = false;
+
+    if (cachedData) {
+        try {
+            const data = JSON.parse(cachedData);
+            renderizarListaEventos(data); // Mostra na tela na hora!
+            cacheUsado = true;
+            console.log("Exibindo cache instantâneo.");
+        } catch(e) { console.warn("Cache corrompido"); }
+    }
+
+    // 2. Busca dados FRESCOS no servidor (para atualizar vagas em tempo real)
+    // Se não usou cache, mostra loader. Se usou, o loader é invisível ou sutil.
+    if (!cacheUsado) toggleLoader(true, "Buscando eventos...");
+
     fetch(`${URL_API}?action=getEventosAtivos`)
         .then(res => res.json())
         .then(json => {
-            toggleLoader(false);
-            const c = document.getElementById('cards-container'); 
-            c.innerHTML = '';
+            if (!cacheUsado) toggleLoader(false);
             
-            if (!json.data || json.data.length === 0) { 
-                c.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:3rem; color:#64748b; background:white; border-radius:16px;">
-                    <i class="fa-regular fa-calendar-xmark" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i>
-                    <h3>Nenhum evento disponível no momento.</h3>
-                    <p>Fique atento às próximas datas!</p>
-                </div>`; 
-                return; 
+            if(json.data) {
+                // Compara se mudou algo crítico antes de renderizar para evitar "piscada"
+                const novoStr = JSON.stringify(json.data);
+                if (novoStr !== cachedData) {
+                    localStorage.setItem(CACHE_EVENTOS_KEY, novoStr);
+                    renderizarListaEventos(json.data); // Atualiza a tela com vagas reais
+                    console.log("Tela atualizada com dados do servidor.");
+                }
+            } else {
+                renderizarListaEventos([]); // Nenhum evento
             }
-            
-            json.data.forEach(ev => {
-                // Lógica de Vagas
-                const limite = parseInt(ev.limite || 0);
-                const inscritos = parseInt(ev.inscritos || 0);
-                let esgotado = false;
-                
-                if (limite > 0 && inscritos >= limite) {
-                    esgotado = true;
-                }
-
-                // Elementos Visuais
-                let statusBadge = '<div class="card-status status-ativo">Inscrições Abertas</div>';
-                let btnHtml = `
-                    <button class="btn-inscrever" onclick='abrirInscricao(${JSON.stringify(ev)})'>
-                        <span>Inscrever-se Agora</span>
-                        <i class="fa-solid fa-arrow-right"></i>
-                    </button>`;
-
-                if (esgotado) {
-                    statusBadge = '<div class="card-status" style="background:#fee2e2; color:#991b1b; border-color:#fecaca;"><i class="fa-solid fa-ban"></i> Vagas Esgotadas</div>';
-                    btnHtml = `
-                        <button class="btn-inscrever" style="background:#94a3b8; cursor:not-allowed; box-shadow:none; opacity:0.7;" disabled>
-                            <span>Encerrado</span>
-                            <i class="fa-solid fa-lock"></i>
-                        </button>`;
-                }
-
-                c.innerHTML += `
-                    <div class="card-event fade-in" ${esgotado ? 'style="opacity:0.9;"' : ''}>
-                        ${statusBadge}
-                        
-                        <h3 class="card-title">${ev.titulo}</h3>
-                        
-                        <div class="card-dates">
-                            <i class="fa-regular fa-calendar-days"></i> Até ${formatarData(ev.fim)}
-                        </div>
-                        
-                        ${limite > 0 ? `<p style="font-size:0.8rem; color:#64748b; margin-bottom:10px;"><i class="fa-solid fa-users"></i> ${inscritos} / ${limite} vagas preenchidas</p>` : ''}
-
-                        <p class="card-desc">${ev.descricao}</p>
-                        
-                        ${btnHtml}
-                    </div>`;
-            });
         })
         .catch(() => { 
-            toggleLoader(false); 
-            document.getElementById('cards-container').innerHTML = '<div style="grid-column:1/-1; text-align:center; color:red; padding:20px;">Erro de conexão. Verifique sua internet.</div>'; 
+            if (!cacheUsado) {
+                toggleLoader(false); 
+                const c = document.getElementById('cards-container');
+                if(c) c.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:red; padding:20px;">Erro de conexão. Verifique sua internet.</div>'; 
+            }
         });
+}
+
+function renderizarListaEventos(data) {
+    const c = document.getElementById('cards-container'); 
+    if(!c) return;
+    c.innerHTML = '';
+    
+    if (!data || data.length === 0) { 
+        c.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:3rem; color:#64748b; background:white; border-radius:16px;">
+            <i class="fa-regular fa-calendar-xmark" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i>
+            <h3>Nenhum evento disponível no momento.</h3>
+            <p>Fique atento às próximas datas!</p>
+        </div>`; 
+        return; 
+    }
+    
+    data.forEach(ev => {
+        const limite = parseInt(ev.limite || 0);
+        const inscritos = parseInt(ev.inscritos || 0);
+        
+        // Regra de Vagas: Backend é a autoridade, mas o frontend já avisa
+        let esgotado = (limite > 0 && inscritos >= limite);
+
+        let statusBadge = '<div class="card-status status-ativo">Inscrições Abertas</div>';
+        let btnHtml = `
+            <button class="btn-inscrever" onclick='abrirInscricao(${JSON.stringify(ev)})'>
+                <span>Inscrever-se Agora</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>`;
+
+        if (esgotado) {
+            statusBadge = '<div class="card-status" style="background:#fee2e2; color:#991b1b; border-color:#fecaca;"><i class="fa-solid fa-ban"></i> Vagas Esgotadas</div>';
+            btnHtml = `
+                <button class="btn-inscrever" style="background:#94a3b8; cursor:not-allowed; box-shadow:none; opacity:0.7;" disabled>
+                    <span>Encerrado</span>
+                    <i class="fa-solid fa-lock"></i>
+                </button>`;
+        }
+
+        c.innerHTML += `
+            <div class="card-event fade-in" ${esgotado ? 'style="opacity:0.9;"' : ''}>
+                ${statusBadge}
+                <h3 class="card-title">${ev.titulo}</h3>
+                <div class="card-dates">
+                    <i class="fa-regular fa-calendar-days"></i> Até ${formatarData(ev.fim)}
+                </div>
+                ${limite > 0 ? `<p style="font-size:0.8rem; color:#64748b; margin-bottom:10px;"><i class="fa-solid fa-users"></i> ${inscritos} / ${limite} vagas preenchidas</p>` : ''}
+                <p class="card-desc">${ev.descricao}</p>
+                ${btnHtml}
+            </div>`;
+    });
 }
 
 async function abrirInscricao(evento) {
@@ -325,17 +325,19 @@ async function abrirInscricao(evento) {
         `;
     }
     
-    // Campos Fixos (CPF, Email)
     areaCampos.innerHTML += `
         <div><label>CPF <span style="color:red">*</span></label><input type="text" name="CPF" placeholder="000.000.000-00" required></div>
         <div><label>E-mail <span style="color:red">*</span></label><input type="email" name="Email" placeholder="seu@email.com" required></div>`;
 
-    // Carregar instituições se necessário
     if(config.camposTexto && config.camposTexto.includes('NomeInstituicao') && listaInstituicoesCache.length === 0) {
-        try { toggleLoader(true,"Carregando lista..."); const r = await fetch(`${URL_API}?action=getInstituicoes`); const j = await r.json(); if(j.data) listaInstituicoesCache = j.data; } catch(e){} finally { toggleLoader(false); }
+        try { 
+            toggleLoader(true,"Carregando lista..."); 
+            const r = await fetch(`${URL_API}?action=getInstituicoes`); 
+            const j = await r.json(); 
+            if(j.data) listaInstituicoesCache = j.data; 
+        } catch(e){ console.error(e); } finally { toggleLoader(false); }
     }
 
-    // Gerar Campos Dinâmicos
     if(config.camposTexto) {
         config.camposTexto.forEach(key => {
             if(CAMPO_DEFS[key]) {
@@ -378,7 +380,6 @@ async function abrirInscricao(evento) {
 
     ativarMascaras();
     
-    // Reset Uploads Visuals
     const df = document.getElementById('div-upload-foto'), dd = document.getElementById('div-upload-doc');
     df.classList.add('hidden'); document.getElementById('file-foto').required = false; previewArquivo({parentElement: df, files: []});
     dd.classList.add('hidden'); document.getElementById('file-doc').required = false; previewArquivo({parentElement: dd, files: []});
@@ -399,23 +400,17 @@ async function enviarInscricao(e) {
     const iCPF = document.querySelector('input[name="CPF"]');
     if(!validarCPF(iCPF.value)) return showError('CPF Inválido', 'Por favor, verifique o CPF digitado.');
     
-    // Validação de Tamanho de Arquivo (PDF)
     const fileDoc = document.getElementById('file-doc');
     if (fileDoc && fileDoc.files.length > 0) {
         const file = fileDoc.files[0];
-        // 2MB em bytes = 2 * 1024 * 1024 = 2097152 bytes
         if (file.size > 2 * 1024 * 1024) {
             return showError('Arquivo Muito Grande', 'O PDF do comprovante deve ter no máximo 2MB. Por favor, comprima o arquivo e tente novamente.');
         }
     }
 
     const r = await Swal.fire({ 
-        title: 'Confirmar envio?', 
-        text: 'Verifique se todos os dados estão corretos.',
-        icon: 'question', 
-        showCancelButton: true, 
-        confirmButtonText: 'Sim, Enviar',
-        confirmButtonColor: '#2563eb'
+        title: 'Confirmar envio?', text: 'Verifique se todos os dados estão corretos.',
+        icon: 'question', showCancelButton: true, confirmButtonText: 'Sim, Enviar', confirmButtonColor: '#2563eb'
     });
     if(!r.isConfirmed) return;
 
@@ -432,7 +427,6 @@ async function enviarInscricao(e) {
     const arqs = {};
     
     try {
-        // Compressão ajustada (maxWidth: 600, quality: 0.5)
         if(config.arquivos?.foto) { arqs.foto = { data: await comprimirImagem(document.getElementById('file-foto').files[0]), mime: 'image/jpeg' }; }
         if(config.arquivos?.doc) { const f = document.getElementById('file-doc').files[0]; arqs.doc = { data: await toBase64(f), mime: f.type }; }
         
@@ -502,21 +496,17 @@ function consultarChave() {
 }
 
 function abrirCarteirinha(aluno) {
-    // 1. Dados Pessoais e Acadêmicos (Frente)
     document.getElementById('cart-nome').innerText = aluno.nome || 'Aluno';
     document.getElementById('cart-inst').innerText = aluno.instituicao || 'Instituição';
     document.getElementById('cart-course').innerText = aluno.curso || 'Curso não informado';
     document.getElementById('cart-cpf').innerText = aluno.cpf || '---';
     document.getElementById('cart-mat').innerText = aluno.matricula || '-';
     
-    // Tratamento Data Nascimento
     let nasc = aluno.nascimento || '--/--/----';
     if(nasc.includes('-')) { const p = nasc.split('-'); nasc = `${p[2]}/${p[1]}/${p[0]}`; }
     document.getElementById('cart-nasc').innerText = nasc;
 
-    // 2. Foto do Aluno
     const img = document.getElementById('cart-img');
-    // Placeholder transparente
     img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNlMmU4ZjAiLz48L3N2Zz4='; 
     if (aluno.foto) {
         if (aluno.foto.startsWith('data:image') || aluno.foto.startsWith('http')) {
@@ -525,36 +515,24 @@ function abrirCarteirinha(aluno) {
     }
     img.onerror = function() { this.src = 'https://via.placeholder.com/150?text=FOTO'; };
 
-    // 3. Dados Institucionais (Verso)
     if(configSistemaCache) {
         if(configSistemaCache.nomeSistema) document.getElementById('cart-sys-name').innerText = configSistemaCache.nomeSistema.toUpperCase();
         if(configSistemaCache.nomeSecretaria) {
-             // Ajusta no verso e na frente (small)
              document.getElementById('cart-sec-name').innerText = configSistemaCache.nomeSecretario || "Responsável";
              document.querySelector('.cart-org-info small').innerText = configSistemaCache.nomeSecretaria;
         }
     }
     
-    // 4. Validade e QR Code (USANDO QRIOUS)
     document.getElementById('cart-validade-ano').innerText = aluno.ano_vigencia || new Date().getFullYear();
 
     const linkValidacao = `${URL_API}?action=validar&chave=${aluno.chave}`;
     
-    // Gerar QR Code no cliente
     const qr = new QRious({
-      element: document.getElementById('cart-qrcode-img'),
-      value: linkValidacao,
-      size: 150,
-      backgroundAlpha: 0,
-      foreground: 'black'
+      element: document.getElementById('cart-qrcode-img'), value: linkValidacao,
+      size: 150, backgroundAlpha: 0, foreground: 'black'
     });
-    // Forçar a src do elemento img caso o QRious renderize em canvas
     document.getElementById('cart-qrcode-img').src = qr.toDataURL();
 
-    // 5. Código Único removido da visualização do aluno para evitar cópias não oficiais
-    // Mas a estrutura HTML ainda pode existir, então limpamos ou deixamos vazio se necessário.
-
-    // 6. Exibir Modal
     document.getElementById('modal-carteirinha').classList.remove('hidden');
     document.getElementById('cart-flip-container').classList.remove('is-flipped');
     fecharModalConsulta();
@@ -584,8 +562,6 @@ function formatarData(iso) {
 }
 
 const toBase64 = f => new Promise((r, j) => { 
-    const rd = new FileReader(); 
-    rd.readAsDataURL(f); 
-    rd.onload = () => r(rd.result.split(',')[1]); 
-    rd.onerror = e => j(e); 
+    const rd = new FileReader(); rd.readAsDataURL(f); 
+    rd.onload = () => r(rd.result.split(',')[1]); rd.onerror = e => j(e); 
 });
