@@ -77,10 +77,10 @@ function aplicarConfiguracoes(config) {
     if(!config) return;
 
     if(config.nomeSistema) {
-        const els = ['sys-name', 'footer-sys-name', 'cart-sys-name'];
+        const els = ['sys-name', 'footer-sys-name']; // 'cart-sys-name' é tratado dinamicamente no modal
         els.forEach(id => {
             const el = document.getElementById(id);
-            if(el) el.innerText = id === 'cart-sys-name' ? config.nomeSistema.toUpperCase() : config.nomeSistema;
+            if(el) el.innerText = config.nomeSistema;
         });
         document.title = config.nomeSistema;
     }
@@ -573,17 +573,30 @@ function abrirCarteirinha(aluno) {
     }
     img.onerror = function() { this.src = 'https://via.placeholder.com/150?text=FOTO'; };
 
-    // 3. Dados Institucionais (Verso)
-    // ATUALIZAÇÃO CRÍTICA: Usa nome e cor do evento se disponíveis
-    if (aluno.nome_evento) {
-        document.getElementById('cart-sys-name').innerText = aluno.nome_evento.toUpperCase();
-    } else if(configSistemaCache && configSistemaCache.nomeSistema) {
+    // 3. ATUALIZAÇÃO 3 LINHAS DO CABEÇALHO (Dados Institucionais)
+    
+    // LINHA 1: Nome do Sistema (Config B3)
+    if(configSistemaCache && configSistemaCache.nomeSistema) {
         document.getElementById('cart-sys-name').innerText = configSistemaCache.nomeSistema.toUpperCase();
     }
 
-    if(configSistemaCache && configSistemaCache.nomeSecretaria) {
+    // LINHA 2: Secretaria (Config B8)
+    const elSec = document.getElementById('cart-header-sec');
+    if(elSec && configSistemaCache && configSistemaCache.nomeSecretaria) {
+        elSec.innerText = configSistemaCache.nomeSecretaria.toUpperCase();
+    }
+
+    // LINHA 3: Nome do Evento (Específico da Inscrição)
+    const elEvent = document.getElementById('cart-event-name');
+    if(elEvent) {
+        elEvent.innerText = (aluno.nome_evento || "EVENTO").toUpperCase();
+    }
+
+    // Rodapé Verso (Signatário)
+    if(configSistemaCache && configSistemaCache.nomeSecretario) {
          document.getElementById('cart-sec-name').innerText = configSistemaCache.nomeSecretario || "Responsável";
-         document.querySelector('.cart-org-info small').innerText = configSistemaCache.nomeSecretaria;
+         // ATENÇÃO: O 'cart-sec-role' abaixo permanece fixo ou usa o mesmo nome da secretaria se preferir
+         document.querySelector('.cart-sec-role').innerText = configSistemaCache.nomeSecretaria || "Secretaria";
     }
 
     // Aplica cor específica do evento ou a cor padrão
@@ -596,11 +609,11 @@ function abrirCarteirinha(aluno) {
     const linkValidacao = `${URL_API}?action=validar&chave=${aluno.chave}`;
     
     const qr = new QRious({
-      element: document.getElementById('cart-qrcode-img'),
-      value: linkValidacao,
-      size: 150,
-      backgroundAlpha: 0,
-      foreground: 'black'
+        element: document.getElementById('cart-qrcode-img'),
+        value: linkValidacao,
+        size: 150,
+        backgroundAlpha: 0,
+        foreground: 'black'
     });
     document.getElementById('cart-qrcode-img').src = qr.toDataURL();
 
