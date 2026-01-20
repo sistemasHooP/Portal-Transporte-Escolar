@@ -472,31 +472,76 @@ input[type="file"] { display: none; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO --- */
+/* --- SKELETON LOADING (Efeito de Carregamento) --- */
+.skeleton {
+    background: #e2e8f0;
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.card-skeleton {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    border: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    height: 100%;
+    min-height: 280px;
+}
+
+.skeleton-badge { width: 100px; height: 24px; border-radius: 20px; }
+.skeleton-title { width: 70%; height: 32px; margin-top: 10px; }
+.skeleton-date { width: 50%; height: 20px; }
+.skeleton-text { width: 100%; height: 60px; }
+.skeleton-btn { width: 100%; height: 50px; margin-top: auto; border-radius: 50px; }
+
+/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + DETALHES ALINHADOS + ASSINATURA + LOGO CENTRAL --- */
 @media print {
+    /* Forçar orientação Retrato na folha para empilhar os cards largos */
     @page { 
         size: portrait; 
         margin: 10mm; 
     }
 
-    body > *:not(#modal-carteirinha-admin) { display: none !important; }
+    /* Oculta tudo por padrão */
+    body > * { display: none !important; }
     
-    #modal-carteirinha-admin {
-        display: block !important; position: absolute; top: 0; left: 0; 
+    /* Regra A: Se o print-layer estiver ativo (Fichas/Relatórios) */
+    #print-layer { 
+        display: block !important; 
+        position: absolute; top: 0; left: 0; width: 100%; 
+        background: white; 
+        padding: 0; margin: 0; 
+    }
+    #print-layer * { visibility: visible; }
+
+    /* Regra B: Se o Modal de Carteirinha Admin estiver aberto */
+    #modal-carteirinha-admin:not(.hidden) {
+        display: block !important; 
+        position: absolute; top: 0; left: 0; 
         width: 100%; background: white; z-index: 9999; margin: 0; padding: 0;
         visibility: visible;
     }
     #modal-carteirinha-admin:not(.hidden) * { visibility: visible; }
-    #modal-carteirinha { display: none !important; }
-
     .modal-content, .modal-content-cart { box-shadow: none; padding: 0; margin: 0; background: transparent; }
     
+    /* WRAPPER EMPILHADO */
     .carteirinha-wrapper {
         perspective: none; height: auto; margin-top: 10mm;
         display: flex; 
-        flex-direction: column; 
+        flex-direction: column; /* EMPILHADO VERTICALMENTE */
         gap: 5mm; 
-        align-items: center; 
+        align-items: center; /* Centraliza na folha */
         justify-content: start;
         width: 100% !important; 
     }
@@ -506,6 +551,7 @@ input[type="file"] { display: none; }
         display: contents; 
     }
     
+    /* DIMENSÕES HORIZONTAIS DO CARTÃO (120mm x 75mm) */
     .carteirinha-face {
         position: relative; transform: none !important;
         width: 120mm; height: 75mm; /* Formato LARGO */
@@ -529,11 +575,15 @@ input[type="file"] { display: none; }
 
     /* --- FRENTE (Layout Compacto) --- */
     .carteirinha-front {
-        padding: 2.5mm !important; 
+        padding: 2.5mm !important; /* Margem interna reduzida para caber tudo */
         display: grid;
-        grid-template-columns: 30mm 1fr; 
+        grid-template-columns: 30mm 1fr; /* Coluna Foto | Coluna Dados */
+        /* Row 1: Header (13mm)
+           Row 2: Nome/Curso (Auto)
+           Row 3: Detalhes (1fr - ocupa o resto)
+           Row 4: Rodapé (5mm) */
         grid-template-rows: 13mm auto 1fr 6mm; 
-        gap: 1mm; 
+        gap: 1mm; /* Gaps mínimos */
         align-items: center;
     }
 
@@ -564,9 +614,10 @@ input[type="file"] { display: none; }
         grid-column: 2; grid-row: 2;
         text-align: left; margin-left: 2mm; margin-top: 1mm;
         display: flex; flex-direction: column; justify-content: center;
-        align-items: flex-start; 
+        align-items: flex-start; /* FIX: Evita que o fundo estique até o final */
         margin-bottom: 1mm;
     }
+    
     .carteirinha-front .cart-info-main h2 { 
         font-size: 12pt; margin-bottom: 0.5mm; line-height: 1.1; 
         text-transform: uppercase; font-weight: 800;
@@ -577,6 +628,7 @@ input[type="file"] { display: none; }
         margin-bottom: 0; display: inline-block;
         background: rgba(255,255,255,0.2);
         white-space: normal;
+        /* Garante que o fundo não ocupe 100% da largura, mas apenas o texto */
         width: fit-content; 
     }
 
