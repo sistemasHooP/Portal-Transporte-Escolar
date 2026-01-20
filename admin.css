@@ -589,9 +589,9 @@ html, body {
 }
 
 /* Ocultar elementos exclusivos de impressão na visualização Web */
-.cart-print-auth, .assinatura-box-print { display: none; }
+.cart-print-auth, .assinatura-box-print, .logo-sme-print, .cart-sec-role { display: none; }
 
-/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + DETALHES ALINHADOS + ASSINATURA BAIXA --- */
+/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + DETALHES ALINHADOS + ASSINATURA + LOGO --- */
 @media print {
     /* Forçar orientação Retrato na folha para empilhar os cards largos */
     @page { 
@@ -750,7 +750,7 @@ html, body {
         padding: 4mm !important;
         display: grid;
         grid-template-columns: 40mm 1fr; 
-        grid-template-rows: 8mm 1fr 8mm; 
+        grid-template-rows: 8mm 1fr 15mm; /* Linhas Ajustadas para Footer Novo */
         align-items: center;
     }
 
@@ -767,7 +767,7 @@ html, body {
         width: 35mm; height: 35mm; padding: 2mm; background: white; margin: 0;
     }
 
-    /* Validade e Assinatura */
+    /* Validade */
     .carteirinha-back .validity-box {
         grid-column: 2; grid-row: 2;
         text-align: center; margin: 0;
@@ -775,37 +775,74 @@ html, body {
     .carteirinha-back .validity-label { font-size: 8pt; display: block; margin-bottom: 2mm; }
     .carteirinha-back .validity-year { font-size: 36pt; font-weight: 900; line-height: 1; display: block; }
 
-    /* Footer Verso COM ASSINATURA BAIXA */
+    /* Footer Verso COM ASSINATURA E LOGO */
     .carteirinha-back .cart-footer {
         grid-column: 1 / -1; grid-row: 3;
         position: static; padding: 0; margin: 0; border: none;
         font-size: 7.5pt; align-self: end;
-        display: flex; flex-direction: column; align-items: center;
+        display: flex; /* MUDANÇA: Flex para dividir colunas */
+        justify-content: space-between;
+        align-items: flex-end;
+        width: 100%;
+        border-top: 1pt solid rgba(255,255,255,0.2);
+        padding-top: 1mm;
     }
-    /* AJUSTE CRÍTICO: MARGEM NEGATIVA PARA DESCER A ASSINATURA */
+
+    /* Área da Assinatura (Esquerda/Centro) */
+    .cart-footer-signature-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        margin-right: 2mm;
+    }
+
+    /* Área da Logo SME (Direita) */
+    .cart-footer-logo-area {
+        width: 25mm; /* Largura fixa para a logo */
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .logo-sme-print {
+        display: block !important;
+        max-width: 100%;
+        max-height: 12mm; /* Altura máxima controlada */
+        object-fit: contain;
+    }
+
+    /* Ajuste na caixa de assinatura para não quebrar o layout */
     .assinatura-box-print {
         display: block !important; /* Exibe apenas na impressão */
-        width: 45mm; 
-        height: 15mm; 
-        margin-bottom: -8mm; /* Puxa para baixo, sobrepondo levemente o nome se necessário */
+        width: 35mm; 
+        height: 10mm; 
+        margin-bottom: 0;
         position: relative;
         z-index: 5;
     }
+    
     .assinatura-box-print img {
-        width: 100%; 
-        height: 100%; 
-        object-fit: contain; 
+        width: 100%; height: 100%; object-fit: contain; 
         object-position: bottom center; /* Alinha a imagem na base da caixa */
         filter: invert(1); /* Inverte se fundo for escuro */
     }
-    .carteirinha-back .cart-sec-name { font-size: 9.5pt; margin-bottom: 1mm; }
+
+    .carteirinha-back .cart-sec-name { font-size: 9pt; margin-bottom: 0.5mm; line-height: 1; }
+    .carteirinha-back .cart-sec-role { 
+        display: block !important; 
+        font-size: 6.5pt; 
+        text-transform: uppercase; 
+        opacity: 0.8; 
+    }
 
     /* Esconder botões na impressão */
     .modal-actions-row, .cart-actions, .btn-close-modern, .btn-action-pri, .btn-action-sec, .btn-flip { display: none !important; }
 
     /* Layout da Ficha A4 (Mantido) */
     .ficha-container { font-family: Arial, sans-serif; color: #000; width: 100%; max-width: 210mm; margin: 0 auto; }
-    /* ... restante dos estilos de ficha mantidos ... */
 }
 
 @media (max-width: 1200px) {
