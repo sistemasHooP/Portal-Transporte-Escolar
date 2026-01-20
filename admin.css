@@ -534,7 +534,7 @@ html, body {
 }
 
 .qr-code-box {
-    width: 130px; height: 130px;
+    width: 160px; height: 160px;
     background: white;
     padding: 10px;
     border-radius: 12px;
@@ -547,11 +547,11 @@ html, body {
 
 .validity-box {
     text-align: center;
-    margin-bottom: 0;
+    margin-bottom: 20px;
 }
 .validity-label { font-size: 0.8rem; opacity: 0.8; text-transform: uppercase; display: block; }
 .validity-year { 
-    font-size: 3rem; 
+    font-size: 3.5rem; 
     font-weight: 800; 
     line-height: 1;
     color: var(--accent); /* Destaque no ano */
@@ -559,18 +559,8 @@ html, body {
     display: block;
 }
 
-/* LOGO CENTRALIZADA - Atualizada para ser maior */
-.logo-center-container {
-    display: flex; justify-content: center; align-items: center;
-    flex: 1; padding: 10px 0;
-}
-.logo-sme-virtual {
-    max-height: 80px; /* AUMENTADO DE 50px PARA 80px */
-    width: auto; object-fit: contain;
-}
-
 .cart-footer {
-    margin-top: 0;
+    margin-top: auto;
     text-align: center;
     font-size: 0.65rem;
     opacity: 0.6;
@@ -578,7 +568,6 @@ html, body {
     padding-top: 10px;
 }
 .cart-sec-name { font-weight: 600; display: block; margin-bottom: 2px; text-transform: uppercase; }
-.cart-sec-role { font-size: 0.65rem; opacity: 0.7; text-transform: uppercase; display: block; }
 
 /* Botões do Modal Admin (REDONDOS E BONITOS) */
 .cart-actions { margin-top: 25px; display: flex; justify-content: center; gap: 15px; }
@@ -600,14 +589,14 @@ html, body {
 }
 
 /* Ocultar elementos exclusivos de impressão na visualização Web */
-.cart-print-auth, .assinatura-box-print { display: none; }
+.cart-print-auth, .assinatura-box-print, .logo-sme-print, .cart-sec-role { display: none; }
 
-/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO --- */
+/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + DETALHES ALINHADOS + ASSINATURA + LOGO --- */
 @media print {
     /* Forçar orientação Retrato na folha para empilhar os cards largos */
     @page { 
         size: portrait; 
-        margin: 10mm; 
+        margin: 0; 
     }
 
     /* Oculta tudo por padrão */
@@ -661,12 +650,7 @@ html, body {
         background: linear-gradient(135deg, var(--card-color, #2563eb), #0f172a) !important;
         overflow: hidden; 
         border-radius: 4mm;
-        /* MUDANÇA: Grid para garantir posição da logo */
-        display: grid;
-        grid-template-columns: 40mm 1fr;
-        grid-template-rows: 8mm 1fr 25mm 10mm; /* Header | Corpo | Logo(25mm) | Footer(10mm) */
-        padding: 4mm;
-        align-items: center;
+        display: block; 
     }
 
     /* --- FRENTE (Layout Compacto) --- */
@@ -763,7 +747,16 @@ html, body {
 
     /* --- VERSO (Layout Horizontal Interno) --- */
     .carteirinha-back {
-        /* O Grid principal já foi definido na classe .carteirinha-face acima para impressão */
+        padding: 4mm !important;
+        display: grid;
+        grid-template-columns: 40mm 1fr; 
+        /* ROWS:
+           1. Header (8mm)
+           2. QR Code + Ano (1fr)
+           3. Footer (20mm) - Aumentado para a logo maior
+        */
+        grid-template-rows: 8mm 1fr 20mm; 
+        align-items: center;
     }
 
     /* Header Verso */
@@ -789,47 +782,68 @@ html, body {
     .carteirinha-back .validity-label { font-size: 8pt; display: block; margin-bottom: 2mm; }
     .carteirinha-back .validity-year { font-size: 36pt; font-weight: 900; line-height: 1; display: block; }
 
-    /* LOGO CENTRALIZADA (LINHA 3 DO GRID) */
-    .logo-center-container {
-        grid-column: 1 / -1;
-        grid-row: 3;
-        display: flex !important;
-        justify-content: center;
-        align-items: center;
-        height: 100%;
-        margin-top: 2mm;
-    }
-    .logo-sme-virtual {
-        max-height: 25mm; /* Aumentado na impressão */
-        width: auto; object-fit: contain;
-    }
-
-    /* Footer Verso (LINHA 4 DO GRID) */
+    /* Footer Verso COM ASSINATURA E LOGO LADO A LADO */
     .carteirinha-back .cart-footer {
-        grid-column: 1 / -1; grid-row: 4;
+        grid-column: 1 / -1; grid-row: 3;
         position: static; padding: 0; margin: 0; border: none;
         font-size: 7.5pt; align-self: end;
-        display: flex; flex-direction: column; align-items: center;
+        display: flex; /* Flex para dividir colunas */
+        justify-content: space-between; /* Lado a Lado */
+        align-items: flex-end;
         width: 100%;
         border-top: 1pt solid rgba(255,255,255,0.2);
         padding-top: 1mm;
     }
 
-    /* Ajuste na caixa de assinatura */
-    .assinatura-box-print {
-        display: block !important; 
-        width: 35mm; height: 10mm; margin-bottom: 0;
-        position: relative; z-index: 5;
+    /* Área da Assinatura (Esquerda/Centro) */
+    .cart-footer-signature-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start; /* Alinha à esquerda */
+        justify-content: flex-end;
+        margin-right: 2mm;
+        text-align: left;
     }
+
+    /* Área da Logo SME (Direita) */
+    .cart-footer-logo-area {
+        width: 40mm; /* Largura maior para a logo */
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end; /* Alinha à direita */
+    }
+
+    .logo-sme-print {
+        display: block !important;
+        max-width: 100%;
+        max-height: 18mm; /* Altura máxima permitida */
+        object-fit: contain;
+    }
+
+    /* Ajuste na caixa de assinatura para não quebrar o layout */
+    .assinatura-box-print {
+        display: block !important; /* Exibe apenas na impressão */
+        width: 40mm; 
+        height: 10mm; 
+        margin-bottom: 0;
+        position: relative;
+        z-index: 5;
+    }
+    
     .assinatura-box-print img {
         width: 100%; height: 100%; object-fit: contain; 
-        object-position: bottom center; filter: invert(1);
+        object-position: bottom left; /* Alinha a imagem na esquerda */
+        filter: invert(1); /* Inverte se fundo for escuro */
     }
 
     .carteirinha-back .cart-sec-name { font-size: 9pt; margin-bottom: 0.5mm; line-height: 1; }
     .carteirinha-back .cart-sec-role { 
         display: block !important; 
-        font-size: 6.5pt; text-transform: uppercase; opacity: 0.8; 
+        font-size: 6.5pt; 
+        text-transform: uppercase; 
+        opacity: 0.8; 
     }
 
     /* Esconder botões na impressão */
