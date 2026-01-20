@@ -431,47 +431,29 @@ html, body {
     -webkit-transform: rotateY(0deg);
 }
 
-/* NOVO HEADER: 3 LINHAS (Estilo Admin) */
-.cart-header-novo {
+.cart-header {
     display: flex;
-    align-items: flex-start; /* Topo para caber as 3 linhas */
+    align-items: center;
     gap: 12px;
-    margin-bottom: 15px;
-    position: relative; z-index: 2; text-align: left; padding-bottom: 10px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 2;
+    text-align: left;
+    padding-bottom: 10px;
     border-bottom: 1px solid rgba(255,255,255,0.2);
 }
 
 .cart-logo {
-    width: 48px; height: 48px;
+    width: 45px; height: 45px;
     background: white;
     border-radius: 50%;
     padding: 3px;
     object-fit: contain;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    flex-shrink: 0;
 }
 
-/* Container de Textos do Novo Header */
-.cart-org-info-novo {
-    display: flex; flex-direction: column; justify-content: center;
-}
-
-.linha-1-sistema {
-    font-size: 0.8rem; font-weight: 800; text-transform: uppercase;
-    line-height: 1.1; margin-bottom: 2px; color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-}
-
-.linha-2-secretaria {
-    font-size: 0.65rem; font-weight: 400; text-transform: uppercase;
-    opacity: 0.9; line-height: 1.1; margin-bottom: 2px;
-}
-
-.linha-3-evento {
-    font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
-    color: #fbbf24; /* Destaque Amarelo */
-    line-height: 1.1;
-}
+.cart-org-info h3 { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2; text-transform: uppercase; margin: 0; }
+.cart-org-info small { font-size: 0.7rem; text-transform: uppercase; opacity: 0.9; font-weight: 300; display: block; margin-top: 2px;}
 
 .cart-body { 
     flex: 1; 
@@ -577,7 +559,7 @@ html, body {
     display: block;
 }
 
-/* LOGO CENTRALIZADA - VISUALIZAÇÃO EM TELA */
+/* LOGO CENTRALIZADA - Atualizada para ser maior */
 .logo-center-container {
     display: flex; justify-content: center; align-items: center;
     flex: 1; padding: 10px 0;
@@ -679,7 +661,7 @@ html, body {
         display: grid;
         grid-template-columns: 40mm 1fr;
         /* Rows: Header | QR+Ano | Footer Area */
-        grid-template-rows: 8mm 1fr 20mm; 
+        grid-template-rows: 8mm 1fr 25mm; /* Rodapé aumentado para 25mm */
         padding: 4mm;
         align-items: center;
     }
@@ -699,18 +681,15 @@ html, body {
     }
 
     /* HEADER FRENTE */
-    .carteirinha-front .cart-header-novo {
+    .carteirinha-front .cart-header {
         grid-column: 1 / -1; grid-row: 1;
         display: flex; align-items: center; gap: 3mm;
         border-bottom: 1pt solid rgba(255,255,255,0.4);
         margin: 0; padding-bottom: 0.5mm; height: 100%;
     }
-    /* Estilos de fonte específicos para impressão (reduzidos para caber) */
-    .linha-1-sistema { font-size: 8pt; margin-bottom: 1px; }
-    .linha-2-secretaria { font-size: 6pt; margin-bottom: 1px; }
-    .linha-3-evento { font-size: 6pt; color: #fbbf24; }
-
     .carteirinha-front .cart-logo { width: 10mm; height: 10mm; padding: 0.5mm; }
+    .carteirinha-front .cart-org-info h3 { font-size: 9pt; line-height: 1.1; margin: 0; font-weight: 800; white-space: normal; }
+    .carteirinha-front .cart-org-info small { font-size: 7pt; line-height: 1; display: block; margin-top: 0.5mm; white-space: normal; }
 
     /* CORPO FRENTE */
     .carteirinha-front .cart-body { display: contents; }
@@ -781,11 +760,7 @@ html, body {
 
     /* --- VERSO (Layout Horizontal Interno) --- */
     .carteirinha-back {
-        padding: 4mm !important;
-        display: grid;
-        grid-template-columns: 40mm 1fr; 
-        grid-template-rows: 8mm 1fr 20mm; 
-        align-items: center;
+        /* O Grid principal já foi definido na classe .carteirinha-face acima para impressão */
     }
 
     /* Header Verso */
@@ -821,10 +796,12 @@ html, body {
         align-items: flex-end;
         height: 100%;
         margin: 0;
+        margin-right: 5mm; /* Afastamento da borda lateral */
+        transform: translateY(3mm); /* Desloca a logo para baixo */
     }
     .logo-sme-virtual {
-        max-height: 18mm; /* Altura máxima para impressão */
-        max-width: 40mm;
+        max-height: 22mm; /* Aumentada para ocupar mais espaço */
+        max-width: 45mm;  /* Aumentada largura permitida */
         width: auto; 
         object-fit: contain;
     }
@@ -842,6 +819,7 @@ html, body {
         width: 100%;
         border-top: 1pt solid rgba(255,255,255,0.2);
         padding-top: 1mm;
+        padding-left: 5mm; /* Afastamento da borda lateral */
     }
 
     /* Ajuste na caixa de assinatura */

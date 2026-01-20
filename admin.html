@@ -8,7 +8,7 @@
     <!-- Fontes e Ícones -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Estilos -->
@@ -376,17 +376,13 @@
                 <!-- Inner container que gira -->
                 <div class="carteirinha-card-inner" id="cart-admin-flip-container" onclick="this.classList.toggle('is-flipped')">
                     
-                    <!-- FRENTE (HEADER ATUALIZADO 3 LINHAS) -->
+                    <!-- FRENTE -->
                     <div class="carteirinha-face carteirinha-front">
-                        <div class="cart-header-novo">
+                        <div class="cart-header">
                             <img src="logo.png" alt="Logo" class="cart-logo" id="cart-admin-logo">
-                            <div class="cart-org-info-novo">
-                                <!-- Linha 1: Sistema -->
-                                <div class="linha-1-sistema" id="cart-admin-sys-name">SISTEMA</div>
-                                <!-- Linha 2: Secretaria (Small para compatibilidade) -->
-                                <small class="linha-2-secretaria">Secretaria Municipal</small>
-                                <!-- Linha 3: Evento -->
-                                <div class="linha-3-evento"></div>
+                            <div class="cart-org-info">
+                                <h3 id="cart-admin-sys-name">TRANSPORTE ESCOLAR</h3>
+                                <small>Secretaria de Educação</small>
                             </div>
                         </div>
 
@@ -427,7 +423,7 @@
                         </div>
                     </div>
 
-                    <!-- VERSO (ATUALIZADO PARA RODAPÉ DIVIDIDO NA IMPRESSÃO) -->
+                    <!-- VERSO (Atualizado para Centralizado - IDÊNTICO AO ALUNO) -->
                     <div class="carteirinha-face carteirinha-back">
                         <div class="cart-back-header">
                             Documento de Identificação Estudantil
@@ -443,27 +439,19 @@
                             <span class="validity-year" id="cart-admin-validade-ano">2025</span>
                         </div>
 
-                        <!-- LOGO CENTRALIZADA (VISUAL) -->
+                        <!-- LOGO CENTRALIZADA -->
                         <div class="logo-center-container">
                             <img src="sme 2.png" alt="Logo SME" class="logo-sme-virtual">
                         </div>
 
-                        <!-- RODAPÉ DIVIDIDO (CSS CONTROLA A POSIÇÃO NA IMPRESSÃO) -->
                         <div class="cart-footer">
                             
                             <!-- Assinatura Centralizada no Footer -->
-                            <div class="cart-footer-signature-area">
-                                <div id="cart-admin-assinatura-box" class="assinatura-box-print">
-                                    <!-- Imagem da assinatura será injetada aqui -->
-                                </div>
-                                <span class="cart-sec-name" id="cart-admin-sec-name">Secretário</span>
-                                <span class="cart-sec-role">Secretário de Educação</span>
+                            <div id="cart-admin-assinatura-box" class="assinatura-box-print">
+                                <!-- Imagem da assinatura será injetada aqui -->
                             </div>
-
-                            <!-- Lado Direito: Logo SME (Visível apenas na impressão via CSS) -->
-                            <div class="cart-footer-logo-area">
-                                <!-- A mesma logo é usada aqui ou via CSS no grid -->
-                            </div>
+                            <span class="cart-sec-name" id="cart-admin-sec-name">Secretário</span>
+                            <span class="cart-sec-role">Secretário de Educação</span>
 
                         </div>
                     </div>
