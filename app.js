@@ -25,13 +25,13 @@ let configSistemaCache = null;
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => { 
-    // Função "Wake Up" imediata para aquecer o servidor
+    // Função "Wake Up" imediata
     acordarSistema();
     
-    // Configura Ping periódico (a cada 5 minutos)
+    // Configura Ping periódico (a cada 5 minutos) para manter a sessão ativa
     setInterval(acordarSistema, 5 * 60 * 1000);
 
-    // Carregamento normal com estratégia de cache
+    // Carregamento normal
     carregarConfiguracoesVisuais();
     carregarEventos(); 
 });
@@ -107,6 +107,7 @@ function aplicarConfiguracoes(config) {
         if(hero) hero.style.backgroundImage = `url('${capaUrl}')`;
     }
 
+    // Aplica a cor global apenas se não houver sobrescrita
     if(config.corCarteirinha) {
         document.documentElement.style.setProperty('--card-color', config.corCarteirinha);
     }
@@ -549,17 +550,21 @@ function consultarChave() {
 }
 
 function abrirCarteirinha(aluno) {
+    // 1. Dados Pessoais e Acadêmicos (Frente)
     document.getElementById('cart-nome').innerText = aluno.nome || 'Aluno';
     document.getElementById('cart-inst').innerText = aluno.instituicao || 'Instituição';
     document.getElementById('cart-course').innerText = aluno.curso || 'Curso não informado';
     document.getElementById('cart-cpf').innerText = aluno.cpf || '---';
     document.getElementById('cart-mat').innerText = aluno.matricula || '-';
     
+    // Tratamento Data Nascimento
     let nasc = aluno.nascimento || '--/--/----';
     if(nasc.includes('-')) { const p = nasc.split('-'); nasc = `${p[2]}/${p[1]}/${p[0]}`; }
     document.getElementById('cart-nasc').innerText = nasc;
 
+    // 2. Foto do Aluno
     const img = document.getElementById('cart-img');
+    // Placeholder transparente
     img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNlMmU4ZjAiLz48L3N2Zz4='; 
     if (aluno.foto) {
         if (aluno.foto.startsWith('data:image') || aluno.foto.startsWith('http')) {
@@ -568,24 +573,38 @@ function abrirCarteirinha(aluno) {
     }
     img.onerror = function() { this.src = 'https://via.placeholder.com/150?text=FOTO'; };
 
-    if(configSistemaCache) {
-        if(configSistemaCache.nomeSistema) document.getElementById('cart-sys-name').innerText = configSistemaCache.nomeSistema.toUpperCase();
-        if(configSistemaCache.nomeSecretaria) {
-             document.getElementById('cart-sec-name').innerText = configSistemaCache.nomeSecretario || "Responsável";
-             document.querySelector('.cart-org-info small').innerText = configSistemaCache.nomeSecretaria;
-        }
+    // 3. Dados Institucionais (Verso)
+    // ATUALIZAÇÃO CRÍTICA: Usa nome e cor do evento se disponíveis
+    if (aluno.nome_evento) {
+        document.getElementById('cart-sys-name').innerText = aluno.nome_evento.toUpperCase();
+    } else if(configSistemaCache && configSistemaCache.nomeSistema) {
+        document.getElementById('cart-sys-name').innerText = configSistemaCache.nomeSistema.toUpperCase();
     }
+
+    if(configSistemaCache && configSistemaCache.nomeSecretaria) {
+         document.getElementById('cart-sec-name').innerText = configSistemaCache.nomeSecretario || "Responsável";
+         document.querySelector('.cart-org-info small').innerText = configSistemaCache.nomeSecretaria;
+    }
+
+    // Aplica cor específica do evento ou a cor padrão
+    const corFinal = aluno.cor_evento || (configSistemaCache ? configSistemaCache.corCarteirinha : '#2563eb');
+    document.documentElement.style.setProperty('--card-color', corFinal);
     
+    // 4. Validade e QR Code
     document.getElementById('cart-validade-ano').innerText = aluno.ano_vigencia || new Date().getFullYear();
 
     const linkValidacao = `${URL_API}?action=validar&chave=${aluno.chave}`;
     
     const qr = new QRious({
-      element: document.getElementById('cart-qrcode-img'), value: linkValidacao,
-      size: 150, backgroundAlpha: 0, foreground: 'black'
+      element: document.getElementById('cart-qrcode-img'),
+      value: linkValidacao,
+      size: 150,
+      backgroundAlpha: 0,
+      foreground: 'black'
     });
     document.getElementById('cart-qrcode-img').src = qr.toDataURL();
 
+    // 6. Exibir Modal
     document.getElementById('modal-carteirinha').classList.remove('hidden');
     document.getElementById('cart-flip-container').classList.remove('is-flipped');
     fecharModalConsulta();
@@ -615,6 +634,8 @@ function formatarData(iso) {
 }
 
 const toBase64 = f => new Promise((r, j) => { 
-    const rd = new FileReader(); rd.readAsDataURL(f); 
-    rd.onload = () => r(rd.result.split(',')[1]); rd.onerror = e => j(e); 
+    const rd = new FileReader(); 
+    rd.readAsDataURL(f); 
+    rd.onload = () => r(rd.result.split(',')[1]); 
+    rd.onerror = e => j(e); 
 });
