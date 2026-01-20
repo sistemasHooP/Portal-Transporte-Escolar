@@ -179,13 +179,19 @@
                 <!-- Inner container que gira -->
                 <div class="carteirinha-card-inner" id="cart-flip-container" onclick="this.classList.toggle('is-flipped')">
                     
-                    <!-- FRENTE -->
+                    <!-- FRENTE ATUALIZADA (CABEÇALHO 3 LINHAS) -->
                     <div class="carteirinha-face carteirinha-front">
-                        <div class="cart-header">
+                        <div class="cart-header-novo">
                             <img src="logo.png" alt="Logo" class="cart-logo" id="cart-logo-img">
-                            <div class="cart-org-info">
-                                <h3 id="cart-sys-name">TRANSPORTE ESCOLAR</h3>
-                                <small>Secretaria de Educação</small>
+                            
+                            <!-- ESTRUTURA DE 3 LINHAS HIERÁRQUICAS -->
+                            <div class="cart-org-info-novo">
+                                <!-- Linha 1: B3 (Sistema) -->
+                                <div class="linha-1-sistema" id="cart-header-sys">SISTEMA</div>
+                                <!-- Linha 2: B8 (Secretaria) -->
+                                <div class="linha-2-secretaria" id="cart-header-sec">Secretaria</div>
+                                <!-- Linha 3: Evento -->
+                                <div class="linha-3-evento" id="cart-header-event">Evento</div>
                             </div>
                         </div>
 
@@ -221,7 +227,7 @@
                         <!-- Código Único removido da versão do aluno -->
                     </div>
 
-                    <!-- VERSO (ATUALIZADO: LOGO CENTRALIZADA) -->
+                    <!-- VERSO (MANTIDO: LOGO CENTRALIZADA) -->
                     <div class="carteirinha-face carteirinha-back">
                         <div class="cart-back-header">
                             Documento de Identificação Estudantil
