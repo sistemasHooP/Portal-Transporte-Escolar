@@ -25,13 +25,13 @@ let configSistemaCache = null;
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => { 
-    // Função "Wake Up" imediata
+    // Função "Wake Up" imediata para aquecer o servidor
     acordarSistema();
     
-    // Configura Ping periódico (a cada 5 minutos) para manter a sessão ativa
+    // Configura Ping periódico (a cada 5 minutos)
     setInterval(acordarSistema, 5 * 60 * 1000);
 
-    // Carregamento normal
+    // Carregamento normal com estratégia de cache
     carregarConfiguracoesVisuais();
     carregarEventos(); 
 });
@@ -215,14 +215,12 @@ function carregarEventos() {
     if (cachedData) {
         try {
             const data = JSON.parse(cachedData);
-            renderizarListaEventos(data); // Mostra na tela na hora!
+            renderizarListaEventos(data); 
             cacheUsado = true;
             console.log("Exibindo cache instantâneo.");
         } catch(e) { console.warn("Cache corrompido"); }
     }
 
-    // 2. Busca dados FRESCOS no servidor (para atualizar vagas em tempo real)
-    // Se não usou cache, mostra loader. Se usou, o loader é invisível ou sutil.
     if (!cacheUsado) toggleLoader(true, "Buscando eventos...");
 
     fetch(`${URL_API}?action=getEventosAtivos`)
@@ -231,15 +229,14 @@ function carregarEventos() {
             if (!cacheUsado) toggleLoader(false);
             
             if(json.data) {
-                // Compara se mudou algo crítico antes de renderizar para evitar "piscada"
                 const novoStr = JSON.stringify(json.data);
                 if (novoStr !== cachedData) {
                     localStorage.setItem(CACHE_EVENTOS_KEY, novoStr);
-                    renderizarListaEventos(json.data); // Atualiza a tela com vagas reais
+                    renderizarListaEventos(json.data);
                     console.log("Tela atualizada com dados do servidor.");
                 }
             } else {
-                renderizarListaEventos([]); // Nenhum evento
+                renderizarListaEventos([]);
             }
         })
         .catch(() => { 
@@ -268,8 +265,6 @@ function renderizarListaEventos(data) {
     data.forEach(ev => {
         const limite = parseInt(ev.limite || 0);
         const inscritos = parseInt(ev.inscritos || 0);
-        
-        // Regra de Vagas: Backend é a autoridade, mas o frontend já avisa
         let esgotado = (limite > 0 && inscritos >= limite);
 
         let statusBadge = '<div class="card-status status-ativo">Inscrições Abertas</div>';
@@ -409,6 +404,35 @@ window.verificarOutraInst = function(s) {
     if(s.value==='Outra'){ i.style.display='block'; i.required=true; i.focus(); } else { i.style.display='none'; i.required=false; } 
 }
 
+// --- FUNÇÃO DE REDUNDÂNCIA: Checa se salvou mesmo com erro de rede ---
+function verificarRedundancia(cpf, eventoId) {
+    toggleLoader(true, "Verificando status do envio...");
+    
+    // Faz uma pergunta rápida ao servidor
+    fetch(`${URL_API}?action=verificarStatusCPF&cpf=${cpf}&eventoId=${eventoId}`)
+        .then(res => res.json())
+        .then(json => {
+            toggleLoader(false);
+            if (json.status === 'success' && json.encontrado) {
+                // SUCESSO! O servidor salvou apesar do erro de rede.
+                showSuccess('Inscrição Confirmada!', `
+                    <div style="text-align:center">
+                        <p style="color:#059669; font-weight:bold;">Seus dados foram salvos com sucesso!</p>
+                        <p>Anote sua chave de acesso:</p>
+                        <h2 style="color:#2563eb; font-size:2rem; margin:10px 0; letter-spacing:2px; font-family:monospace;">${json.chave}</h2>
+                    </div>`, 
+                    () => { document.getElementById('form-inscricao').reset(); voltarHome(); });
+            } else {
+                // Realmente deu erro
+                showError('Erro no Envio', 'Não conseguimos salvar seus dados. Por favor, tente novamente.');
+            }
+        })
+        .catch(() => {
+            toggleLoader(false);
+            showError('Erro de Conexão', 'Não conseguimos conectar ao servidor. Verifique sua internet.');
+        });
+}
+
 async function enviarInscricao(e) {
     e.preventDefault();
     const iCPF = document.querySelector('input[name="CPF"]');
@@ -437,6 +461,7 @@ async function enviarInscricao(e) {
     });
     if(dados['NomeInstituicao'] === 'Outra') { dados['NomeInstituicao'] = document.getElementById('input_outra_inst').value; }
 
+    const eventoId = document.getElementById('form-inscricao').dataset.idEvento;
     const config = JSON.parse(document.getElementById('form-inscricao').dataset.config);
     const arqs = {};
     
@@ -444,12 +469,18 @@ async function enviarInscricao(e) {
         if(config.arquivos?.foto) { arqs.foto = { data: await comprimirImagem(document.getElementById('file-foto').files[0]), mime: 'image/jpeg' }; }
         if(config.arquivos?.doc) { const f = document.getElementById('file-doc').files[0]; arqs.doc = { data: await toBase64(f), mime: f.type }; }
         
+        // Timeout manual para evitar espera infinita (45 segundos)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 45000);
+
         fetch(URL_API, { 
             method: 'POST', 
-            body: JSON.stringify({ action: 'novaInscricao', eventoId: document.getElementById('form-inscricao').dataset.idEvento, campos: dados, arquivos: arqs }) 
+            body: JSON.stringify({ action: 'novaInscricao', eventoId: eventoId, campos: dados, arquivos: arqs }),
+            signal: controller.signal
         })
         .then(res => res.json())
         .then(j => {
+            clearTimeout(timeoutId);
             toggleLoader(false);
             if(j.status === 'success') {
                 showSuccess('Inscrição Realizada!', `
@@ -460,12 +491,20 @@ async function enviarInscricao(e) {
                     </div>`, 
                     () => { document.getElementById('form-inscricao').reset(); voltarHome(); });
             } else {
-                showError('Não foi possível enviar', j.message);
+                showError('Atenção', j.message);
             }
+        })
+        .catch(err => {
+            clearTimeout(timeoutId);
+            console.warn("Erro no fetch principal:", err);
+            // Se der erro de rede ou timeout, verifica a redundância
+            verificarRedundancia(dados['CPF'], eventoId);
         });
+
     } catch(err) { 
-        toggleLoader(false); showError('Erro Técnico', 'Ocorreu uma falha no envio. Tente novamente.'); 
+        toggleLoader(false); 
         console.error(err);
+        showError('Erro Técnico', 'Ocorreu uma falha ao processar os arquivos. Tente novamente.'); 
     }
 }
 
