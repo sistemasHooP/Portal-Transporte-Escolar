@@ -749,6 +749,7 @@ function modalNovoEvento() {
             }
 
             const sels = []; 
+            
             CAMPOS_PADRAO.forEach(c => { 
                 const el = document.getElementById(`check_${c.key}`);
                 if(el && el.checked) sels.push(c.key); 
@@ -1096,7 +1097,7 @@ function acaoEmMassa(s) {
     });
 }
 
-// --- GERAR FICHA DE INSCRIÇÃO (NOVA VERSÃO PROFISSIONAL - A4 GRID) ---
+// --- GERAR FICHA DE INSCRIÇÃO (NOVA VERSÃO PROFISSIONAL - A4 GRID 3 LINHAS) ---
 function gerarFicha(chave) {
     showLoading('Gerando Ficha...');
 
@@ -1130,7 +1131,7 @@ function gerarFicha(chave) {
         // CSS Injetado para a Ficha
         const fichaStyle = `
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;800&display=swap');
                 
                 @media print {
                     @page { size: A4 portrait; margin: 10mm; }
@@ -1147,7 +1148,7 @@ function gerarFicha(chave) {
                     display: flex; flex-direction: column; gap: 20px;
                 }
 
-                /* HEADER */
+                /* HEADER ATUALIZADO (3 LINHAS DE HIERARQUIA) */
                 .ficha-header {
                     display: grid;
                     grid-template-columns: 100px 1fr 120px;
@@ -1157,10 +1158,30 @@ function gerarFicha(chave) {
                     align-items: center;
                 }
                 .ficha-logo img { width: 100px; height: 100px; object-fit: contain; }
+                
                 .ficha-titles { text-align: center; }
-                .ficha-titles h1 { font-size: 16px; margin: 0; color: #1e293b; text-transform: uppercase; font-weight: 700; }
-                .ficha-titles h2 { font-size: 14px; margin: 5px 0 0; color: #64748b; font-weight: 400; text-transform: uppercase; }
-                .ficha-titles h3 { font-size: 18px; margin: 10px 0 0; color: #2563eb; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+                
+                /* LINHA 1: B3 (Nome Sistema) - Negrito */
+                .ficha-titles h1 { 
+                    font-size: 18px; margin: 0; color: #1e293b; text-transform: uppercase; font-weight: 800; 
+                }
+                
+                /* LINHA 2: B8 (Secretaria) - Normal */
+                .ficha-titles h2 { 
+                    font-size: 14px; margin: 4px 0 0; color: #475569; font-weight: 500; text-transform: uppercase; 
+                }
+
+                /* LINHA 3: Evento - Normal */
+                .ficha-titles .evento-title { 
+                    font-size: 14px; margin: 2px 0 0; color: #475569; font-weight: 400; text-transform: uppercase; 
+                }
+
+                /* LINHA 4: Título Ficha */
+                .ficha-titles h3 { 
+                    font-size: 12px; margin: 8px 0 0; color: #2563eb; font-weight: 700; 
+                    text-transform: uppercase; letter-spacing: 1px; 
+                    border: 1px solid #2563eb; display: inline-block; padding: 2px 8px; border-radius: 4px; 
+                }
                 
                 .ficha-meta-box {
                     border: 1px solid #ccc;
@@ -1251,12 +1272,13 @@ function gerarFicha(chave) {
             ${fichaStyle}
             <div class="ficha-a4">
                 
-                <!-- CABEÇALHO -->
+                <!-- CABEÇALHO ATUALIZADO (3 LINHAS DE HIERARQUIA) -->
                 <div class="ficha-header">
                     <div class="ficha-logo"><img src="${logoUrl}" onerror="this.style.display='none'"></div>
                     <div class="ficha-titles">
-                        <h1>${nomeSistema}</h1>
-                        <h2>${nomeSecretaria}</h2>
+                        <h1>${nomeSistema}</h1> <!-- B3: Negrito -->
+                        <h2>${nomeSecretaria}</h2> <!-- B8: Normal -->
+                        <div class="evento-title">${evento.titulo}</div> <!-- Evento: Normal -->
                         <h3>FICHA DE INSCRIÇÃO</h3>
                     </div>
                     <div class="ficha-meta-box">
@@ -1265,10 +1287,10 @@ function gerarFicha(chave) {
                     </div>
                 </div>
 
-                <!-- INFO DO EVENTO -->
+                <!-- INFO DO EVENTO (REDUZIDO, POIS JÁ ESTÁ NO CABEÇALHO) -->
                 <div class="data-grid" style="background:#f8fafc; padding:10px; border-radius:4px; border:1px solid #e2e8f0;">
                     <div class="data-item col-8">
-                        <span class="data-label">Evento / Período Letivo</span>
+                        <span class="data-label">Detalhes da Inscrição</span>
                         <div class="data-value" style="border:none; font-weight:bold; font-size:14px; color:#2563eb;">${evento.titulo}</div>
                     </div>
                     <div class="data-item col-2">
