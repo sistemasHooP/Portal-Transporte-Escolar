@@ -645,7 +645,7 @@ input[type="file"] { display: none; }
         justify-content: center;
         align-items: center;
         align-self: flex-end; /* Joga para baixo */
-        height: 25mm; /* AUMENTADO DE 18mm PARA 25mm */
+        height: 35mm; /* AUMENTADO DE 18mm PARA 25mm */
     }
     .logo-sme-virtual {
         max-height: 100%; width: auto; object-fit: contain;
@@ -685,3 +685,4 @@ input[type="file"] { display: none; }
 @media (max-width: 1200px) {
     .charts-wrapper { grid-template-columns: 1fr; height: auto; }
 }
+
