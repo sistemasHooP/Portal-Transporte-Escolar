@@ -528,7 +528,7 @@ html, body {
     text-transform: uppercase;
     letter-spacing: 2px;
     opacity: 0.6;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
     padding-bottom: 10px;
 }
@@ -538,7 +538,7 @@ html, body {
     background: white;
     padding: 10px;
     border-radius: 12px;
-    margin: 0 auto 10px;
+    margin: 0 auto 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -559,13 +559,14 @@ html, body {
     display: block;
 }
 
-/* LOGO CENTRALIZADA */
+/* LOGO CENTRALIZADA - Atualizada para ser maior */
 .logo-center-container {
     display: flex; justify-content: center; align-items: center;
     flex: 1; padding: 10px 0;
 }
 .logo-sme-virtual {
-    max-height: 50px; width: auto; object-fit: contain;
+    max-height: 80px; /* AUMENTADO DE 50px PARA 80px */
+    width: auto; object-fit: contain;
 }
 
 .cart-footer {
@@ -601,12 +602,12 @@ html, body {
 /* Ocultar elementos exclusivos de impressão na visualização Web */
 .cart-print-auth, .assinatura-box-print { display: none; }
 
-/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO + DETALHES ALINHADOS + ASSINATURA + LOGO CENTRAL --- */
+/* --- IMPRESSÃO CORRIGIDA: LAYOUT EMPILHADO --- */
 @media print {
     /* Forçar orientação Retrato na folha para empilhar os cards largos */
     @page { 
         size: portrait; 
-        margin: 0; 
+        margin: 10mm; 
     }
 
     /* Oculta tudo por padrão */
@@ -660,7 +661,12 @@ html, body {
         background: linear-gradient(135deg, var(--card-color, #2563eb), #0f172a) !important;
         overflow: hidden; 
         border-radius: 4mm;
-        display: block; 
+        /* MUDANÇA: Grid para garantir posição da logo */
+        display: grid;
+        grid-template-columns: 40mm 1fr;
+        grid-template-rows: 8mm 1fr 25mm 10mm; /* Header | Corpo | Logo(25mm) | Footer(10mm) */
+        padding: 4mm;
+        align-items: center;
     }
 
     /* --- FRENTE (Layout Compacto) --- */
@@ -757,11 +763,7 @@ html, body {
 
     /* --- VERSO (Layout Horizontal Interno) --- */
     .carteirinha-back {
-        padding: 4mm !important;
-        display: grid;
-        grid-template-columns: 40mm 1fr; 
-        grid-template-rows: 8mm 1fr 15mm; 
-        align-items: center;
+        /* O Grid principal já foi definido na classe .carteirinha-face acima para impressão */
     }
 
     /* Header Verso */
@@ -775,33 +777,36 @@ html, body {
     .carteirinha-back .qr-code-box {
         grid-column: 1; grid-row: 2;
         width: 35mm; height: 35mm; padding: 2mm; background: white; margin: 0;
+        align-self: center; justify-self: center;
     }
 
     /* Validade */
     .carteirinha-back .validity-box {
         grid-column: 2; grid-row: 2;
         text-align: center; margin: 0;
-        align-self: flex-start;
+        align-self: center; justify-self: center;
     }
     .carteirinha-back .validity-label { font-size: 8pt; display: block; margin-bottom: 2mm; }
-    .carteirinha-back .validity-year { font-size: 32pt; font-weight: 900; line-height: 1; display: block; }
+    .carteirinha-back .validity-year { font-size: 36pt; font-weight: 900; line-height: 1; display: block; }
 
-    /* LOGO CENTRALIZADA NA IMPRESSÃO */
+    /* LOGO CENTRALIZADA (LINHA 3 DO GRID) */
     .logo-center-container {
-        grid-column: 2; grid-row: 2;
+        grid-column: 1 / -1;
+        grid-row: 3;
         display: flex !important;
         justify-content: center;
         align-items: center;
-        align-self: flex-end; /* Joga para baixo */
-        height: 18mm; /* Altura fixa para logo */
+        height: 100%;
+        margin-top: 2mm;
     }
     .logo-sme-virtual {
-        max-height: 100%; width: auto; object-fit: contain;
+        max-height: 25mm; /* Aumentado na impressão */
+        width: auto; object-fit: contain;
     }
 
-    /* Footer Verso */
+    /* Footer Verso (LINHA 4 DO GRID) */
     .carteirinha-back .cart-footer {
-        grid-column: 1 / -1; grid-row: 3;
+        grid-column: 1 / -1; grid-row: 4;
         position: static; padding: 0; margin: 0; border: none;
         font-size: 7.5pt; align-self: end;
         display: flex; flex-direction: column; align-items: center;
