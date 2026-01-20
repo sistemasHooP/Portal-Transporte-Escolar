@@ -36,7 +36,7 @@ const LABELS_TODOS_CAMPOS = {
 let mapaEventos = {}; 
 let cacheEventos = {}; 
 let chartEventosInstance = null; let chartStatusInstance = null;
-let todasInscricoes = [];         
+let todasInscricoes = [];          
 let inscricoesFiltradas = []; 
 let dashboardData = []; 
 let paginaAtual = 1;
@@ -725,7 +725,7 @@ function modalNovoEvento() {
                 return false;
             }
 
-            const sels = []; // Agora vazio, pois Cidade e Estado não são forçados
+            const sels = []; 
             
             CAMPOS_PADRAO.forEach(c => { 
                 const el = document.getElementById(`check_${c.key}`);
@@ -828,6 +828,8 @@ function renderizarProximaPagina() {
         let d = {}; try { d = JSON.parse(ins.dadosJson); } catch(e){}
         const checked = selecionados.has(ins.chave) ? 'checked' : '';
         
+        // --- AQUI ESTÁ A LÓGICA DA NOVA FICHA ---
+        // Ao clicar neste botão, chamamos a nova função gerarFicha(chave)
         let btnFicha = `<button class="btn-icon bg-view" style="background:#6366f1;" onclick="gerarFicha('${ins.chave}')" title="Gerar Ficha"><i class="fa-solid fa-print"></i></button>`;
         
         let btnCartAdm = '';
@@ -839,7 +841,6 @@ function renderizarProximaPagina() {
             }
         }
         
-        // CORREÇÃO: Container flex seguro com largura definida
         tbody.innerHTML += `<tr>
             <td style="text-align:center;"><input type="checkbox" class="bulk-check" value="${ins.chave}" ${checked} onclick="toggleCheck('${ins.chave}')"></td>
             <td>${safeDate(ins.data)}</td>
@@ -1074,7 +1075,7 @@ function acaoEmMassa(s) {
     });
 }
 
-// --- GERAR FICHA DE INSCRIÇÃO (DINÂMICA E REVISADA: TABELAS SEM BORDAS) ---
+// --- GERAR FICHA DE INSCRIÇÃO (NOVA VERSÃO PROFISSIONAL - A4 GRID) ---
 function gerarFicha(chave) {
     showLoading('Gerando Ficha...');
 
@@ -1086,189 +1087,323 @@ function gerarFicha(chave) {
 
     let evento = cacheEventos[inscricao.eventoId] || { titulo: 'Documento Oficial' };
 
-    // Buscar configurações visuais atualizadas para o cabeçalho
+    // Buscar configurações visuais
     fetch(`${URL_API}?action=getPublicConfig`)
     .then(r => r.json())
     .then(jsonConfig => {
         const configSistema = jsonConfig.config || {};
         
-        // Dados visuais do sistema (com fallback)
         const logoUrl = configSistema.urlLogo ? formatarUrlDrive(configSistema.urlLogo) : URL_LOGO;
         const nomeSistema = configSistema.nomeSistema || 'Sistema de Transporte';
         const nomeSecretaria = configSistema.nomeSecretaria || 'Secretaria de Educação';
 
-        // Foto do Aluno (URL)
         let fotoUrl = '';
         if(dados.linkFoto) {
             fotoUrl = formatarUrlDrive(dados.linkFoto);
         }
         
-        // Foto HTML
         const fotoHtml = fotoUrl 
-            ? `<img src="${fotoUrl}" style="width:100%; height:100%; object-fit:cover;">`
-            : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:10px;">SEM FOTO</div>`;
+            ? `<img src="${fotoUrl}" style="width:100%; height:100%; object-fit:cover; border-radius: 4px;">`
+            : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:10px; background:#f0f0f0;">SEM FOTO</div>`;
 
-        // Definição de Grupos para Organização Lógica
-        const ordemPessoais = ['NomeCompleto', 'CPF', 'DataNascimento', 'Telefone', 'Email', 'Endereco', 'Cidade', 'Estado'];
-        const ordemAcademicos = ['NomeInstituicao', 'NomeCurso', 'PeriodoCurso', 'Matricula', 'Turno'];
-        
-        // Helper para gerar linhas de tabela SEM BORDAS
-        const createTableRows = (keys) => {
-            let rows = '';
-            keys.forEach(key => {
-                if (dados[key]) {
-                    const label = LABELS_TODOS_CAMPOS[key] || key;
-                    let val = dados[key];
-                    if(key === 'DataNascimento' && val.includes('-') && val.length === 10) {
-                        const parts = val.split('-');
-                        if(parts.length === 3) val = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                    }
-                    rows += `
-                        <tr>
-                            <td class="label-cell">${label.toUpperCase()}</td>
-                            <td class="value-cell">${val}</td>
-                        </tr>
-                    `;
-                }
-            });
-            return rows;
-        };
-
-        const rowsPessoais = createTableRows(ordemPessoais);
-        const rowsAcademicos = createTableRows(ordemAcademicos);
-        
-        // Outras Informações
-        let rowsOutros = '';
-        const ignorar = ['linkFoto', 'linkDoc', 'Assinatura', 'Observacoes', ...ordemPessoais, ...ordemAcademicos];
-        for (const [key, val] of Object.entries(dados)) {
-            if (!ignorar.includes(key)) {
-                rowsOutros += `
-                    <tr>
-                        <td class="label-cell">${key.toUpperCase()}</td>
-                        <td class="value-cell">${val}</td>
-                    </tr>`;
-            }
-        }
-        if(!rowsOutros) rowsOutros = '<tr><td colspan="2" style="padding:10px; color:#666; font-style:italic;">Nenhuma informação adicional.</td></tr>';
-
-        // HTML FINAL COM TABELAS LIMPAS (Igual Modelo PDF)
-        const htmlFicha = `
+        // CSS Injetado para a Ficha
+        const fichaStyle = `
             <style>
+                @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+                
                 @media print {
-                    @page { size: portrait; margin: 10mm; }
-                    body { -webkit-print-color-adjust: exact; font-family: 'Arial', sans-serif; }
+                    @page { size: A4 portrait; margin: 10mm; }
+                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-family: 'Roboto', sans-serif; background: white; }
+                    /* Esconde interface do sistema */
+                    body > *:not(#print-layer) { display: none !important; }
+                    #print-layer { display: block !important; position: absolute; top:0; left:0; width:100%; }
                 }
-                .ficha-container { width: 100%; max-width: 800px; margin: 0 auto; padding: 2px; }
-                
-                /* HEADER TABLE - Clean */
-                .header-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; border-bottom: none; }
-                .header-table td { padding: 5px; vertical-align: top; }
-                
-                .logo-cell img { width: 80px; height: 80px; object-fit: contain; }
-                .center-info { text-align: center; padding-top: 15px; }
-                .center-info h2 { margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
-                .center-info h3 { margin: 5px 0 0; font-size: 14px; font-weight: normal; color: #444; }
-                
-                .key-cell { text-align: right; vertical-align: top; padding-right: 0; }
-                .key-text { font-size: 12px; font-weight: bold; margin-bottom: 5px; display: block; text-align: center; border: 1px solid #ccc; padding: 2px; background: #f0f0f0; margin-top: 5px; }
-                .photo-box { width: 80px; height: 100px; border: 1px solid #ccc; float: right; background: #f9f9f9; overflow: hidden; }
 
-                /* DATA SECTIONS - Clean & Spaced */
-                .section-title { 
-                    font-weight: bold; 
+                .ficha-a4 {
+                    width: 100%; max-width: 210mm; margin: 0 auto;
+                    font-family: 'Roboto', sans-serif; color: #333;
+                    box-sizing: border-box;
+                    display: flex; flex-direction: column; gap: 20px;
+                }
+
+                /* HEADER */
+                .ficha-header {
+                    display: grid;
+                    grid-template-columns: 100px 1fr 120px;
+                    gap: 20px;
+                    border-bottom: 3px solid #2563eb;
+                    padding-bottom: 20px;
+                    align-items: center;
+                }
+                .ficha-logo img { width: 100px; height: 100px; object-fit: contain; }
+                .ficha-titles { text-align: center; }
+                .ficha-titles h1 { font-size: 16px; margin: 0; color: #1e293b; text-transform: uppercase; font-weight: 700; }
+                .ficha-titles h2 { font-size: 14px; margin: 5px 0 0; color: #64748b; font-weight: 400; text-transform: uppercase; }
+                .ficha-titles h3 { font-size: 18px; margin: 10px 0 0; color: #2563eb; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+                
+                .ficha-meta-box {
+                    border: 1px solid #ccc;
+                    padding: 5px;
+                    text-align: center;
+                    border-radius: 4px;
+                    background: #f8fafc;
+                }
+                .ficha-foto-frame {
+                    width: 90px; height: 110px; 
+                    border: 1px solid #000; 
+                    margin: 0 auto 5px; 
+                    overflow: hidden; 
+                    background: #fff;
+                }
+                .ficha-chave { font-family: monospace; font-size: 12px; font-weight: bold; color: #2563eb; display: block; }
+                
+                /* SEÇÕES */
+                .ficha-section { margin-bottom: 10px; }
+                .section-title {
+                    background: #e2e8f0;
+                    color: #1e293b;
                     font-size: 12px;
+                    font-weight: 700;
                     text-transform: uppercase;
-                    margin-top: 25px; 
-                    margin-bottom: 10px;
-                    border-bottom: 1px solid #000;
-                    padding-bottom: 3px;
-                    width: 100%;
+                    padding: 6px 10px;
+                    border-radius: 4px;
+                    margin-bottom: 8px;
+                    border-left: 4px solid #2563eb;
                 }
-                
-                .data-table { width: 100%; border-collapse: collapse; border: none; font-size: 11px; margin-bottom: 15px; }
-                .data-table td { padding: 6px 0; border: none; } /* SEM BORDAS NAS CÉLULAS */
-                
-                .label-cell { 
-                    width: 25%; 
-                    font-weight: bold; 
+
+                /* GRID DE DADOS */
+                .data-grid {
+                    display: grid;
+                    grid-template-columns: repeat(12, 1fr);
+                    gap: 10px;
+                    row-gap: 15px;
+                }
+                .data-item { display: flex; flex-direction: column; }
+                .data-label { font-size: 9px; text-transform: uppercase; color: #64748b; font-weight: 600; margin-bottom: 2px; }
+                .data-value { 
+                    font-size: 12px; 
+                    font-weight: 500; 
                     color: #000; 
-                    vertical-align: top; 
-                    padding-right: 10px;
-                }
-                .value-cell { 
-                    width: 75%; 
-                    color: #333;
-                    font-weight: normal;
+                    border-bottom: 1px solid #ccc; 
+                    padding-bottom: 2px; 
+                    min-height: 18px;
                 }
 
-                /* SIGNATURE */
-                .sign-area { margin-top: 80px; text-align: left; }
-                .sign-label { font-weight: bold; font-size: 11px; margin-bottom: 40px; }
-                .sign-name { font-size: 12px; text-transform: uppercase; border-top: 1px solid #000; display: inline-block; padding-top: 5px; min-width: 300px; }
-
-                .footer-info { 
-                    margin-top: 60px;
-                    border-top: 1px solid #ccc; padding-top: 5px;
-                    font-size: 9px; color: #555;
+                /* ASSINATURAS */
+                .signatures-area {
+                    margin-top: 50px;
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 40px;
                 }
+                .sign-box { text-align: center; }
+                .sign-line { border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; font-size: 12px; font-weight: bold; }
+                .sign-desc { font-size: 10px; color: #666; }
+
+                /* RODAPÉ */
+                .ficha-footer {
+                    margin-top: auto;
+                    border-top: 1px solid #eee;
+                    padding-top: 10px;
+                    font-size: 10px;
+                    color: #888;
+                    display: flex;
+                    justify-content: space-between;
+                }
+                .legal-text {
+                    font-size: 9px; text-align: justify; margin-top: 20px; color: #555; font-style: italic;
+                }
+
+                /* UTILITÁRIOS DE LARGURA */
+                .col-12 { grid-column: span 12; }
+                .col-9 { grid-column: span 9; }
+                .col-8 { grid-column: span 8; }
+                .col-6 { grid-column: span 6; }
+                .col-4 { grid-column: span 4; }
+                .col-3 { grid-column: span 3; }
+                .col-2 { grid-column: span 2; }
             </style>
+        `;
 
-            <div class="ficha-container">
+        // Conteúdo da Ficha
+        let htmlContent = `
+            ${fichaStyle}
+            <div class="ficha-a4">
                 
-                <table class="header-table">
-                    <tr>
-                        <td width="100" class="logo-cell"><img src="${logoUrl}" onerror="this.style.display='none'"></td>
-                        <td class="center-info">
-                            <h2>FICHA DE INSCRIÇÃO</h2>
-                            <h3>${evento.titulo}</h3>
-                        </td>
-                        <td width="120" class="key-cell">
-                            <div class="photo-box">
-                                ${fotoHtml}
-                            </div>
-                             <div style="clear:both;"></div>
-                            <span class="key-text">CHAVE: ${chave}</span>
-                        </td>
-                    </tr>
-                </table>
-
-                ${rowsPessoais ? `<div class="section-title">DADOS PESSOAIS</div><table class="data-table">${rowsPessoais}</table>` : ''}
-                
-                ${rowsAcademicos ? `<div class="section-title">DADOS ACADÊMICOS</div><table class="data-table">${rowsAcademicos}</table>` : ''}
-                
-                <div class="section-title">OUTRAS INFORMAÇÕES</div>
-                <table class="data-table">${rowsOutros}</table>
-
-                <div class="sign-area">
-                    <div class="sign-label">ASSINATURA DO ALUNO(A)</div>
-                    <div class="sign-name">${dados.NomeCompleto || ''}</div>
+                <!-- CABEÇALHO -->
+                <div class="ficha-header">
+                    <div class="ficha-logo"><img src="${logoUrl}" onerror="this.style.display='none'"></div>
+                    <div class="ficha-titles">
+                        <h1>${nomeSistema}</h1>
+                        <h2>${nomeSecretaria}</h2>
+                        <h3>FICHA DE INSCRIÇÃO</h3>
+                    </div>
+                    <div class="ficha-meta-box">
+                        <div class="ficha-foto-frame">${fotoHtml}</div>
+                        <span class="ficha-chave">CHAVE: ${chave}</span>
+                    </div>
                 </div>
 
-                <div class="footer-info">
-                    Documento oficial gerado em ${new Date().toLocaleString('pt-BR')}<br>
-                    ${nomeSecretaria} - ${nomeSistema}
+                <!-- INFO DO EVENTO -->
+                <div class="data-grid" style="background:#f8fafc; padding:10px; border-radius:4px; border:1px solid #e2e8f0;">
+                    <div class="data-item col-8">
+                        <span class="data-label">Evento / Período Letivo</span>
+                        <div class="data-value" style="border:none; font-weight:bold; font-size:14px; color:#2563eb;">${evento.titulo}</div>
+                    </div>
+                    <div class="data-item col-2">
+                        <span class="data-label">Data Inscrição</span>
+                        <div class="data-value" style="border:none;">${new Date(inscricao.data).toLocaleDateString('pt-BR')}</div>
+                    </div>
+                    <div class="data-item col-2">
+                        <span class="data-label">Status</span>
+                        <div class="data-value" style="border:none;">${inscricao.status.toUpperCase()}</div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 1: DADOS PESSOAIS -->
+                <div class="ficha-section">
+                    <div class="section-title">1. Dados Pessoais</div>
+                    <div class="data-grid">
+                        <div class="data-item col-8">
+                            <span class="data-label">Nome Completo</span>
+                            <div class="data-value">${dados.NomeCompleto || ''}</div>
+                        </div>
+                        <div class="data-item col-4">
+                            <span class="data-label">CPF</span>
+                            <div class="data-value">${dados.CPF || ''}</div>
+                        </div>
+                        
+                        <div class="data-item col-3">
+                            <span class="data-label">Data de Nascimento</span>
+                            <div class="data-value">${dados.DataNascimento ? new Date(dados.DataNascimento).toLocaleDateString('pt-BR') : ''}</div>
+                        </div>
+                        <div class="data-item col-3">
+                            <span class="data-label">Celular / WhatsApp</span>
+                            <div class="data-value">${dados.Telefone || ''}</div>
+                        </div>
+                        <div class="data-item col-6">
+                            <span class="data-label">E-mail</span>
+                            <div class="data-value">${dados.Email || ''}</div>
+                        </div>
+
+                        <div class="data-item col-6">
+                            <span class="data-label">Endereço</span>
+                            <div class="data-value">${dados.Endereco || ''}</div>
+                        </div>
+                        <div class="data-item col-4">
+                            <span class="data-label">Cidade</span>
+                            <div class="data-value">${dados.Cidade || ''}</div>
+                        </div>
+                        <div class="data-item col-2">
+                            <span class="data-label">UF</span>
+                            <div class="data-value">${dados.Estado || ''}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 2: DADOS ACADÊMICOS -->
+                <div class="ficha-section">
+                    <div class="section-title">2. Dados Acadêmicos</div>
+                    <div class="data-grid">
+                        <div class="data-item col-6">
+                            <span class="data-label">Instituição de Ensino</span>
+                            <div class="data-value">${dados.NomeInstituicao || ''}</div>
+                        </div>
+                        <div class="data-item col-6">
+                            <span class="data-label">Curso</span>
+                            <div class="data-value">${dados.NomeCurso || ''}</div>
+                        </div>
+
+                        <div class="data-item col-4">
+                            <span class="data-label">Período / Semestre</span>
+                            <div class="data-value">${dados.PeriodoCurso || ''}</div>
+                        </div>
+                        <div class="data-item col-4">
+                            <span class="data-label">Matrícula</span>
+                            <div class="data-value">${dados.Matricula || ''}</div>
+                        </div>
+                        <div class="data-item col-4">
+                            <span class="data-label">Turno</span>
+                            <div class="data-value">${dados.Turno || ''}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 3: INFORMAÇÕES ADICIONAIS -->
+                <div class="ficha-section">
+                    <div class="section-title">3. Informações Complementares</div>
+                    <div class="data-grid">
+        `;
+
+        // Renderiza campos extras dinamicamente
+        const camposIgnorar = ['NomeCompleto','CPF','DataNascimento','Telefone','Email','Endereco','Cidade','Estado','NomeInstituicao','NomeCurso','PeriodoCurso','Matricula','Turno','linkFoto','linkDoc','Assinatura','Observacoes'];
+        
+        let temExtras = false;
+        for (const [key, val] of Object.entries(dados)) {
+            if (!camposIgnorar.includes(key)) {
+                temExtras = true;
+                htmlContent += `
+                    <div class="data-item col-4">
+                        <span class="data-label">${key}</span>
+                        <div class="data-value">${val}</div>
+                    </div>`;
+            }
+        }
+        if(!temExtras) {
+            htmlContent += `<div class="col-12" style="font-size:11px; color:#999; font-style:italic;">Nenhuma informação adicional registrada.</div>`;
+        }
+
+        htmlContent += `
+                    </div>
+                </div>
+
+                <!-- TERMO E ASSINATURAS -->
+                <div class="legal-text">
+                    Declaro, para os devidos fins, que as informações acima prestadas são verdadeiras e assumo inteira responsabilidade por elas. Estou ciente das normas de utilização do transporte escolar municipal.
+                </div>
+
+                <div class="signatures-area">
+                    <div class="sign-box">
+                        <div class="sign-line">${dados.NomeCompleto || 'Aluno(a)'}</div>
+                        <div class="sign-desc">Assinatura do Aluno(a) ou Responsável</div>
+                    </div>
+                    <div class="sign-box">
+                        <div class="sign-line">Responsável pela Validação</div>
+                        <div class="sign-desc">${nomeSecretaria}</div>
+                    </div>
+                </div>
+
+                <!-- RODAPÉ PÁGINA -->
+                <div class="ficha-footer">
+                    <span>Documento gerado eletronicamente em ${new Date().toLocaleString('pt-BR')}</span>
+                    <span>${nomeSistema} - Gestão Inteligente</span>
                 </div>
 
             </div>
         `;
 
-        const pl = document.getElementById('print-layer') || document.createElement('div');
-        pl.id = 'print-layer';
-        if(!pl.parentElement) document.body.appendChild(pl);
-        pl.innerHTML = htmlFicha;
+        // INJEÇÃO NO DOM E IMPRESSÃO
+        let printLayer = document.getElementById('print-layer');
+        if (!printLayer) {
+            printLayer = document.createElement('div');
+            printLayer.id = 'print-layer';
+            document.body.appendChild(printLayer);
+        }
         
-        // Espera imagens carregarem
-        const images = pl.querySelectorAll('img');
+        printLayer.innerHTML = htmlContent;
+        Swal.close();
+        
+        // Espera imagens carregarem antes de imprimir
+        const images = printLayer.querySelectorAll('img');
         let loaded = 0;
         const checkPrint = () => {
             loaded++;
             if(loaded >= images.length) {
-                Swal.close();
                 if(inscricao.status === 'Pendente') {
                     fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'atualizarStatus', senha: sessionStorage.getItem('admin_token'), chave: chave, novoStatus: 'Ficha Emitida' }) });
                     inscricao.status = 'Ficha Emitida'; 
                 }
-                setTimeout(() => window.print(), 100);
+                setTimeout(() => window.print(), 200);
             }
         };
 
