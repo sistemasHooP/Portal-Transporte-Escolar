@@ -377,13 +377,14 @@ input[type="file"] { display: none; }
 .validity-label { font-size: 0.8rem; opacity: 0.8; text-transform: uppercase; display: block; }
 .validity-year { font-size: 3rem; font-weight: 800; line-height: 1; color: var(--accent); text-shadow: 0 4px 10px rgba(0,0,0,0.3); display: block; }
 
-/* LOGO CENTRALIZADA */
+/* LOGO CENTRALIZADA - Atualizada para ser maior */
 .logo-center-container {
     display: flex; justify-content: center; align-items: center;
     flex: 1; padding: 10px 0;
 }
 .logo-sme-virtual {
-    max-height: 50px; width: auto; object-fit: contain;
+    max-height: 80px; /* AUMENTADO DE 50px PARA 80px */
+    width: auto; object-fit: contain;
 }
 
 .cart-footer { 
@@ -632,19 +633,19 @@ input[type="file"] { display: none; }
     .carteirinha-back .validity-box {
         grid-column: 2; grid-row: 2;
         text-align: center; margin: 0;
-        align-self: flex-start; /* Joga para cima */
+        align-self: flex-start;
     }
     .carteirinha-back .validity-label { font-size: 8pt; display: block; margin-bottom: 2mm; }
     .carteirinha-back .validity-year { font-size: 32pt; font-weight: 900; line-height: 1; display: block; }
 
-    /* LOGO CENTRALIZADA NA IMPRESSÃO */
+    /* LOGO CENTRALIZADA NA IMPRESSÃO - AUMENTADA */
     .logo-center-container {
         grid-column: 2; grid-row: 2;
         display: flex !important;
         justify-content: center;
         align-items: center;
         align-self: flex-end; /* Joga para baixo */
-        height: 36mm; /* Altura fixa para logo */
+        height: 25mm; /* AUMENTADO DE 18mm PARA 25mm */
     }
     .logo-sme-virtual {
         max-height: 100%; width: auto; object-fit: contain;
@@ -681,8 +682,6 @@ input[type="file"] { display: none; }
     .modal-actions-row, .cart-actions, .btn-close-modern, .btn-action-pri, .btn-action-sec, .btn-flip { display: none !important; }
 }
 
-@media(max-width: 400px) {
-    .hero-header { height: 260px; }
-    .text-container h1 { font-size: 1.4rem; }
+@media (max-width: 1200px) {
+    .charts-wrapper { grid-template-columns: 1fr; height: auto; }
 }
-
