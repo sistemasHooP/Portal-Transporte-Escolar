@@ -21,7 +21,7 @@
     --bg-body: #f1f5f9;        
     --bg-card: #ffffff;        
     --text-main: #1e293b;        
-    --text-muted: #64748b;       
+    --text-muted: #64748b;        
     
     /* Sombras e Bordas */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -326,17 +326,61 @@ input[type="file"] { display: none; }
     display: flex; flex-direction: column; padding: 20px;
     transform: rotateY(0deg); -webkit-transform: rotateY(0deg);
 }
+
+/* --- ATUALIZAÇÃO NOVO CABEÇALHO 3 LINHAS --- */
 .cart-header {
-    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
-    position: relative; z-index: 2; text-align: left; padding-bottom: 10px;
+    display: flex; 
+    align-items: center; /* Centraliza verticalmente com a logo */
+    gap: 12px; 
+    margin-bottom: 20px;
+    position: relative; z-index: 2; 
+    text-align: left; 
+    padding-bottom: 10px;
     border-bottom: 1px solid rgba(255,255,255,0.2);
 }
 .cart-logo {
-    width: 45px; height: 45px; background: white; border-radius: 50%;
-    padding: 3px; object-fit: contain; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    width: 50px; height: 50px; 
+    background: white; border-radius: 50%;
+    padding: 3px; object-fit: contain; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    flex-shrink: 0;
 }
-.cart-org-info h3 { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2; text-transform: uppercase; margin: 0; }
-.cart-org-info small { font-size: 0.7rem; text-transform: uppercase; opacity: 0.9; font-weight: 300; display: block; margin-top: 2px;}
+
+.cart-org-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* NOVAS CLASSES PARA AS 3 LINHAS */
+.line-1-sistema {
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    line-height: 1.1;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    color: #ffffff;
+}
+
+.line-2-secretaria {
+    font-size: 0.65rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    opacity: 0.9;
+    line-height: 1.1;
+    margin-bottom: 2px;
+}
+
+.line-3-evento {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #fbbf24; /* Amarelo destaque */
+    line-height: 1.1;
+}
+/* ------------------------------------------- */
+
 .cart-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 2; gap: 15px; }
 .cart-photo-frame {
     width: 110px; height: 140px; background: #e2e8f0; border: 3px solid white;
@@ -595,8 +639,20 @@ input[type="file"] { display: none; }
         margin: 0; padding-bottom: 0.5mm; height: 100%;
     }
     .carteirinha-front .cart-logo { width: 10mm; height: 10mm; padding: 0.5mm; }
-    .carteirinha-front .cart-org-info h3 { font-size: 9pt; line-height: 1.1; margin: 0; font-weight: 800; white-space: normal; }
-    .carteirinha-front .cart-org-info small { font-size: 7pt; line-height: 1; display: block; margin-top: 0.5mm; white-space: normal; }
+    
+    /* ATUALIZADO: AJUSTE DO HEADER 3 LINHAS NA IMPRESSÃO */
+    .carteirinha-front .cart-org-info {
+        display: flex; flex-direction: column; justify-content: center;
+    }
+    .carteirinha-front .line-1-sistema {
+        font-size: 8pt; line-height: 1; font-weight: 800; margin-bottom: 1px;
+    }
+    .carteirinha-front .line-2-secretaria {
+        font-size: 6pt; line-height: 1; opacity: 0.9; margin-bottom: 1px;
+    }
+    .carteirinha-front .line-3-evento {
+        font-size: 6.5pt; line-height: 1; font-weight: 700; color: #fbbf24;
+    }
 
     /* CORPO FRENTE */
     .carteirinha-front .cart-body { display: contents; }
