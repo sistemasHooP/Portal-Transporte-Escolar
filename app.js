@@ -25,10 +25,24 @@ let configSistemaCache = null;
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => { 
-    // Carrega instantaneamente do cache se existir
+    // Função "Wake Up" imediata
+    acordarSistema();
+    
+    // Configura Ping periódico (a cada 5 minutos) para manter a sessão ativa
+    setInterval(acordarSistema, 5 * 60 * 1000);
+
+    // Carregamento normal
     carregarConfiguracoesVisuais();
     carregarEventos(); 
 });
+
+// --- FUNÇÃO PARA ACORDAR O GOOGLE SHEETS ---
+function acordarSistema() {
+    // Chama o backend sem bloquear a interface (fire and forget)
+    fetch(`${URL_API}?action=wakeUp`, { method: 'GET', mode: 'no-cors' }) 
+        .then(() => console.log('Ping enviado ao sistema.'))
+        .catch(e => console.log('Ping falhou (offline?)', e));
+}
 
 // --- CARREGAR CONFIGURAÇÕES VISUAIS (Estratégia: Cache First) ---
 function carregarConfiguracoesVisuais() {
