@@ -36,7 +36,7 @@ const LABELS_TODOS_CAMPOS = {
 let mapaEventos = {}; 
 let cacheEventos = {}; 
 let chartEventosInstance = null; let chartStatusInstance = null;
-let todasInscricoes = [];          
+let todasInscricoes = [];           
 let inscricoesFiltradas = []; 
 let dashboardData = []; 
 let paginaAtual = 1;
@@ -1463,11 +1463,23 @@ function imprimirCarteirinhaAdmin(chave) {
         document.getElementById('cart-admin-cpf').innerText = aluno.cpf || '---';
         document.getElementById('cart-admin-mat').innerText = aluno.matricula || '---';
         
-        // NOVO: Exibe Nome do Evento (se disponível)
-        if (aluno.nome_evento) {
-            document.getElementById('cart-admin-sys-name').innerText = aluno.nome_evento.toUpperCase();
-        } else if(config.nomeSistema) {
+        // 3. ATUALIZAÇÃO 3 LINHAS DO CABEÇALHO (Dados Institucionais)
+        
+        // LINHA 1: Nome do Sistema (Config B3) - ID: cart-admin-sys-name
+        if(config.nomeSistema) {
             document.getElementById('cart-admin-sys-name').innerText = config.nomeSistema.toUpperCase();
+        }
+
+        // LINHA 2: Secretaria (Config B8) - ID: cart-admin-sec-header
+        const elSec = document.getElementById('cart-admin-sec-header');
+        if(elSec && config.nomeSecretaria) {
+            elSec.innerText = config.nomeSecretaria.toUpperCase();
+        }
+
+        // LINHA 3: Nome do Evento (Específico da Inscrição) - ID: cart-admin-event-name
+        const elEvent = document.getElementById('cart-admin-event-name');
+        if(elEvent) {
+            elEvent.innerText = (aluno.nome_evento || "EVENTO").toUpperCase();
         }
 
         // Código Único na Frente (Visível na impressão)
@@ -1490,13 +1502,8 @@ function imprimirCarteirinhaAdmin(chave) {
 
         // 2. Preenche Verso & Estilo
         const secName = config.nomeSecretario || "Secretário";
-        const deptName = config.nomeSecretaria || "Secretaria de Educação";
         
         document.getElementById('cart-admin-sec-name').innerText = secName;
-        
-        // Atualiza legenda da secretaria (Small)
-        const orgInfoSmall = document.querySelector('#cart-admin-sys-name + small');
-        if(orgInfoSmall) orgInfoSmall.innerText = deptName;
         
         // Logo
         if(config.urlLogo) {
@@ -1524,11 +1531,11 @@ function imprimirCarteirinhaAdmin(chave) {
         // Geração do QR Code usando QRious (Client-side)
         const linkValidacao = `${URL_API}?action=validar&chave=${chave}`;
         const qr = new QRious({
-          element: document.getElementById('cart-admin-qr-img'), 
-          value: linkValidacao,
-          size: 150,
-          backgroundAlpha: 0,
-          foreground: 'black'
+            element: document.getElementById('cart-admin-qr-img'), 
+            value: linkValidacao,
+            size: 150,
+            backgroundAlpha: 0,
+            foreground: 'black'
         });
         // Atualiza a imagem com o DataURL gerado pelo canvas do QRious
         document.getElementById('cart-admin-qr-img').src = qr.toDataURL();
