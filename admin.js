@@ -164,7 +164,7 @@ function carregarConfigGeral() {
     .then(json => {
         if(json.status === 'success') {
             document.getElementById('config-drive-id').value = json.idPasta || '';
-            // Config de cor removida daqui
+            // Config de cor removida (agora é por evento)
             document.getElementById('config-nome-sec').value = json.nomeSec || '';
             document.getElementById('config-nome-resp').value = json.nomeResp || '';
             document.getElementById('config-assinatura').value = json.assinatura || ''; 
@@ -174,7 +174,7 @@ function carregarConfigGeral() {
 
 function salvarConfigGeral() {
     const id = document.getElementById('config-drive-id').value;
-    // Config de cor removida daqui
+    // Config de cor removida (agora é por evento)
     const sec = document.getElementById('config-nome-sec').value;
     const resp = document.getElementById('config-nome-resp').value;
     const ass = document.getElementById('config-assinatura').value; 
@@ -186,13 +186,44 @@ function salvarConfigGeral() {
             action: 'salvarConfigGeral', 
             senha: sessionStorage.getItem('admin_token'),
             idPasta: id,
-            // corCard removido do envio
+            // corCard removido
             nomeSec: sec,
             nomeResp: resp,
             assinatura: ass
         }) 
     }).then(() => {
         Swal.fire({icon: 'success', title: 'Configurações Salvas!', timer: 1500, showConfirmButton: false});
+    });
+}
+
+// NOVO: Função para copiar link do Scanner
+function copiarLinkScanner() {
+    // Pega a URL atual e troca admin.html por scanner.html
+    // Se estiver na raiz, assume scanner.html
+    let urlBase = window.location.href;
+    if (urlBase.includes('admin.html')) {
+        urlBase = urlBase.replace('admin.html', 'scanner.html');
+    } else {
+        // Fallback genérico caso a URL esteja diferente
+        urlBase = urlBase.substring(0, urlBase.lastIndexOf('/') + 1) + 'scanner.html';
+    }
+
+    // Usa a API de Clipboard
+    navigator.clipboard.writeText(urlBase).then(() => {
+        Swal.fire({
+            icon: 'success',
+            title: 'Link Copiado!',
+            text: 'Envie este link para o motorista ou fiscal.',
+            timer: 2500,
+            showConfirmButton: false
+        });
+    }).catch(err => {
+        console.error('Erro ao copiar: ', err);
+        Swal.fire({
+            icon: 'error',
+            title: 'Erro ao Copiar',
+            text: 'Não foi possível copiar automaticamente. O link é: ' + urlBase
+        });
     });
 }
 
@@ -1673,6 +1704,37 @@ function imprimirCarteirinhaAdmin(chave) {
         Swal.close();
         console.error(err);
         Swal.fire('Erro', 'Falha ao gerar carteirinha.', 'error');
+    });
+}
+
+// NOVO: Função para copiar link do Scanner
+function copiarLinkScanner() {
+    // Pega a URL atual e troca admin.html por scanner.html
+    // Se estiver na raiz, assume scanner.html
+    let urlBase = window.location.href;
+    if (urlBase.includes('admin.html')) {
+        urlBase = urlBase.replace('admin.html', 'scanner.html');
+    } else {
+        // Fallback genérico caso a URL esteja diferente
+        urlBase = urlBase.substring(0, urlBase.lastIndexOf('/') + 1) + 'scanner.html';
+    }
+
+    // Usa a API de Clipboard
+    navigator.clipboard.writeText(urlBase).then(() => {
+        Swal.fire({
+            icon: 'success',
+            title: 'Link Copiado!',
+            text: 'Envie este link para o motorista ou fiscal.',
+            timer: 2500,
+            showConfirmButton: false
+        });
+    }).catch(err => {
+        console.error('Erro ao copiar: ', err);
+        Swal.fire({
+            icon: 'error',
+            title: 'Erro ao Copiar',
+            text: 'Não foi possível copiar automaticamente. O link é: ' + urlBase
+        });
     });
 }
 
