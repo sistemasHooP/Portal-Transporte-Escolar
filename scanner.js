@@ -14,12 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function iniciarLeitor() {
-    // Verifica se está em ambiente seguro (HTTPS ou Localhost) - Obrigatório para Câmera
+    // Verifica se está em ambiente seguro
     if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
         Swal.fire({
             icon: 'warning',
             title: 'Segurança',
-            text: 'O acesso à câmera requer HTTPS. Verifique se o site possui o cadeado de segurança.',
+            text: 'O acesso à câmera requer HTTPS.',
             confirmButtonColor: '#f59e0b'
         });
         return;
@@ -27,98 +27,102 @@ function iniciarLeitor() {
 
     html5QrCode = new Html5Qrcode("reader");
 
+    // CONFIGURAÇÃO DE ALTA PERFORMANCE (IOS & ANDROID)
     const config = { 
-        fps: 25, 
+        // 15 FPS é o ideal para Web. Mais que isso engasga o processador do iPhone no navegador.
+        fps: 15, 
+        // OTIMIZAÇÃO CRÍTICA: Procura APENAS QR Codes, ignora códigos de barra (acelera muito)
+        formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
         qrbox: (viewfinderWidth, viewfinderHeight) => {
             const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
             return {
-                width: Math.floor(minEdge * 0.75),
-                height: Math.floor(minEdge * 0.75)
+                width: Math.floor(minEdge * 0.70),
+                height: Math.floor(minEdge * 0.70)
             };
         },
-        aspectRatio: 1.0
+        aspectRatio: 1.0,
+        experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true
+        }
     };
 
-    // NOVA LÓGICA ROBUSTA: Lista câmeras antes de iniciar
+    // Lista câmeras antes de iniciar
     Html5Qrcode.getCameras().then(devices => {
         if (devices && devices.length) {
-            let cameraId = devices[0].id; // Padrão: primeira câmera encontrada
+            let cameraId = devices[0].id; 
             
-            // Tenta encontrar a câmera traseira inteligentemente
-            // Geralmente em celulares a traseira é a última da lista ou tem 'back' no nome
+            // Lógica para encontrar câmera traseira
             if (devices.length > 1) {
                 const backCamera = devices.find(device => 
                     device.label.toLowerCase().includes('back') || 
                     device.label.toLowerCase().includes('traseira') ||
                     device.label.toLowerCase().includes('environment')
                 );
-                
                 if (backCamera) {
                     cameraId = backCamera.id;
                 } else {
-                    // Se não achar pelo nome, tenta a última da lista (comum em Android)
                     cameraId = devices[devices.length - 1].id;
                 }
             }
 
-            // Inicia o leitor com a câmera específica (ID)
+            // OTIMIZAÇÃO DE VÍDEO: Solicita resolução HD (720p) ou VGA (480p)
+            // Processar 4K no navegador é o que causa a lentidão no iPhone.
+            const cameraConfig = {
+                deviceId: { exact: cameraId },
+                videoConstraints: {
+                    width: { min: 640, ideal: 720, max: 1280 },
+                    height: { min: 480, ideal: 720, max: 1280 },
+                    facingMode: "environment",
+                    focusMode: "continuous"
+                }
+            };
+
+            // Inicia com ID específico e configurações de vídeo travadas
             html5QrCode.start(
-                cameraId, 
+                cameraId, // Usa o ID encontrado
                 config, 
                 onScanSuccess, 
                 onScanFailure
             ).catch(err => {
-                console.error("Erro ao iniciar com ID:", err);
-                // Fallback: Tenta iniciar com modo genérico se o ID falhar
+                console.warn("Falha ao iniciar com ID, tentando modo genérico...", err);
+                // Fallback para modo simples se a configuração avançada falhar
                 startGenericCamera(config);
             });
 
         } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Sem Câmera',
-                text: 'Nenhuma câmera foi detectada neste dispositivo.',
-                confirmButtonColor: '#dc2626'
-            });
+            Swal.fire({ icon: 'error', title: 'Sem Câmera', text: 'Nenhuma câmera detectada.' });
         }
     }).catch(err => {
-        // Erro ao pedir permissão ou listar dispositivos
-        console.error("Erro de permissão/listagem:", err);
-        tratarErroCamera(err);
+        console.error("Erro geral:", err);
+        startGenericCamera(config); // Tenta forçar o início mesmo sem listar
     });
 }
 
 function startGenericCamera(config) {
+    // Modo de compatibilidade máxima
     html5QrCode.start(
         { facingMode: "environment" }, 
         config, 
         onScanSuccess, 
         onScanFailure
     ).catch(err => {
-        console.error("Erro genérico:", err);
         tratarErroCamera(err);
     });
 }
 
 function tratarErroCamera(err) {
-    let titulo = 'Erro de Câmera';
     let msg = 'Não foi possível acessar a câmera.';
-    
     const erroStr = err.toString().toLowerCase();
 
     if (erroStr.includes('notallowederror') || erroStr.includes('permission denied')) {
-        msg = 'Permissão negada. Por favor, clique no ícone de cadeado/câmera na barra de endereço e permita o acesso.';
-    } else if (erroStr.includes('notfounderror')) {
-        msg = 'Nenhuma câmera encontrada no dispositivo.';
-    } else if (erroStr.includes('notreadableerror') || erroStr.includes('trackstarterror')) {
-        msg = 'A câmera está sendo usada por outro aplicativo ou aba. Feche outros apps e tente novamente.';
-    } else if (erroStr.includes('overconstrainederror')) {
-        msg = 'A câmera não suporta a resolução solicitada.';
+        msg = 'Permissão negada. Clique no cadeado/Aa na barra de endereço para liberar.';
+    } else if (erroStr.includes('notreadableerror')) {
+        msg = 'A câmera está sendo usada por outro app. Feche tudo e tente novamente.';
     }
 
     Swal.fire({
         icon: 'error',
-        title: titulo,
+        title: 'Erro de Câmera',
         text: msg,
         confirmButtonColor: '#dc2626'
     });
@@ -145,12 +149,12 @@ function onScanSuccess(decodedText, decodedResult) {
 }
 
 function onScanFailure(error) {
-    // console.warn(`Erro frame: ${error}`);
+    // Silencioso para performance
 }
 
 function processarChave(chave) {
     isProcessing = true;
-    html5QrCode.pause(true); // Pausa visualmente e logicamente
+    html5QrCode.pause(true); 
 
     const painel = document.getElementById('result-panel');
     const loader = document.getElementById('validating-loader');
@@ -178,13 +182,12 @@ function processarChave(chave) {
                     exibirErro("Acesso Negado", `Situação: ${status}`);
                 }
             } else {
-                exibirErro("Não Encontrado", "Chave inválida ou inexistente.");
+                exibirErro("Não Encontrado", "Chave inválida.");
             }
         })
         .catch(err => {
-            console.error(err);
             loader.classList.add('hidden');
-            exibirErro("Erro de Conexão", "Falha ao verificar. Tente novamente.");
+            exibirErro("Erro de Conexão", "Tente novamente.");
         });
 }
 
