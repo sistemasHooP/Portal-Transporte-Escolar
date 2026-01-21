@@ -230,7 +230,7 @@
                                 <h1>Inscrições</h1>
                                 <p>Gerenciamento completo de alunos.</p>
                             </div>
-                            <button onclick="carregarInscricoes()" class="btn btn-secondary btn-icon" title="Recarregar">
+                            <button onclick="carregarInscricoes(true)" class="btn btn-secondary btn-icon" title="Recarregar">
                                 <i class="fa-solid fa-rotate-right" style="color: var(--text-main);"></i>
                             </button>
                         </div>
@@ -310,15 +310,9 @@
 
                             <!-- Card Configurações Gerais -->
                             <div class="card-widget">
-                                <h3 style="margin-bottom: 1rem; font-size: 1rem; color: var(--text-main);">Carteirinha & Sistema</h3>
+                                <h3 style="margin-bottom: 1rem; font-size: 1rem; color: var(--text-main);">Dados do Sistema</h3>
                                 
-                                <div style="margin-bottom: 15px;">
-                                    <label class="swal-label">Cor da Carteirinha (Hex ou Nome)</label>
-                                    <div style="display:flex; gap:10px;">
-                                        <input type="color" id="config-cor-picker" class="swal-input-custom" style="width:50px; padding:0; height:38px;" onchange="document.getElementById('config-cor').value = this.value">
-                                        <input type="text" id="config-cor" class="swal-input-custom" placeholder="#2563eb">
-                                    </div>
-                                </div>
+                                <!-- REMOVIDO: Campo de Cor da Carteirinha -->
 
                                 <div style="margin-bottom: 15px;">
                                     <label class="swal-label">Nome da Secretaria</label>
