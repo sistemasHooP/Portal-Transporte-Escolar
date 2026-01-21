@@ -1,0 +1,266 @@
+/* --- LAYOUT GERAL --- */
+body {
+    background-color: #000; /* Fundo preto para destaque da câmera */
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden; /* Impede scroll global */
+}
+
+/* --- CABEÇALHO --- */
+.scanner-header {
+    background: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 100;
+    position: relative;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: var(--primary-dark);
+}
+
+.header-content i { font-size: 1.8rem; }
+.header-content h1 { font-size: 1.2rem; font-weight: 700; margin: 0; line-height: 1.1; }
+.header-content p { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
+
+.btn-sair {
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    padding: 10px;
+    transition: color 0.2s;
+}
+.btn-sair:hover { color: #ef4444; }
+
+/* --- ÁREA PRINCIPAL --- */
+.scanner-main {
+    flex: 1;
+    position: relative;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- CÂMERA --- */
+.camera-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+#reader {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Ajustes específicos para a biblioteca html5-qrcode */
+#reader video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+}
+
+/* Overlay Visual (Moldura de Leitura) */
+.scan-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3); /* Escurece bordas */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none; /* Permite cliques passarem para o vídeo se necessário */
+    z-index: 10;
+}
+
+.scan-frame {
+    width: 280px;
+    height: 280px;
+    border: 4px solid rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); /* Efeito de foco */
+    position: relative;
+}
+
+/* Cantos da moldura */
+.scan-frame::before, .scan-frame::after {
+    content: '';
+    position: absolute;
+    width: 40px; height: 40px;
+    border-color: var(--accent);
+    border-style: solid;
+    border-width: 0;
+    transition: all 0.3s;
+}
+.scan-frame::before { top: -4px; left: -4px; border-top-width: 6px; border-left-width: 6px; }
+.scan-frame::after { bottom: -4px; right: -4px; border-bottom-width: 6px; border-right-width: 6px; }
+
+/* Animação de Scan */
+.scan-frame {
+    animation: pulse-border 2s infinite;
+}
+@keyframes pulse-border {
+    0% { border-color: rgba(255,255,255,0.6); box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); }
+    50% { border-color: var(--accent); box-shadow: 0 0 0 1000px rgba(0,0,0,0.6); }
+    100% { border-color: rgba(255,255,255,0.6); box-shadow: 0 0 0 1000px rgba(0,0,0,0.5); }
+}
+
+.scan-instruction {
+    margin-top: 20px;
+    color: white;
+    font-size: 0.9rem;
+    background: rgba(0,0,0,0.6);
+    padding: 8px 16px;
+    border-radius: 20px;
+    text-align: center;
+}
+
+/* --- PAINEL DE RESULTADOS --- */
+.result-panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    border-top-left-radius: 30px;
+    border-top-right-radius: 30px;
+    padding: 30px;
+    box-shadow: 0 -5px 25px rgba(0,0,0,0.3);
+    z-index: 20;
+    min-height: 50vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.result-panel.hidden {
+    transform: translateY(110%); /* Esconde deslizando para baixo */
+    display: flex !important; /* Mantém display flex para animação funcionar */
+    visibility: visible !important; /* Visibilidade controlada pelo transform */
+}
+
+/* Loader Interno */
+#validating-loader {
+    text-align: center;
+    color: var(--text-muted);
+}
+
+/* Status: Sucesso e Erro */
+.result-content {
+    width: 100%;
+    text-align: center;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.status-icon {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem; color: white;
+    margin: 0 auto 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+.status-icon.success { background: #16a34a; }
+.status-icon.error { background: #dc2626; }
+
+.status-text {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+}
+.success-text { color: #16a34a; }
+.error-text { color: #dc2626; }
+
+/* Card do Aluno (Sucesso) */
+.student-info {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    text-align: left;
+    margin-bottom: 25px;
+}
+
+.student-info img {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.student-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+    color: var(--text-main);
+    line-height: 1.2;
+}
+
+.student-info p {
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.tag-validity {
+    display: inline-block;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+/* Erro Descrição */
+.error-desc {
+    color: var(--text-muted);
+    margin-bottom: 25px;
+    font-size: 1rem;
+}
+
+/* Botões */
+.btn-reset {
+    width: 100%;
+    padding: 16px;
+    background: var(--primary);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: transform 0.2s;
+}
+.btn-reset:active { transform: scale(0.96); }
+
+.error-btn {
+    background: #dc2626;
+    box-shadow: 0 10px 20px rgba(220, 38, 38, 0.3);
+}
+
+/* Responsividade para telas muito pequenas */
+@media (max-height: 700px) {
+    .scan-frame { width: 220px; height: 220px; }
+    .result-panel { padding: 20px; }
+    .status-icon { width: 60px; height: 60px; font-size: 2rem; }
+    .status-text { font-size: 1.5rem; margin-bottom: 15px; }
+}

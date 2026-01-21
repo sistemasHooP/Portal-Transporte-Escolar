@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Validador de Acesso</title>
+    
+    <!-- OTIMIZAÇÃO DE PERFORMANCE -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Fontes e Ícones -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="style.css">   <!-- Herda variáveis globais -->
+    <link rel="stylesheet" href="scanner.css"> <!-- Estilo específico do scanner -->
+</head>
+<body>
+
+    <!-- CABEÇALHO FIXO -->
+    <header class="scanner-header">
+        <div class="header-content">
+            <i class="fa-solid fa-qrcode"></i>
+            <div>
+                <h1>Validador</h1>
+                <p>Transporte Escolar</p>
+            </div>
+        </div>
+        <a href="index.html" class="btn-sair"><i class="fa-solid fa-right-from-bracket"></i></a>
+    </header>
+
+    <main class="scanner-main">
+        
+        <!-- ÁREA DA CÂMERA -->
+        <div class="camera-container">
+            <div id="reader"></div>
+            <div class="scan-overlay">
+                <div class="scan-frame"></div>
+                <p class="scan-instruction">Aponte para o QR Code da Carteirinha</p>
+            </div>
+        </div>
+
+        <!-- ÁREA DE RESULTADO (Card que sobe) -->
+        <div id="result-panel" class="result-panel hidden">
+            
+            <!-- LOADER DE VALIDAÇÃO -->
+            <div id="validating-loader" class="hidden">
+                <div class="spinner-ring"></div>
+                <p>Verificando base de dados...</p>
+            </div>
+
+            <!-- RESULTADO: SUCESSO -->
+            <div id="result-success" class="result-content hidden">
+                <div class="status-icon success">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <h2 class="status-text success-text">AUTORIZADO</h2>
+                
+                <div class="student-info">
+                    <img id="student-photo" src="" alt="Foto" onerror="this.src='https://via.placeholder.com/150?text=FOTO'">
+                    <div>
+                        <h3 id="student-name">Nome do Aluno</h3>
+                        <p id="student-course">Curso / Instituição</p>
+                        <div class="tag-validity">Válido até <span id="student-validity">2025</span></div>
+                    </div>
+                </div>
+
+                <button class="btn-reset" onclick="reiniciarLeitura()">
+                    Ler Próximo <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- RESULTADO: ERRO/VENCIDO -->
+            <div id="result-error" class="result-content hidden">
+                <div class="status-icon error">
+                    <i class="fa-solid fa-xmark"></i>
+                </div>
+                <h2 class="status-text error-text" id="error-title">NEGADO</h2>
+                <p class="error-desc" id="error-msg">Carteirinha não encontrada ou inválida.</p>
+                
+                <button class="btn-reset error-btn" onclick="reiniciarLeitura()">
+                    Tentar Novamente
+                </button>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- ÁUDIOS DE FEEDBACK -->
+    <audio id="audio-beep" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+    <audio id="audio-error" src="https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3"></audio>
+
+    <!-- BIBLIOTECA DE LEITURA QR -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="scanner.js"></script>
+
+</body>
+</html>
