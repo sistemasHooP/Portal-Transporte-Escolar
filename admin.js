@@ -3,7 +3,7 @@ const URL_API = 'https://script.google.com/macros/s/AKfycbx6wAwfQyfLbp4IPedWu8Ky
 // --- CONFIGURAÇÃO GERAL ---
 const URL_LOGO = './logo.png'; 
 
-// Campos padrão (Cidade e Estado agora são opcionais)
+// Campos padrão (Cidade e Estado agora são opcionais no sistema, mas listados aqui)
 const CAMPOS_PADRAO = [
     { key: 'NomeCompleto', label: 'Nome Completo' }, 
     { key: 'DataNascimento', label: 'Nascimento' }, 
@@ -32,14 +32,15 @@ const LABELS_TODOS_CAMPOS = {
     'Email': 'E-mail'
 };
 
-// Chaves de Cache
+// Chaves de Cache para otimização
 const CACHE_KEY_EVENTS = 'admin_events_data';
 const CACHE_KEY_INSCR = 'admin_inscr_data';
 
-// Estado da Aplicação
+// Estado da Aplicação (Variáveis Globais)
 let mapaEventos = {}; 
 let cacheEventos = {}; 
-let chartEventosInstance = null; let chartStatusInstance = null;
+let chartEventosInstance = null; 
+let chartStatusInstance = null;
 let todasInscricoes = [];            
 let inscricoesFiltradas = []; 
 let dashboardData = []; 
@@ -47,7 +48,7 @@ let paginaAtual = 1;
 const ITENS_POR_PAGINA = 50;
 let selecionados = new Set(); 
 
-// --- LOADING CUSTOMIZADO ---
+// --- LOADING CUSTOMIZADO (SweetAlert com GIF/Logo pulsante) ---
 function showLoading(msg = 'Processando...') {
     Swal.fire({
         html: `
@@ -57,16 +58,25 @@ function showLoading(msg = 'Processando...') {
                 <style>@keyframes pulse-swal { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }</style>
             </div>
         `,
-        showConfirmButton: false, allowOutsideClick: false, width: '300px', background: '#fff'
+        showConfirmButton: false, 
+        allowOutsideClick: false, 
+        width: '300px', 
+        background: '#fff'
     });
 }
 
+// --- HELPERS DE DATA ---
 function safeDate(val) {
     if(!val) return '-';
-    try { const d = new Date(val); return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('pt-BR'); } catch(e) { return '-'; }
+    try { 
+        const d = new Date(val); 
+        return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('pt-BR'); 
+    } catch(e) { 
+        return '-'; 
+    }
 }
 
-// Helper para converter data DD/MM/YYYY ou ISO para YYYY-MM-DD (Formato do Input Date)
+// Helper para converter data DD/MM/YYYY ou ISO para YYYY-MM-DD (Formato do Input Date HTML)
 function formatarDataParaInput(dataStr) {
     if (!dataStr) return '';
     if (dataStr.includes('T')) return dataStr.split('T')[0];
@@ -82,8 +92,13 @@ function formatarDataParaInput(dataStr) {
 function toggleSenha() {
     const input = document.getElementById('admin-pass');
     const icon = document.querySelector('.password-toggle');
-    if (input.type === 'password') { input.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); } 
-    else { input.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); }
+    if (input.type === 'password') { 
+        input.type = 'text'; 
+        icon.classList.replace('fa-eye', 'fa-eye-slash'); 
+    } else { 
+        input.type = 'password'; 
+        icon.classList.replace('fa-eye-slash', 'fa-eye'); 
+    }
 }
 
 function realizarLogin(e) {
@@ -97,24 +112,32 @@ function realizarLogin(e) {
 
     showLoading('Autenticando...');
 
-    fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'loginAdmin', senha: pass }) })
-    .then(res => res.json()).then(json => {
+    fetch(URL_API, { 
+        method: 'POST', 
+        body: JSON.stringify({ action: 'loginAdmin', senha: pass }) 
+    })
+    .then(res => res.json())
+    .then(json => {
         Swal.close();
         if(json.auth) {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('admin-panel').classList.remove('hidden');
+            
             sessionStorage.setItem('admin_token', pass);
-            // Limpa cache antigo ao logar para garantir dados frescos na sessão
+            
+            // Limpa cache antigo ao logar para garantir dados frescos na nova sessão
             sessionStorage.removeItem(CACHE_KEY_EVENTS);
             sessionStorage.removeItem(CACHE_KEY_INSCR);
+            
             carregarDashboard();
-            atualizarCotaEmail(); // Atualiza Cota ao logar
+            atualizarCotaEmail(); // Atualiza Cota imediatamente ao logar
         } else { 
             btn.disabled = false;
             btn.innerHTML = originalText;
             Swal.fire({icon: 'error', title: 'Acesso Negado', text: 'Senha incorreta.'}); 
         }
-    }).catch(() => {
+    })
+    .catch(() => {
         Swal.close();
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -129,7 +152,7 @@ function logout() {
     window.location.reload(); 
 }
 
-// --- NOVO: GERENCIADOR DE COTA ---
+// --- NOVO: GERENCIADOR DE COTA DE E-MAIL ---
 function atualizarCotaEmail() {
     const token = sessionStorage.getItem('admin_token');
     if (!token) return;
@@ -140,6 +163,8 @@ function atualizarCotaEmail() {
             if (json.status === 'success') {
                 const usado = json.usado;
                 const limite = json.limite;
+                
+                // Calcula percentual, limitando a 100% visualmente
                 const percentual = Math.min((usado / limite) * 100, 100);
                 
                 const elText = document.getElementById('quota-text');
@@ -149,13 +174,14 @@ function atualizarCotaEmail() {
                 
                 if (elBar) {
                     elBar.style.width = `${percentual}%`;
-                    // Muda a cor conforme o uso
+                    
+                    // Lógica de cores do indicador (Semáforo)
                     if (percentual > 90) {
-                        elBar.style.backgroundColor = '#ef4444'; // Vermelho
+                        elBar.style.backgroundColor = '#ef4444'; // Vermelho (Perigo)
                     } else if (percentual > 75) {
-                        elBar.style.backgroundColor = '#f59e0b'; // Amarelo
+                        elBar.style.backgroundColor = '#f59e0b'; // Amarelo (Atenção)
                     } else {
-                        elBar.style.backgroundColor = '#10b981'; // Verde
+                        elBar.style.backgroundColor = '#10b981'; // Verde (OK)
                     }
                 }
             }
@@ -163,14 +189,18 @@ function atualizarCotaEmail() {
         .catch(e => console.log('Erro ao buscar cota (silencioso):', e));
 }
 
-// --- NAVEGAÇÃO APP SHELL ---
+// --- NAVEGAÇÃO APP SHELL (Troca de Abas) ---
 function switchTab(tabId) {
+    // Esconde todas as abas
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    // Remove classe ativa de todos os botões do menu
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     
+    // Mostra a aba selecionada
     const selectedTab = document.getElementById(tabId);
     if(selectedTab) selectedTab.classList.remove('hidden');
     
+    // Identifica o botão correspondente para ativar
     let btnId = '';
     if(tabId === 'tab-dashboard') btnId = 'btn-dashboard';
     if(tabId === 'tab-relatorios') btnId = 'btn-relatorios';
@@ -186,9 +216,20 @@ function switchTab(tabId) {
     // Sempre atualiza a cota ao mudar de aba para manter o adm informado
     atualizarCotaEmail();
 
-    if(tabId === 'tab-dashboard' || tabId === 'tab-relatorios') carregarDashboard();
-    if(tabId === 'tab-eventos') carregarEventosAdmin();
-    if(tabId === 'tab-inscricoes') carregarInscricoes();
+    // Carregamento de dados por demanda
+    if(tabId === 'tab-dashboard' || tabId === 'tab-relatorios') {
+        carregarDashboard();
+    }
+    
+    if(tabId === 'tab-eventos') {
+        carregarEventosAdmin();
+    }
+    
+    if(tabId === 'tab-inscricoes') {
+        // Carregamento inteligente: só busca se não tiver cache ou se for a primeira vez
+        carregarInscricoes();
+    }
+    
     if(tabId === 'tab-config') {
         carregarInstituicoes();
         carregarConfigGeral(); 
@@ -231,9 +272,10 @@ function salvarConfigGeral() {
     });
 }
 
-// NOVO: Função para copiar link do Scanner
+// Função para copiar link do Scanner (Facilitador para o Fiscal)
 function copiarLinkScanner() {
     let urlBase = window.location.href;
+    // Ajusta a URL para apontar para o scanner.html
     if (urlBase.includes('admin.html')) {
         urlBase = urlBase.replace('admin.html', 'scanner.html');
     } else {
@@ -262,7 +304,7 @@ function copiarLinkScanner() {
 function carregarDashboard() {
     const token = sessionStorage.getItem('admin_token');
     
-    // 1. Tentar carregar do Cache primeiro
+    // 1. Tentar carregar do Cache Local primeiro
     const cachedEvt = sessionStorage.getItem(CACHE_KEY_EVENTS);
     const cachedInscr = sessionStorage.getItem(CACHE_KEY_INSCR);
     
@@ -272,16 +314,16 @@ function carregarDashboard() {
         } catch(e) { console.warn("Cache inválido"); }
     }
 
-    // 2. Buscar atualizações em background
+    // 2. Buscar atualizações em background (Silent Update)
     Promise.all([
         fetch(`${URL_API}?action=getTodosEventos`).then(r => r.json()),
         fetch(`${URL_API}?action=getInscricoesAdmin&token=${token}`).then(r => r.json())
     ]).then(([jsonEventos, jsonInscricoes]) => {
-        // Atualiza cache
+        // Atualiza cache com dados frescos
         if(jsonEventos.data) sessionStorage.setItem(CACHE_KEY_EVENTS, JSON.stringify(jsonEventos.data));
         if(jsonInscricoes.data) sessionStorage.setItem(CACHE_KEY_INSCR, JSON.stringify(jsonInscricoes.data));
         
-        // Atualiza tela
+        // Atualiza tela com dados novos
         processarDadosDashboard(jsonEventos.data || [], jsonInscricoes.data || []);
     });
 }
@@ -324,22 +366,61 @@ function atualizarEstatisticasDashboard(dados) {
 
 function renderizarGraficos(dadosEventos, dadosStatus) {
     if(chartEventosInstance) chartEventosInstance.destroy();
-    chartEventosInstance = new Chart(document.getElementById('chartEventos').getContext('2d'), {
-        type: 'bar', 
-        data: { labels: Object.keys(dadosEventos), datasets: [{ label: 'Inscritos', data: Object.values(dadosEventos), backgroundColor: '#2563eb', borderRadius: 4 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { borderDash: [2, 4] } }, x: { grid: { display: false } } } }
-    });
+    
+    const ctxEventos = document.getElementById('chartEventos');
+    if (ctxEventos) {
+        chartEventosInstance = new Chart(ctxEventos.getContext('2d'), {
+            type: 'bar', 
+            data: { 
+                labels: Object.keys(dadosEventos), 
+                datasets: [{ 
+                    label: 'Inscritos', 
+                    data: Object.values(dadosEventos), 
+                    backgroundColor: '#2563eb', 
+                    borderRadius: 4 
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }, 
+                scales: { 
+                    y: { beginAtZero: true, grid: { borderDash: [2, 4] } }, 
+                    x: { grid: { display: false } } 
+                } 
+            }
+        });
+    }
+
     if(chartStatusInstance) chartStatusInstance.destroy();
-    chartStatusInstance = new Chart(document.getElementById('chartStatus').getContext('2d'), {
-        type: 'doughnut', 
-        data: { labels: Object.keys(dadosStatus), datasets: [{ data: Object.values(dadosStatus), backgroundColor: ['#ca8a04', '#16a34a', '#dc2626', '#2563eb'], borderWidth: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } } } }
-    });
+    
+    const ctxStatus = document.getElementById('chartStatus');
+    if (ctxStatus) {
+        chartStatusInstance = new Chart(ctxStatus.getContext('2d'), {
+            type: 'doughnut', 
+            data: { 
+                labels: Object.keys(dadosStatus), 
+                datasets: [{ 
+                    data: Object.values(dadosStatus), 
+                    backgroundColor: ['#ca8a04', '#16a34a', '#dc2626', '#2563eb'], 
+                    borderWidth: 0 
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                cutout: '70%', 
+                plugins: { 
+                    legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } } 
+                } 
+            }
+        });
+    }
 }
 
 function atualizarSelectsRelatorio(eventos, inscricoes) {
     const selEvento = document.getElementById('relatorio-evento');
-    if(selEvento && selEvento.options.length <= 1) { // Só preenche se vazio
+    if(selEvento && selEvento.options.length <= 1) { // Só preenche se vazio para não duplicar
         selEvento.innerHTML = '<option value="">Todos os Eventos</option>';
         eventos.forEach(ev => {
             if(ev.id && ev.titulo) {
@@ -351,9 +432,17 @@ function atualizarSelectsRelatorio(eventos, inscricoes) {
     const selInst = document.getElementById('relatorio-inst');
     if(selInst && selInst.options.length <= 1) {
         let instituicoes = new Set();
-        inscricoes.forEach(ins => { try { instituicoes.add(JSON.parse(ins.dadosJson).NomeInstituicao); } catch(e){} });
+        inscricoes.forEach(ins => { 
+            try { 
+                const d = JSON.parse(ins.dadosJson);
+                if (d.NomeInstituicao) instituicoes.add(d.NomeInstituicao); 
+            } catch(e){} 
+        });
+        
         selInst.innerHTML = '<option value="">Todas as Instituições</option>';
-        Array.from(instituicoes).sort().forEach(inst => { if(inst) selInst.innerHTML += `<option value="${inst}">${inst}</option>`; });
+        Array.from(instituicoes).sort().forEach(inst => { 
+            if(inst) selInst.innerHTML += `<option value="${inst}">${inst}</option>`; 
+        });
     }
 }
 
@@ -560,42 +649,104 @@ function construirRelatorioFinal(alunos, colunasKeys, eventoId, configSistema) {
     setTimeout(() => window.print(), 500);
 }
 
-// --- EVENTOS ---
+// --- EVENTOS (AGORA COM RENDERIZAÇÃO OTIMIZADA) ---
 function carregarEventosAdmin() {
-    fetch(`${URL_API}?action=getTodosEventos`).then(res => res.json()).then(json => {
-        const tbody = document.getElementById('lista-eventos-admin'); 
-        tbody.innerHTML = '';
-        mapaEventos = {};
-        if(!json.data || json.data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem;">Nenhum evento criado.</td></tr>'; return; }
-        
-        json.data.forEach(ev => {
-            if (ev.id && ev.titulo) {
-                mapaEventos[ev.id] = ev.titulo;
-                cacheEventos[ev.id] = ev; 
-            }
-        });
-        
-        const eventosValidos = json.data.filter(ev => ev.id && ev.titulo);
+    // 1. Renderiza o que tiver em memória/cache primeiro
+    renderizarTabelaEventos();
 
-        eventosValidos.sort((a,b) => b.id - a.id).forEach(ev => {
-            let btnAction = ev.status === 'Ativo' ? 
-                `<button class="btn-icon" style="background:#eab308;" onclick="toggleStatusEvento('${ev.id}','Inativo')" title="Pausar"><i class="fa-solid fa-pause"></i></button>` : 
-                `<button class="btn-icon" style="background:#22c55e;" onclick="toggleStatusEvento('${ev.id}','Ativo')" title="Ativar"><i class="fa-solid fa-play"></i></button>`;
+    // 2. Busca atualização silenciosa do servidor
+    fetch(`${URL_API}?action=getTodosEventos`).then(res => res.json()).then(json => {
+        if(json.data) {
+            // Atualiza cache e re-renderiza se necessário
+            sessionStorage.setItem(CACHE_KEY_EVENTS, JSON.stringify(json.data));
             
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>#${ev.id}</strong></td>
-                    <td><div style="font-weight:600; color:var(--text-main); font-size:0.95rem;">${ev.titulo}</div></td>
-                    <td><div style="font-size:0.85rem; color:var(--text-secondary);">${safeDate(ev.inicio)} - ${safeDate(ev.fim)}</div></td>
-                    <td><span class="badge ${ev.status === 'Ativo' ? 'success' : 'danger'}">${ev.status}</span></td>
-                    <td style="text-align:right;">
-                        <div style="display:flex; gap:5px; justify-content:flex-end; align-items:center; width:100%;">
-                            ${btnAction}
-                            <button class="btn-icon bg-edit" onclick='abrirEdicaoEvento(${JSON.stringify(ev)})'><i class="fa-solid fa-pen"></i></button>
-                        </div>
-                    </td>
-                </tr>`;
-        });
+            // Atualiza mapa global
+            json.data.forEach(ev => {
+                if (ev.id && ev.titulo) {
+                    mapaEventos[ev.id] = ev.titulo;
+                    cacheEventos[ev.id] = ev; 
+                }
+            });
+            
+            renderizarTabelaEventos(json.data);
+        }
+    });
+}
+
+function renderizarTabelaEventos(dadosOpcionais) {
+    const tbody = document.getElementById('lista-eventos-admin'); 
+    if(!tbody) return;
+    tbody.innerHTML = '';
+
+    // Usa dados passados como argumento OU busca do cache
+    let dados = dadosOpcionais;
+    if(!dados) {
+        const cached = sessionStorage.getItem(CACHE_KEY_EVENTS);
+        if(cached) dados = JSON.parse(cached);
+    }
+
+    if(!dados || dados.length === 0) { 
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem;">Nenhum evento criado ou carregando...</td></tr>'; 
+        return; 
+    }
+
+    // Atualiza mapa caso esteja usando cache
+    mapaEventos = {};
+    cacheEventos = {};
+    dados.forEach(ev => {
+        if (ev.id && ev.titulo) {
+            mapaEventos[ev.id] = ev.titulo;
+            cacheEventos[ev.id] = ev; 
+        }
+    });
+
+    const eventosValidos = dados.filter(ev => ev.id && ev.titulo);
+
+    // Ordena por ID decrescente
+    eventosValidos.sort((a,b) => b.id - a.id).forEach(ev => {
+        let btnAction = ev.status === 'Ativo' ? 
+            `<button class="btn-icon" style="background:#eab308;" onclick="toggleStatusEvento('${ev.id}','Inativo')" title="Pausar"><i class="fa-solid fa-pause"></i></button>` : 
+            `<button class="btn-icon" style="background:#22c55e;" onclick="toggleStatusEvento('${ev.id}','Ativo')" title="Ativar"><i class="fa-solid fa-play"></i></button>`;
+        
+        tbody.innerHTML += `
+            <tr>
+                <td><strong>#${ev.id}</strong></td>
+                <td><div style="font-weight:600; color:var(--text-main); font-size:0.95rem;">${ev.titulo}</div></td>
+                <td><div style="font-size:0.85rem; color:var(--text-secondary);">${safeDate(ev.inicio)} - ${safeDate(ev.fim)}</div></td>
+                <td><span class="badge ${ev.status === 'Ativo' ? 'success' : 'danger'}">${ev.status}</span></td>
+                <td style="text-align:right;">
+                    <div style="display:flex; gap:5px; justify-content:flex-end; align-items:center; width:100%;">
+                        ${btnAction}
+                        <button class="btn-icon bg-edit" onclick='abrirEdicaoEvento(${JSON.stringify(ev)})'><i class="fa-solid fa-pen"></i></button>
+                    </div>
+                </td>
+            </tr>`;
+    });
+}
+
+function toggleStatusEvento(id, status) {
+    showLoading('Atualizando...');
+    fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'alterarStatusEvento', senha: sessionStorage.getItem('admin_token'), id, novoStatus: status }) })
+    .then(() => { 
+        Swal.close(); 
+        
+        // --- OTIMIZAÇÃO: Atualiza cache local e repinta sem fazer fetch de tudo de novo ---
+        // 1. Pega dados atuais
+        let dados = [];
+        const cached = sessionStorage.getItem(CACHE_KEY_EVENTS);
+        if(cached) dados = JSON.parse(cached);
+        
+        // 2. Encontra e atualiza
+        const evento = dados.find(e => String(e.id) === String(id));
+        if(evento) {
+            evento.status = status;
+            // 3. Salva e Renderiza
+            sessionStorage.setItem(CACHE_KEY_EVENTS, JSON.stringify(dados));
+            renderizarTabelaEventos(dados);
+        } else {
+            // Fallback se não achar no cache
+            carregarEventosAdmin();
+        }
     });
 }
 
@@ -723,12 +874,6 @@ function abrirEdicaoEvento(evento) {
             .then(() => { Swal.fire({icon: 'success', title: 'Salvo!'}); carregarEventosAdmin(); }); 
         }
     });
-}
-
-function toggleStatusEvento(id, status) {
-    showLoading('Atualizando...');
-    fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'alterarStatusEvento', senha: sessionStorage.getItem('admin_token'), id, novoStatus: status }) })
-    .then(() => { Swal.close(); carregarEventosAdmin(); });
 }
 
 function modalNovoEvento() {
@@ -887,12 +1032,13 @@ function modalNovoEvento() {
     });
 }
 
-// --- INSCRIÇÕES (Logic COM CACHE) ---
+// --- INSCRIÇÕES (Logic COM CACHE E ATUALIZAÇÃO OTIMISTA) ---
 function carregarInscricoes(forceReload = false) {
     const tbody = document.getElementById('lista-inscricoes-admin');
     const cachedEvents = sessionStorage.getItem(CACHE_KEY_EVENTS);
     const cachedInscr = sessionStorage.getItem(CACHE_KEY_INSCR);
 
+    // Se tiver cache e não for reload forçado, renderiza instantâneo
     if (!forceReload && cachedEvents && cachedInscr) {
         try {
             const evData = JSON.parse(cachedEvents);
@@ -946,6 +1092,7 @@ function resetEFiltrar() {
     const termo = document.getElementById('filtro-nome').value.toLowerCase();
     const status = document.getElementById('filtro-status').value;
     const eventoId = document.getElementById('filtro-evento').value;
+    
     inscricoesFiltradas = todasInscricoes.filter(i => {
         let d = {}; try { d = JSON.parse(i.dadosJson); } catch(e){}
         const nome = (d.NomeCompleto || "").toLowerCase();
@@ -954,6 +1101,7 @@ function resetEFiltrar() {
                (status === "" || i.status === status) && 
                (eventoId === "" || String(i.eventoId) === String(eventoId));
     });
+    
     document.getElementById('lista-inscricoes-admin').innerHTML = '';
     renderizarProximaPagina();
 }
@@ -1007,6 +1155,28 @@ function renderizarProximaPagina() {
     });
     paginaAtual++;
     document.getElementById('btn-load-more').style.display = (paginaAtual * ITENS_POR_PAGINA < inscricoesFiltradas.length + ITENS_POR_PAGINA) ? 'block' : 'none';
+}
+
+// --- HELPER DE ATUALIZAÇÃO OTIMISTA (LOCAL STATE) ---
+function atualizarEstadoLocalInscricao(chave, novosDados, novoStatus) {
+    const inscricao = todasInscricoes.find(i => i.chave === chave);
+    if (!inscricao) return;
+
+    // Atualiza o objeto em memória
+    if (novoStatus) inscricao.status = novoStatus;
+    if (novosDados) {
+        // Mescla dados antigos com novos
+        let dadosAntigos = {};
+        try { dadosAntigos = JSON.parse(inscricao.dadosJson); } catch(e){}
+        const dadosFinais = { ...dadosAntigos, ...novosDados };
+        inscricao.dadosJson = JSON.stringify(dadosFinais);
+    }
+
+    // Persiste no SessionStorage para sobreviver a F5
+    sessionStorage.setItem(CACHE_KEY_INSCR, JSON.stringify(todasInscricoes));
+
+    // Re-aplica filtros e renderiza a tabela (MUITO MAIS RÁPIDO que fetch)
+    resetEFiltrar();
 }
 
 // --- EDIÇÃO DE INSCRIÇÃO (MODAL PREMIUM REVISADO) ---
@@ -1250,20 +1420,22 @@ function abrirEdicaoInscricao(chave) {
                     html: 'As alterações foram salvas com sucesso.' + msgEmail,
                     showConfirmButton: true
                 });
-                carregarInscricoes(true);
+                
+                // --- MUDANÇA CRÍTICA: ATUALIZAÇÃO OTIMISTA (SEM RECARREGAR TUDO) ---
+                atualizarEstadoLocalInscricao(chave, result.value.novosDados, result.value.status);
                 atualizarCotaEmail(); // Atualiza contador
             });
         }
     });
 }
 
-// --- FUNÇÕES AUXILIARES ---
+// --- FUNÇÕES AUXILIARES DE TABELA ---
 function toggleCheck(k) { if(selecionados.has(k)) selecionados.delete(k); else selecionados.add(k); atualizarBarraBulk(); }
 function toggleAllChecks() { const m = document.getElementById('check-all').checked; document.querySelectorAll('.bulk-check').forEach(c => { c.checked = m; if(m) selecionados.add(c.value); else selecionados.delete(c.value); }); atualizarBarraBulk(); }
 function atualizarBarraBulk() { const b = document.getElementById('bulk-bar'); document.getElementById('bulk-count').innerText = selecionados.size; if(selecionados.size > 0) b.classList.remove('hidden'); else b.classList.add('hidden'); }
 function desmarcarTudo() { selecionados.clear(); document.getElementById('check-all').checked = false; document.querySelectorAll('.bulk-check').forEach(c => c.checked = false); atualizarBarraBulk(); }
 
-// --- ATUALIZAÇÃO EM MASSA (COM FEEDBACK DE EMAIL) ---
+// --- ATUALIZAÇÃO EM MASSA (COM FEEDBACK DE EMAIL E OTIMIZAÇÃO LOCAL) ---
 function acaoEmMassa(s) {
     Swal.fire({title: `Marcar ${selecionados.size} como ${s}?`, icon: 'warning', showCancelButton: true}).then((r) => {
         if(r.isConfirmed) {
@@ -1292,7 +1464,9 @@ function acaoEmMassa(s) {
                         html: htmlRes
                     });
                     
+                    // Atualização Otimista em Massa
                     todasInscricoes.forEach(i => { if(selecionados.has(i.chave)) i.status = s; }); 
+                    sessionStorage.setItem(CACHE_KEY_INSCR, JSON.stringify(todasInscricoes)); // Salva estado novo
                     resetEFiltrar();
                     atualizarCotaEmail(); // Atualiza contador
                 }
@@ -1301,7 +1475,11 @@ function acaoEmMassa(s) {
     });
 }
 
-// --- GERAR FICHA DE INSCRIÇÃO (NOVA VERSÃO PROFISSIONAL - A4 GRID) ---
+function carregarInstituicoes() { fetch(`${URL_API}?action=getInstituicoes`).then(r => r.json()).then(json => { const d = document.getElementById('lista-instituicoes'); d.innerHTML = ''; if(json.data) json.data.forEach(n => d.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;"><span>${n}</span> <button onclick="removerInst('${n}')" class="btn-icon bg-delete" style="width:24px; height:24px;"><i class="fa-solid fa-times"></i></button></div>`); }); }
+function addInstituicao() { const n = document.getElementById('nova-inst').value; if(n) fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'adicionarInstituicao', nome: n, senha: sessionStorage.getItem('admin_token') }) }).then(() => { document.getElementById('nova-inst').value = ''; carregarInstituicoes(); }); }
+function removerInst(n) { fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'removerInstituicao', nome: n, senha: sessionStorage.getItem('admin_token') }) }).then(() => carregarInstituicoes()); }
+
+// --- GERAR FICHA DE INSCRIÇÃO (Versão Profissional - PDF Grid) ---
 function gerarFicha(chave) {
     showLoading('Gerando Ficha...');
 
@@ -1755,10 +1933,6 @@ function imprimirCarteirinhaAdmin(chave) {
         Swal.fire('Erro', 'Falha ao gerar carteirinha.', 'error');
     });
 }
-
-function carregarInstituicoes() { fetch(`${URL_API}?action=getInstituicoes`).then(r => r.json()).then(json => { const d = document.getElementById('lista-instituicoes'); d.innerHTML = ''; if(json.data) json.data.forEach(n => d.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;"><span>${n}</span> <button onclick="removerInst('${n}')" class="btn-icon bg-delete" style="width:24px; height:24px;"><i class="fa-solid fa-times"></i></button></div>`); }); }
-function addInstituicao() { const n = document.getElementById('nova-inst').value; if(n) fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'adicionarInstituicao', nome: n, senha: sessionStorage.getItem('admin_token') }) }).then(() => { document.getElementById('nova-inst').value = ''; carregarInstituicoes(); }); }
-function removerInst(n) { fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'removerInstituicao', nome: n, senha: sessionStorage.getItem('admin_token') }) }).then(() => carregarInstituicoes()); }
 
 // --- HELPERS ---
 function formatarUrlDrive(url) {
