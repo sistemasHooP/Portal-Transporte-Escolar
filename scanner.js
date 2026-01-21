@@ -14,86 +14,144 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function iniciarLeitor() {
-    // Configura o leitor para usar a div "reader"
+    // Verifica se está em ambiente seguro (HTTPS ou Localhost) - Obrigatório para Câmera
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Segurança',
+            text: 'O acesso à câmera requer HTTPS. Verifique se o site possui o cadeado de segurança.',
+            confirmButtonColor: '#f59e0b'
+        });
+        return;
+    }
+
     html5QrCode = new Html5Qrcode("reader");
 
-    // CONFIGURAÇÃO OTIMIZADA DE PERFORMANCE
     const config = { 
-        fps: 25, // Aumentado para 25 frames por segundo (Leitura mais fluida)
+        fps: 25, 
         qrbox: (viewfinderWidth, viewfinderHeight) => {
-            // Cria uma área de leitura dinâmica (75% da menor dimensão da tela)
-            // Isso facilita o enquadramento sem precisar ser exato
             const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
             return {
                 width: Math.floor(minEdge * 0.75),
                 height: Math.floor(minEdge * 0.75)
             };
         },
-        aspectRatio: 1.0,
-        // Tenta usar o detector de código de barras nativo do navegador (Muito mais rápido no Android/Chrome)
-        experimentalFeatures: {
-            useBarCodeDetectorIfSupported: true
+        aspectRatio: 1.0
+    };
+
+    // NOVA LÓGICA ROBUSTA: Lista câmeras antes de iniciar
+    Html5Qrcode.getCameras().then(devices => {
+        if (devices && devices.length) {
+            let cameraId = devices[0].id; // Padrão: primeira câmera encontrada
+            
+            // Tenta encontrar a câmera traseira inteligentemente
+            // Geralmente em celulares a traseira é a última da lista ou tem 'back' no nome
+            if (devices.length > 1) {
+                const backCamera = devices.find(device => 
+                    device.label.toLowerCase().includes('back') || 
+                    device.label.toLowerCase().includes('traseira') ||
+                    device.label.toLowerCase().includes('environment')
+                );
+                
+                if (backCamera) {
+                    cameraId = backCamera.id;
+                } else {
+                    // Se não achar pelo nome, tenta a última da lista (comum em Android)
+                    cameraId = devices[devices.length - 1].id;
+                }
+            }
+
+            // Inicia o leitor com a câmera específica (ID)
+            html5QrCode.start(
+                cameraId, 
+                config, 
+                onScanSuccess, 
+                onScanFailure
+            ).catch(err => {
+                console.error("Erro ao iniciar com ID:", err);
+                // Fallback: Tenta iniciar com modo genérico se o ID falhar
+                startGenericCamera(config);
+            });
+
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Sem Câmera',
+                text: 'Nenhuma câmera foi detectada neste dispositivo.',
+                confirmButtonColor: '#dc2626'
+            });
         }
-    };
+    }).catch(err => {
+        // Erro ao pedir permissão ou listar dispositivos
+        console.error("Erro de permissão/listagem:", err);
+        tratarErroCamera(err);
+    });
+}
 
-    // Configurações de Câmera (Foco e Seleção)
-    const cameraConfig = { 
-        facingMode: "environment", // Câmera traseira
-        focusMode: "continuous"    // Tenta forçar o foco automático contínuo
-    };
-
-    // Inicia a câmera
+function startGenericCamera(config) {
     html5QrCode.start(
-        cameraConfig, 
+        { facingMode: "environment" }, 
         config, 
         onScanSuccess, 
         onScanFailure
     ).catch(err => {
-        console.error("Erro ao iniciar câmera:", err);
-        Swal.fire({
-            icon: 'error',
-            title: 'Erro de Câmera',
-            text: 'Não foi possível acessar a câmera. Verifique se deu permissão no navegador.',
-            confirmButtonColor: '#dc2626'
-        });
+        console.error("Erro genérico:", err);
+        tratarErroCamera(err);
+    });
+}
+
+function tratarErroCamera(err) {
+    let titulo = 'Erro de Câmera';
+    let msg = 'Não foi possível acessar a câmera.';
+    
+    const erroStr = err.toString().toLowerCase();
+
+    if (erroStr.includes('notallowederror') || erroStr.includes('permission denied')) {
+        msg = 'Permissão negada. Por favor, clique no ícone de cadeado/câmera na barra de endereço e permita o acesso.';
+    } else if (erroStr.includes('notfounderror')) {
+        msg = 'Nenhuma câmera encontrada no dispositivo.';
+    } else if (erroStr.includes('notreadableerror') || erroStr.includes('trackstarterror')) {
+        msg = 'A câmera está sendo usada por outro aplicativo ou aba. Feche outros apps e tente novamente.';
+    } else if (erroStr.includes('overconstrainederror')) {
+        msg = 'A câmera não suporta a resolução solicitada.';
+    }
+
+    Swal.fire({
+        icon: 'error',
+        title: titulo,
+        text: msg,
+        confirmButtonColor: '#dc2626'
     });
 }
 
 function onScanSuccess(decodedText, decodedResult) {
-    if (isProcessing) return; // Evita leituras duplicadas enquanto processa
+    if (isProcessing) return; 
 
-    // Tenta extrair a chave da URL (formato: ...exec?action=validar&chave=XXXX)
     let chave = "";
-    
     try {
         if (decodedText.includes("chave=")) {
             const url = new URL(decodedText);
             chave = url.searchParams.get("chave");
         } else {
-            // Se for apenas o código puro (sem URL)
             chave = decodedText.trim();
         }
     } catch (e) {
-        // Fallback para texto simples se não for URL válida
         chave = decodedText.trim();
     }
 
-    // Filtro básico para evitar leituras de códigos aleatórios curtos
     if (chave && chave.length >= 4) {
         processarChave(chave);
     }
 }
 
 function onScanFailure(error) {
-    // Não fazemos nada aqui para não poluir o console, pois erros de frame são comuns 
-    // enquanto ele procura o código.
+    // console.warn(`Erro frame: ${error}`);
 }
 
 function processarChave(chave) {
     isProcessing = true;
-    html5QrCode.pause(); // Pausa a câmera para economizar bateria e evitar conflito
+    html5QrCode.pause(true); // Pausa visualmente e logicamente
 
-    // UI: Mostrar painel carregando
     const painel = document.getElementById('result-panel');
     const loader = document.getElementById('validating-loader');
     const successDiv = document.getElementById('result-success');
@@ -104,7 +162,6 @@ function processarChave(chave) {
     successDiv.classList.add('hidden');
     errorDiv.classList.add('hidden');
 
-    // Consulta API
     fetch(`${URL_API}?action=consultarInscricao&chave=${chave}`)
         .then(response => response.json())
         .then(json => {
@@ -115,32 +172,29 @@ function processarChave(chave) {
                 const aluno = dados.aluno;
                 const status = dados.situacao;
 
-                // Verifica se está aprovado
                 if (status === 'Aprovada' || status === 'Ficha Emitida') {
                     exibirSucesso(aluno);
                 } else {
-                    exibirErro("Status Inválido", `A situação atual é: ${status}`);
+                    exibirErro("Acesso Negado", `Situação: ${status}`);
                 }
             } else {
-                exibirErro("Não Encontrado", "Chave inválida ou aluno não cadastrado.");
+                exibirErro("Não Encontrado", "Chave inválida ou inexistente.");
             }
         })
         .catch(err => {
             console.error(err);
             loader.classList.add('hidden');
-            exibirErro("Erro de Conexão", "Falha ao verificar dados. Tente novamente.");
+            exibirErro("Erro de Conexão", "Falha ao verificar. Tente novamente.");
         });
 }
 
 function exibirSucesso(aluno) {
     const successDiv = document.getElementById('result-success');
     
-    // Preencher dados
     document.getElementById('student-name').innerText = aluno.nome || "Aluno";
-    document.getElementById('student-course').innerText = `${aluno.curso || ''} - ${aluno.instituicao || ''}`;
+    document.getElementById('student-course').innerText = `${aluno.curso || ''}`;
     document.getElementById('student-validity').innerText = aluno.ano_vigencia || new Date().getFullYear();
     
-    // Foto
     const img = document.getElementById('student-photo');
     if (aluno.foto) {
         img.src = formatarUrlDrive(aluno.foto);
@@ -148,45 +202,36 @@ function exibirSucesso(aluno) {
         img.src = 'https://via.placeholder.com/150?text=FOTO';
     }
 
-    // Tocar som e mostrar
     playAudio(audioBeep);
     successDiv.classList.remove('hidden');
 }
 
 function exibirErro(titulo, mensagem) {
     const errorDiv = document.getElementById('result-error');
-    
     document.getElementById('error-title').innerText = titulo;
     document.getElementById('error-msg').innerText = mensagem;
-
-    // Tocar som e mostrar
     playAudio(audioError);
     errorDiv.classList.remove('hidden');
 }
 
 function reiniciarLeitura() {
-    // Esconde o painel (desliza para baixo)
     document.getElementById('result-panel').classList.add('hidden');
     
-    // Reseta estados internos
     setTimeout(() => {
         document.getElementById('result-success').classList.add('hidden');
         document.getElementById('result-error').classList.add('hidden');
         isProcessing = false;
-        
-        // Retoma a câmera
         html5QrCode.resume(); 
-    }, 300); // Aguarda a animação CSS terminar
+    }, 300);
 }
 
 function playAudio(audioElement) {
     try {
         audioElement.currentTime = 0;
-        audioElement.play().catch(e => console.log("Autoplay bloqueado pelo navegador", e));
+        audioElement.play().catch(e => console.log("Autoplay bloqueado:", e));
     } catch (e) {}
 }
 
-// Helper para formatar URL do Drive (mesmo do app.js)
 function formatarUrlDrive(url) {
     if (!url) return '';
     if (url.startsWith('data:')) return url;
