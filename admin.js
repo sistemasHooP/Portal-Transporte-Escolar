@@ -32,6 +32,10 @@ const LABELS_TODOS_CAMPOS = {
     'Email': 'E-mail'
 };
 
+// Chaves de Cache
+const CACHE_KEY_EVENTS = 'admin_events_data';
+const CACHE_KEY_INSCR = 'admin_inscr_data';
+
 // Estado da Aplicação
 let mapaEventos = {}; 
 let cacheEventos = {}; 
@@ -65,11 +69,8 @@ function safeDate(val) {
 // Helper para converter data DD/MM/YYYY ou ISO para YYYY-MM-DD (Formato do Input Date)
 function formatarDataParaInput(dataStr) {
     if (!dataStr) return '';
-    // Se já estiver em ISO (contém T ou - na posição 4)
     if (dataStr.includes('T')) return dataStr.split('T')[0];
     if (dataStr.match(/^\d{4}-\d{2}-\d{2}$/)) return dataStr;
-    
-    // Tenta converter de PT-BR ou string simples
     const d = new Date(dataStr);
     if (!isNaN(d.getTime())) {
         return d.toISOString().split('T')[0];
@@ -103,6 +104,9 @@ function realizarLogin(e) {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('admin-panel').classList.remove('hidden');
             sessionStorage.setItem('admin_token', pass);
+            // Limpa cache antigo ao logar para garantir dados frescos na sessão
+            sessionStorage.removeItem(CACHE_KEY_EVENTS);
+            sessionStorage.removeItem(CACHE_KEY_INSCR);
             carregarDashboard();
         } else { 
             btn.disabled = false;
@@ -119,6 +123,8 @@ function realizarLogin(e) {
 
 function logout() { 
     sessionStorage.removeItem('admin_token'); 
+    sessionStorage.removeItem(CACHE_KEY_EVENTS);
+    sessionStorage.removeItem(CACHE_KEY_INSCR);
     window.location.reload(); 
 }
 
@@ -158,8 +164,7 @@ function carregarConfigGeral() {
     .then(json => {
         if(json.status === 'success') {
             document.getElementById('config-drive-id').value = json.idPasta || '';
-            document.getElementById('config-cor').value = json.corCard || '#2563eb';
-            document.getElementById('config-cor-picker').value = json.corCard || '#2563eb';
+            // Config de cor removida daqui
             document.getElementById('config-nome-sec').value = json.nomeSec || '';
             document.getElementById('config-nome-resp').value = json.nomeResp || '';
             document.getElementById('config-assinatura').value = json.assinatura || ''; 
@@ -169,7 +174,7 @@ function carregarConfigGeral() {
 
 function salvarConfigGeral() {
     const id = document.getElementById('config-drive-id').value;
-    const cor = document.getElementById('config-cor').value;
+    // Config de cor removida daqui
     const sec = document.getElementById('config-nome-sec').value;
     const resp = document.getElementById('config-nome-resp').value;
     const ass = document.getElementById('config-assinatura').value; 
@@ -181,7 +186,7 @@ function salvarConfigGeral() {
             action: 'salvarConfigGeral', 
             senha: sessionStorage.getItem('admin_token'),
             idPasta: id,
-            corCard: cor,
+            // corCard removido do envio
             nomeSec: sec,
             nomeResp: resp,
             assinatura: ass
@@ -191,37 +196,59 @@ function salvarConfigGeral() {
     });
 }
 
-// --- DASHBOARD E DADOS GERAIS ---
+// --- DASHBOARD E DADOS GERAIS (COM CACHE) ---
 function carregarDashboard() {
     const token = sessionStorage.getItem('admin_token');
+    
+    // 1. Tentar carregar do Cache primeiro
+    const cachedEvt = sessionStorage.getItem(CACHE_KEY_EVENTS);
+    const cachedInscr = sessionStorage.getItem(CACHE_KEY_INSCR);
+    
+    if (cachedEvt && cachedInscr) {
+        try {
+            processarDadosDashboard(JSON.parse(cachedEvt), JSON.parse(cachedInscr));
+        } catch(e) { console.warn("Cache inválido"); }
+    }
+
+    // 2. Buscar atualizações em background
     Promise.all([
         fetch(`${URL_API}?action=getTodosEventos`).then(r => r.json()),
         fetch(`${URL_API}?action=getInscricoesAdmin&token=${token}`).then(r => r.json())
     ]).then(([jsonEventos, jsonInscricoes]) => {
-        mapaEventos = {}; 
-        cacheEventos = {}; 
-        if(jsonEventos.data) jsonEventos.data.forEach(ev => {
-            if (ev.id && ev.titulo) {
-                mapaEventos[ev.id] = ev.titulo;
-                cacheEventos[ev.id] = ev; 
-            }
-        });
+        // Atualiza cache
+        if(jsonEventos.data) sessionStorage.setItem(CACHE_KEY_EVENTS, JSON.stringify(jsonEventos.data));
+        if(jsonInscricoes.data) sessionStorage.setItem(CACHE_KEY_INSCR, JSON.stringify(jsonInscricoes.data));
         
-        dashboardData = jsonInscricoes.data || [];
-        atualizarSelectsRelatorio(jsonEventos.data || [], dashboardData);
-        atualizarEstatisticasDashboard(dashboardData);
+        // Atualiza tela
+        processarDadosDashboard(jsonEventos.data || [], jsonInscricoes.data || []);
+    });
+}
 
-        const contagemEventos = {}, contagemStatus = {};
-        dashboardData.forEach(i => {
-            const nome = mapaEventos[i.eventoId] || `Evento ${i.eventoId}`;
-            contagemEventos[nome] = (contagemEventos[nome] || 0) + 1;
-            contagemStatus[i.status] = (contagemStatus[i.status] || 0) + 1;
-        });
-        
-        if(document.getElementById('chartEventos')) {
-            renderizarGraficos(contagemEventos, contagemStatus);
+function processarDadosDashboard(eventosData, inscricoesData) {
+    mapaEventos = {}; 
+    cacheEventos = {}; 
+    
+    eventosData.forEach(ev => {
+        if (ev.id && ev.titulo) {
+            mapaEventos[ev.id] = ev.titulo;
+            cacheEventos[ev.id] = ev; 
         }
     });
+    
+    dashboardData = inscricoesData;
+    atualizarSelectsRelatorio(eventosData, dashboardData);
+    atualizarEstatisticasDashboard(dashboardData);
+
+    const contagemEventos = {}, contagemStatus = {};
+    dashboardData.forEach(i => {
+        const nome = mapaEventos[i.eventoId] || `Evento ${i.eventoId}`;
+        contagemEventos[nome] = (contagemEventos[nome] || 0) + 1;
+        contagemStatus[i.status] = (contagemStatus[i.status] || 0) + 1;
+    });
+    
+    if(document.getElementById('chartEventos')) {
+        renderizarGraficos(contagemEventos, contagemStatus);
+    }
 }
 
 function atualizarEstatisticasDashboard(dados) {
@@ -250,7 +277,7 @@ function renderizarGraficos(dadosEventos, dadosStatus) {
 
 function atualizarSelectsRelatorio(eventos, inscricoes) {
     const selEvento = document.getElementById('relatorio-evento');
-    if(selEvento) {
+    if(selEvento && selEvento.options.length <= 1) { // Só preenche se vazio
         selEvento.innerHTML = '<option value="">Todos os Eventos</option>';
         eventos.forEach(ev => {
             if(ev.id && ev.titulo) {
@@ -260,7 +287,7 @@ function atualizarSelectsRelatorio(eventos, inscricoes) {
     }
     
     const selInst = document.getElementById('relatorio-inst');
-    if(selInst) {
+    if(selInst && selInst.options.length <= 1) {
         let instituicoes = new Set();
         inscricoes.forEach(ins => { try { instituicoes.add(JSON.parse(ins.dadosJson).NomeInstituicao); } catch(e){} });
         selInst.innerHTML = '<option value="">Todas as Instituições</option>';
@@ -801,38 +828,66 @@ function modalNovoEvento() {
     });
 }
 
-// --- INSCRIÇÕES (Logic) ---
-function carregarInscricoes() {
+// --- INSCRIÇÕES (Logic COM CACHE) ---
+function carregarInscricoes(forceReload = false) {
     const tbody = document.getElementById('lista-inscricoes-admin');
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem;">Carregando dados...</td></tr>';
+    const cachedEvents = sessionStorage.getItem(CACHE_KEY_EVENTS);
+    const cachedInscr = sessionStorage.getItem(CACHE_KEY_INSCR);
+
+    // Se tiver cache e não for reload forçado, renderiza instantâneo
+    if (!forceReload && cachedEvents && cachedInscr) {
+        try {
+            const evData = JSON.parse(cachedEvents);
+            const insData = JSON.parse(cachedInscr);
+            // Processa sem carregar a tela inteira
+            processarDadosInscricoes(evData, insData);
+            return; // Sai e deixa o fetch atualizar em background se necessário, ou só usa cache
+        } catch(e) { console.warn("Cache inválido"); }
+    }
+
+    // Se não tiver cache ou for reload forçado, mostra loading na tabela
+    if(!cachedInscr || forceReload) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem;">Carregando dados...</td></tr>';
+    }
     
-    // 1. Carrega Eventos
-    fetch(`${URL_API}?action=getTodosEventos`)
-    .then(r => r.json())
-    .then(jsonEventos => {
-        if(jsonEventos.data) {
-             jsonEventos.data.forEach(ev => { 
-                 if(ev.id && ev.titulo) {
-                     mapaEventos[ev.id] = ev.titulo; 
-                     cacheEventos[ev.id] = ev; 
-                 }
-             });
-             const select = document.getElementById('filtro-evento');
-             if(select && select.options.length <= 1) {
-                 Object.keys(mapaEventos).forEach(id => select.innerHTML += `<option value="${id}">${mapaEventos[id]}</option>`);
-             }
-        }
-        // 2. Carrega Inscrições
-        return fetch(`${URL_API}?action=getInscricoesAdmin&token=${sessionStorage.getItem('admin_token')}`);
-    })
-    .then(r => r.json())
-    .then(json => {
-        todasInscricoes = (json.data || []).sort((a,b) => new Date(b.data) - new Date(a.data));
-        resetEFiltrar();
+    // Fetch em paralelo
+    Promise.all([
+        fetch(`${URL_API}?action=getTodosEventos`).then(r => r.json()),
+        fetch(`${URL_API}?action=getInscricoesAdmin&token=${sessionStorage.getItem('admin_token')}`).then(r => r.json())
+    ])
+    .then(([jsonEventos, jsonInscricoes]) => {
+        // Atualiza Cache
+        if(jsonEventos.data) sessionStorage.setItem(CACHE_KEY_EVENTS, JSON.stringify(jsonEventos.data));
+        if(jsonInscricoes.data) sessionStorage.setItem(CACHE_KEY_INSCR, JSON.stringify(jsonInscricoes.data));
+        
+        processarDadosInscricoes(jsonEventos.data || [], jsonInscricoes.data || []);
     })
     .catch(() => {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#dc2626;">Erro de comunicação.</td></tr>';
     });
+}
+
+function processarDadosInscricoes(eventosData, inscricoesData) {
+    // 1. Processa Eventos
+    mapaEventos = {}; 
+    cacheEventos = {};
+    const select = document.getElementById('filtro-evento');
+    
+    eventosData.forEach(ev => { 
+         if(ev.id && ev.titulo) {
+             mapaEventos[ev.id] = ev.titulo; 
+             cacheEventos[ev.id] = ev; 
+         }
+    });
+
+    // Atualiza select de filtro apenas se necessário
+    if(select && select.options.length <= 1) {
+         Object.keys(mapaEventos).forEach(id => select.innerHTML += `<option value="${id}">${mapaEventos[id]}</option>`);
+    }
+
+    // 2. Processa Inscrições
+    todasInscricoes = (inscricoesData || []).sort((a,b) => new Date(b.data) - new Date(a.data));
+    resetEFiltrar();
 }
 
 function resetEFiltrar() {
@@ -1145,7 +1200,7 @@ function abrirEdicaoInscricao(chave) {
                 });
             }).then(() => {
                 Swal.fire({icon: 'success', title: 'Dados Atualizados!', timer: 1500, showConfirmButton: false});
-                carregarInscricoes(); // Força reload completo
+                carregarInscricoes(true); // Força reload completo
             });
         }
     });
