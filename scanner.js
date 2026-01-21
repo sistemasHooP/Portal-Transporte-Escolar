@@ -17,15 +17,34 @@ function iniciarLeitor() {
     // Configura o leitor para usar a div "reader"
     html5QrCode = new Html5Qrcode("reader");
 
+    // CONFIGURAÇÃO OTIMIZADA DE PERFORMANCE
     const config = { 
-        fps: 10, 
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0
+        fps: 25, // Aumentado para 25 frames por segundo (Leitura mais fluida)
+        qrbox: (viewfinderWidth, viewfinderHeight) => {
+            // Cria uma área de leitura dinâmica (75% da menor dimensão da tela)
+            // Isso facilita o enquadramento sem precisar ser exato
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            return {
+                width: Math.floor(minEdge * 0.75),
+                height: Math.floor(minEdge * 0.75)
+            };
+        },
+        aspectRatio: 1.0,
+        // Tenta usar o detector de código de barras nativo do navegador (Muito mais rápido no Android/Chrome)
+        experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true
+        }
     };
 
-    // Tenta usar a câmera traseira (environment)
+    // Configurações de Câmera (Foco e Seleção)
+    const cameraConfig = { 
+        facingMode: "environment", // Câmera traseira
+        focusMode: "continuous"    // Tenta forçar o foco automático contínuo
+    };
+
+    // Inicia a câmera
     html5QrCode.start(
-        { facingMode: "environment" }, 
+        cameraConfig, 
         config, 
         onScanSuccess, 
         onScanFailure
@@ -34,7 +53,7 @@ function iniciarLeitor() {
         Swal.fire({
             icon: 'error',
             title: 'Erro de Câmera',
-            text: 'Não foi possível acessar a câmera. Verifique as permissões.',
+            text: 'Não foi possível acessar a câmera. Verifique se deu permissão no navegador.',
             confirmButtonColor: '#dc2626'
         });
     });
@@ -59,14 +78,15 @@ function onScanSuccess(decodedText, decodedResult) {
         chave = decodedText.trim();
     }
 
+    // Filtro básico para evitar leituras de códigos aleatórios curtos
     if (chave && chave.length >= 4) {
         processarChave(chave);
     }
 }
 
 function onScanFailure(error) {
-    // console.warn(`Erro de leitura: ${error}`);
-    // Não fazemos nada aqui para não poluir o console, pois erros de frame são comuns
+    // Não fazemos nada aqui para não poluir o console, pois erros de frame são comuns 
+    // enquanto ele procura o código.
 }
 
 function processarChave(chave) {
