@@ -1,6 +1,6 @@
 const URL_API = 'https://script.google.com/macros/s/AKfycbx6wAwfQyfLbp4IPedWu8KyGrJAM_2Ocq9edgQ5M2oxf8egOi87jeF6AjMjaRyH6W4wnA/exec';
 
-// --- CONFIGURAÇÃO GERAL ----
+// --- CONFIGURAÇÃO GERAL ---
 const URL_LOGO = './logo.png'; 
 
 // Campos padrão (Cidade e Estado agora são opcionais)
@@ -40,7 +40,7 @@ const CACHE_KEY_INSCR = 'admin_inscr_data';
 let mapaEventos = {}; 
 let cacheEventos = {}; 
 let chartEventosInstance = null; let chartStatusInstance = null;
-let todasInscricoes = [];           
+let todasInscricoes = [];            
 let inscricoesFiltradas = []; 
 let dashboardData = []; 
 let paginaAtual = 1;
@@ -108,6 +108,7 @@ function realizarLogin(e) {
             sessionStorage.removeItem(CACHE_KEY_EVENTS);
             sessionStorage.removeItem(CACHE_KEY_INSCR);
             carregarDashboard();
+            atualizarCotaEmail(); // Atualiza Cota ao logar
         } else { 
             btn.disabled = false;
             btn.innerHTML = originalText;
@@ -126,6 +127,40 @@ function logout() {
     sessionStorage.removeItem(CACHE_KEY_EVENTS);
     sessionStorage.removeItem(CACHE_KEY_INSCR);
     window.location.reload(); 
+}
+
+// --- NOVO: GERENCIADOR DE COTA ---
+function atualizarCotaEmail() {
+    const token = sessionStorage.getItem('admin_token');
+    if (!token) return;
+
+    fetch(`${URL_API}?action=getQuotaEmail&token=${token}`)
+        .then(r => r.json())
+        .then(json => {
+            if (json.status === 'success') {
+                const usado = json.usado;
+                const limite = json.limite;
+                const percentual = Math.min((usado / limite) * 100, 100);
+                
+                const elText = document.getElementById('quota-text');
+                const elBar = document.getElementById('quota-bar');
+                
+                if (elText) elText.innerText = `${usado}/${limite}`;
+                
+                if (elBar) {
+                    elBar.style.width = `${percentual}%`;
+                    // Muda a cor conforme o uso
+                    if (percentual > 90) {
+                        elBar.style.backgroundColor = '#ef4444'; // Vermelho
+                    } else if (percentual > 75) {
+                        elBar.style.backgroundColor = '#f59e0b'; // Amarelo
+                    } else {
+                        elBar.style.backgroundColor = '#10b981'; // Verde
+                    }
+                }
+            }
+        })
+        .catch(e => console.log('Erro ao buscar cota (silencioso):', e));
 }
 
 // --- NAVEGAÇÃO APP SHELL ---
@@ -148,6 +183,9 @@ function switchTab(tabId) {
         if(btn) btn.classList.add('active');
     }
 
+    // Sempre atualiza a cota ao mudar de aba para manter o adm informado
+    atualizarCotaEmail();
+
     if(tabId === 'tab-dashboard' || tabId === 'tab-relatorios') carregarDashboard();
     if(tabId === 'tab-eventos') carregarEventosAdmin();
     if(tabId === 'tab-inscricoes') carregarInscricoes();
@@ -164,7 +202,6 @@ function carregarConfigGeral() {
     .then(json => {
         if(json.status === 'success') {
             document.getElementById('config-drive-id').value = json.idPasta || '';
-            // Config de cor removida (agora é por evento)
             document.getElementById('config-nome-sec').value = json.nomeSec || '';
             document.getElementById('config-nome-resp').value = json.nomeResp || '';
             document.getElementById('config-assinatura').value = json.assinatura || ''; 
@@ -174,7 +211,6 @@ function carregarConfigGeral() {
 
 function salvarConfigGeral() {
     const id = document.getElementById('config-drive-id').value;
-    // Config de cor removida (agora é por evento)
     const sec = document.getElementById('config-nome-sec').value;
     const resp = document.getElementById('config-nome-resp').value;
     const ass = document.getElementById('config-assinatura').value; 
@@ -186,7 +222,6 @@ function salvarConfigGeral() {
             action: 'salvarConfigGeral', 
             senha: sessionStorage.getItem('admin_token'),
             idPasta: id,
-            // corCard removido
             nomeSec: sec,
             nomeResp: resp,
             assinatura: ass
@@ -198,17 +233,13 @@ function salvarConfigGeral() {
 
 // NOVO: Função para copiar link do Scanner
 function copiarLinkScanner() {
-    // Pega a URL atual e troca admin.html por scanner.html
-    // Se estiver na raiz, assume scanner.html
     let urlBase = window.location.href;
     if (urlBase.includes('admin.html')) {
         urlBase = urlBase.replace('admin.html', 'scanner.html');
     } else {
-        // Fallback genérico caso a URL esteja diferente
         urlBase = urlBase.substring(0, urlBase.lastIndexOf('/') + 1) + 'scanner.html';
     }
 
-    // Usa a API de Clipboard
     navigator.clipboard.writeText(urlBase).then(() => {
         Swal.fire({
             icon: 'success',
@@ -594,7 +625,6 @@ function abrirEdicaoEvento(evento) {
         </div>`;
     });
 
-    // COR ATUAL DA CARTEIRINHA
     const corAtual = config.corCarteirinha || '#2563eb';
 
     Swal.fire({
@@ -618,7 +648,6 @@ function abrirEdicaoEvento(evento) {
                     <input type="number" id="edit_limite" class="swal-input-custom" placeholder="0 para ilimitado" value="${limite}">
                 </div>
                 <div>
-                    <!-- NOVO: Cor da Carteirinha deste Evento -->
                     <label class="swal-label">Cor da Carteirinha</label>
                     <div style="display:flex; gap:10px;">
                         <input type="color" id="edit_cor_picker" class="swal-input-custom" style="width:50px; padding:0; height:38px;" value="${corAtual}" onchange="document.getElementById('edit_cor').value = this.value">
@@ -678,7 +707,7 @@ function abrirEdicaoEvento(evento) {
                 camposPersonalizados: extras,
                 limiteInscricoes: document.getElementById('edit_limite').value,
                 camposTexto: camposSelecionados,
-                corCarteirinha: document.getElementById('edit_cor').value // Salva a cor
+                corCarteirinha: document.getElementById('edit_cor').value 
             }; 
         }
     }).then((res) => {
@@ -761,7 +790,6 @@ function modalNovoEvento() {
 
                 <div class="swal-grid-2" style="margin-top: 10px;">
                     <div>
-                        <!-- NOVO: Cor da Carteirinha ao Criar -->
                         <label class="swal-label">Cor da Carteirinha</label>
                         <div style="display:flex; gap:10px;">
                             <input type="color" id="swal-cor-picker" class="swal-input-custom" style="width:50px; padding:0; height:38px;" value="#2563eb" onchange="document.getElementById('swal-cor').value = this.value">
@@ -845,7 +873,7 @@ function modalNovoEvento() {
                     emiteCarteirinha: document.getElementById('emitir_carteirinha').checked,
                     cidadesPermitidas: cidadesArr,
                     limiteInscricoes: document.getElementById('swal-limite').value,
-                    corCarteirinha: document.getElementById('swal-cor').value // Salva a cor
+                    corCarteirinha: document.getElementById('swal-cor').value
                 }, 
                 status: 'Ativo'
             }
@@ -865,29 +893,24 @@ function carregarInscricoes(forceReload = false) {
     const cachedEvents = sessionStorage.getItem(CACHE_KEY_EVENTS);
     const cachedInscr = sessionStorage.getItem(CACHE_KEY_INSCR);
 
-    // Se tiver cache e não for reload forçado, renderiza instantâneo
     if (!forceReload && cachedEvents && cachedInscr) {
         try {
             const evData = JSON.parse(cachedEvents);
             const insData = JSON.parse(cachedInscr);
-            // Processa sem carregar a tela inteira
             processarDadosInscricoes(evData, insData);
-            return; // Sai e deixa o fetch atualizar em background se necessário, ou só usa cache
+            return; 
         } catch(e) { console.warn("Cache inválido"); }
     }
 
-    // Se não tiver cache ou for reload forçado, mostra loading na tabela
     if(!cachedInscr || forceReload) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem;">Carregando dados...</td></tr>';
     }
     
-    // Fetch em paralelo
     Promise.all([
         fetch(`${URL_API}?action=getTodosEventos`).then(r => r.json()),
         fetch(`${URL_API}?action=getInscricoesAdmin&token=${sessionStorage.getItem('admin_token')}`).then(r => r.json())
     ])
     .then(([jsonEventos, jsonInscricoes]) => {
-        // Atualiza Cache
         if(jsonEventos.data) sessionStorage.setItem(CACHE_KEY_EVENTS, JSON.stringify(jsonEventos.data));
         if(jsonInscricoes.data) sessionStorage.setItem(CACHE_KEY_INSCR, JSON.stringify(jsonInscricoes.data));
         
@@ -899,7 +922,6 @@ function carregarInscricoes(forceReload = false) {
 }
 
 function processarDadosInscricoes(eventosData, inscricoesData) {
-    // 1. Processa Eventos
     mapaEventos = {}; 
     cacheEventos = {};
     const select = document.getElementById('filtro-evento');
@@ -911,12 +933,10 @@ function processarDadosInscricoes(eventosData, inscricoesData) {
          }
     });
 
-    // Atualiza select de filtro apenas se necessário
     if(select && select.options.length <= 1) {
          Object.keys(mapaEventos).forEach(id => select.innerHTML += `<option value="${id}">${mapaEventos[id]}</option>`);
     }
 
-    // 2. Processa Inscrições
     todasInscricoes = (inscricoesData || []).sort((a,b) => new Date(b.data) - new Date(a.data));
     resetEFiltrar();
 }
@@ -1024,9 +1044,8 @@ function abrirEdicaoInscricao(chave) {
         `;
     }
 
-    // Construção dos Campos em 2 Colunas usando classes swal-grid-2
-    let htmlCamposEsquerda = ''; // Dados Pessoais
-    let htmlCamposDireita = '';  // Dados Acadêmicos
+    let htmlCamposEsquerda = ''; 
+    let htmlCamposDireita = ''; 
 
     const ignorar = ['linkFoto', 'linkDoc'];
     const camposAcad = ['NomeInstituicao', 'NomeCurso', 'PeriodoCurso', 'Matricula', 'Turno'];
@@ -1035,7 +1054,6 @@ function abrirEdicaoInscricao(chave) {
         if (!ignorar.includes(key)) {
             const label = LABELS_TODOS_CAMPOS[key] || key;
             
-            // CORREÇÃO DATA NASCIMENTO: Exibir como input date
             let inputType = 'text';
             let valorInput = val;
             if (key === 'DataNascimento') {
@@ -1053,7 +1071,6 @@ function abrirEdicaoInscricao(chave) {
         }
     }
 
-    // Área de Uploads Condicional (Substituição)
     let htmlUploads = '';
     const pedeFoto = configEvento.arquivos && configEvento.arquivos.foto;
     const pedeDoc = configEvento.arquivos && configEvento.arquivos.doc;
@@ -1079,14 +1096,13 @@ function abrirEdicaoInscricao(chave) {
     }
 
     Swal.fire({
-        width: '1100px', // Modal Extra Largo para o Grid funcionar bem
+        width: '1100px',
         title: '', 
         html: `
             <div class="grid-sidebar">
                 <!-- COLUNA LATERAL (FOTO + STATUS + DOC) -->
                 <div style="background: #f8fafc; padding: 25px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; height: 100%;">
                     
-                    <!-- Foto em Destaque -->
                     <div style="width: 160px; height: 160px; margin: 0 auto 15px; position: relative;">
                         <img src="${fotoUrl}" style="width: 100%; height: 100%; border-radius: 12px; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
                     </div>
@@ -1107,24 +1123,22 @@ function abrirEdicaoInscricao(chave) {
                         </select>
                     </div>
 
-                    <!-- NOVO: Área de Motivo de Rejeição (inicialmente oculta) -->
+                    <!-- NOVO: Área de Motivo de Rejeição -->
                     <div id="area-motivo-rejeicao" style="text-align: left; margin-bottom: 20px; display: none;">
                         <label class="swal-label" style="color: #dc2626;">Motivo da Rejeição (Será enviado por e-mail)</label>
                         <textarea id="motivo_rejeicao" class="swal-input-custom" style="height: 80px; border-color: #fecaca; background: #fef2f2;" placeholder="Explique o motivo da rejeição para o aluno..."></textarea>
                     </div>
 
-                    <!-- Cartão de Documento (se existir) -->
                     ${htmlDocCard}
                 </div>
 
-                <!-- COLUNA PRINCIPAL (EDIÇÃO DE CAMPOS) -->
+                <!-- COLUNA PRINCIPAL -->
                 <div style="padding-right: 10px;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
                         <i class="fa-solid fa-user-pen" style="color: var(--primary); font-size: 1.2rem;"></i>
                         <h3 style="margin: 0; color: var(--text-main); font-size:1.1rem; font-weight: 700;">Editar Informações</h3>
                     </div>
                     
-                    <!-- WRAPPER COM SCROLLBAR DEDICADA -->
                     <div style="max-height: 60vh; overflow-y: auto; padding-right: 10px;">
                         <div class="swal-grid-2" style="align-items: start; margin-bottom:0;">
                             <div>
@@ -1144,7 +1158,6 @@ function abrirEdicaoInscricao(chave) {
         `,
         showCancelButton: true, confirmButtonText: 'Salvar Alterações', confirmButtonColor: '#2563eb',
         didOpen: () => {
-            // Lógica para mostrar/esconder o campo de motivo
             const selectStatus = document.getElementById('novo_status_modal');
             const areaMotivo = document.getElementById('area-motivo-rejeicao');
             
@@ -1155,11 +1168,7 @@ function abrirEdicaoInscricao(chave) {
                     areaMotivo.style.display = 'none';
                 }
             }
-            
-            // Checa inicialmente
             toggleMotivo();
-            
-            // Adiciona listener
             selectStatus.addEventListener('change', toggleMotivo);
         },
         preConfirm: async () => {
@@ -1174,13 +1183,11 @@ function abrirEdicaoInscricao(chave) {
             const novoStatus = document.getElementById('novo_status_modal').value;
             const motivoRejeicao = document.getElementById('motivo_rejeicao').value;
 
-            // Validação simples: Se rejeitar, exigir motivo? (Opcional, mas recomendado)
             if (novoStatus === 'Rejeitada' && !motivoRejeicao.trim()) {
                 Swal.showValidationMessage('Por favor, informe o motivo da rejeição para o aluno.');
                 return false;
             }
             
-            // Coleta Arquivos
             const arqs = {};
             const inputFoto = document.getElementById('edit_upload_foto');
             const inputDoc = document.getElementById('edit_upload_doc');
@@ -1197,7 +1204,7 @@ function abrirEdicaoInscricao(chave) {
             return { 
                 novosDados, 
                 status: novoStatus, 
-                motivo: motivoRejeicao, // Passa o motivo para o backend
+                motivo: motivoRejeicao, 
                 arquivos: Object.keys(arqs).length > 0 ? arqs : null 
             };
         }
@@ -1213,12 +1220,12 @@ function abrirEdicaoInscricao(chave) {
                         senha: sessionStorage.getItem('admin_token'), 
                         chave: chave, 
                         novoStatus: result.value.status,
-                        motivo: result.value.motivo // Envia motivo se houver
+                        motivo: result.value.motivo 
                     }) 
-                }) : 
-                Promise.resolve();
+                }).then(r => r.json()) : 
+                Promise.resolve(null);
 
-            promiseStatus.then(() => {
+            promiseStatus.then((respStatus) => {
                 return fetch(URL_API, { 
                     method: 'POST', 
                     body: JSON.stringify({ 
@@ -1228,10 +1235,23 @@ function abrirEdicaoInscricao(chave) {
                         novosDados: result.value.novosDados,
                         arquivos: result.value.arquivos 
                     }) 
+                }).then(() => respStatus);
+            }).then((respStatus) => {
+                let msgEmail = '';
+                if(respStatus && respStatus.emailStatus === 'enviado') {
+                    msgEmail = '<br><span style="color:#16a34a; font-size:0.9rem;"><i class="fa-solid fa-envelope-circle-check"></i> E-mail de notificação enviado!</span>';
+                } else if (respStatus && respStatus.emailStatus === 'cota_excedida') {
+                    msgEmail = '<br><span style="color:#dc2626; font-size:0.9rem;"><i class="fa-solid fa-triangle-exclamation"></i> Cota de E-mail excedida! Não enviado.</span>';
+                }
+
+                Swal.fire({
+                    icon: 'success', 
+                    title: 'Dados Atualizados!', 
+                    html: 'As alterações foram salvas com sucesso.' + msgEmail,
+                    showConfirmButton: true
                 });
-            }).then(() => {
-                Swal.fire({icon: 'success', title: 'Dados Atualizados!', timer: 1500, showConfirmButton: false});
-                carregarInscricoes(true); // Força reload completo
+                carregarInscricoes(true);
+                atualizarCotaEmail(); // Atualiza contador
             });
         }
     });
@@ -1243,11 +1263,40 @@ function toggleAllChecks() { const m = document.getElementById('check-all').chec
 function atualizarBarraBulk() { const b = document.getElementById('bulk-bar'); document.getElementById('bulk-count').innerText = selecionados.size; if(selecionados.size > 0) b.classList.remove('hidden'); else b.classList.add('hidden'); }
 function desmarcarTudo() { selecionados.clear(); document.getElementById('check-all').checked = false; document.querySelectorAll('.bulk-check').forEach(c => c.checked = false); atualizarBarraBulk(); }
 
+// --- ATUALIZAÇÃO EM MASSA (COM FEEDBACK DE EMAIL) ---
 function acaoEmMassa(s) {
     Swal.fire({title: `Marcar ${selecionados.size} como ${s}?`, icon: 'warning', showCancelButton: true}).then((r) => {
         if(r.isConfirmed) {
-            showLoading('Processando...');
-            fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'atualizarStatusEmMassa', senha: sessionStorage.getItem('admin_token'), chaves: Array.from(selecionados), novoStatus: s }) }).then(() => { Swal.fire({icon: 'success', title: 'Atualizado!'}); todasInscricoes.forEach(i => { if(selecionados.has(i.chave)) i.status = s; }); resetEFiltrar(); });
+            showLoading('Processando e enviando e-mails...');
+            fetch(URL_API, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: 'atualizarStatusEmMassa', 
+                    senha: sessionStorage.getItem('admin_token'), 
+                    chaves: Array.from(selecionados), 
+                    novoStatus: s 
+                }) 
+            })
+            .then(r => r.json())
+            .then(json => { 
+                if (json.status === 'success') {
+                    let htmlRes = `<p>Total Processado: <strong>${json.total}</strong></p>`;
+                    htmlRes += `<p style="color:#16a34a;">E-mails Enviados: <strong>${json.emailsEnviados}</strong></p>`;
+                    if (json.emailsPulados > 0) {
+                        htmlRes += `<p style="color:#dc2626;">E-mails Não Enviados (Cota): <strong>${json.emailsPulados}</strong></p>`;
+                    }
+                    
+                    Swal.fire({
+                        icon: json.emailsPulados > 0 ? 'warning' : 'success', 
+                        title: 'Processamento Concluído', 
+                        html: htmlRes
+                    });
+                    
+                    todasInscricoes.forEach(i => { if(selecionados.has(i.chave)) i.status = s; }); 
+                    resetEFiltrar();
+                    atualizarCotaEmail(); // Atualiza contador
+                }
+            });
         }
     });
 }
@@ -1707,37 +1756,6 @@ function imprimirCarteirinhaAdmin(chave) {
     });
 }
 
-// NOVO: Função para copiar link do Scanner
-function copiarLinkScanner() {
-    // Pega a URL atual e troca admin.html por scanner.html
-    // Se estiver na raiz, assume scanner.html
-    let urlBase = window.location.href;
-    if (urlBase.includes('admin.html')) {
-        urlBase = urlBase.replace('admin.html', 'scanner.html');
-    } else {
-        // Fallback genérico caso a URL esteja diferente
-        urlBase = urlBase.substring(0, urlBase.lastIndexOf('/') + 1) + 'scanner.html';
-    }
-
-    // Usa a API de Clipboard
-    navigator.clipboard.writeText(urlBase).then(() => {
-        Swal.fire({
-            icon: 'success',
-            title: 'Link Copiado!',
-            text: 'Envie este link para o motorista ou fiscal.',
-            timer: 2500,
-            showConfirmButton: false
-        });
-    }).catch(err => {
-        console.error('Erro ao copiar: ', err);
-        Swal.fire({
-            icon: 'error',
-            title: 'Erro ao Copiar',
-            text: 'Não foi possível copiar automaticamente. O link é: ' + urlBase
-        });
-    });
-}
-
 function carregarInstituicoes() { fetch(`${URL_API}?action=getInstituicoes`).then(r => r.json()).then(json => { const d = document.getElementById('lista-instituicoes'); d.innerHTML = ''; if(json.data) json.data.forEach(n => d.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;"><span>${n}</span> <button onclick="removerInst('${n}')" class="btn-icon bg-delete" style="width:24px; height:24px;"><i class="fa-solid fa-times"></i></button></div>`); }); }
 function addInstituicao() { const n = document.getElementById('nova-inst').value; if(n) fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'adicionarInstituicao', nome: n, senha: sessionStorage.getItem('admin_token') }) }).then(() => { document.getElementById('nova-inst').value = ''; carregarInstituicoes(); }); }
 function removerInst(n) { fetch(URL_API, { method: 'POST', body: JSON.stringify({ action: 'removerInstituicao', nome: n, senha: sessionStorage.getItem('admin_token') }) }).then(() => carregarInstituicoes()); }
@@ -1754,5 +1772,3 @@ function formatarUrlDrive(url) {
 }
 
 const toBase64 = f => new Promise((r, j) => { const rd = new FileReader(); rd.readAsDataURL(f); rd.onload = () => r(rd.result.split(',')[1]); rd.onerror = e => j(e); });
-
-
