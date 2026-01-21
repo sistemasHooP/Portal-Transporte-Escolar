@@ -71,17 +71,9 @@
                     <button id="btn-eventos" class="nav-item" onclick="switchTab('tab-eventos')">
                         <i class="fa-regular fa-calendar-days"></i> Eventos
                     </button>
-                    
-                    <!-- ATUALIZADO: Badge de E-mail na Sidebar -->
                     <button id="btn-inscricoes" class="nav-item" onclick="switchTab('tab-inscricoes')">
-                        <div style="display:flex; align-items:center; gap:12px; flex:1;">
-                            <i class="fa-solid fa-users-viewfinder"></i> Inscrições
-                        </div>
-                        <span id="sidebar-quota-badge" style="font-size:0.7rem; background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:10px; display:none;">
-                            0/97
-                        </span>
+                        <i class="fa-solid fa-users-viewfinder"></i> Inscrições
                     </button>
-
                     <button id="btn-config" class="nav-item" onclick="switchTab('tab-config')">
                         <i class="fa-solid fa-sliders"></i> Configurações
                     </button>
@@ -236,13 +228,7 @@
                         <div class="page-header">
                             <div class="page-title">
                                 <h1>Inscrições</h1>
-                                <!-- ATUALIZADO: Contador de E-mails no Header -->
-                                <p style="display:flex; align-items:center; gap:8px;">
-                                    Gerenciamento completo. 
-                                    <span id="header-quota-badge" class="badge" style="background:#e2e8f0; color:#475569; display:none;">
-                                        <i class="fa-regular fa-envelope"></i> <span id="quota-value">0</span> / 97
-                                    </span>
-                                </p>
+                                <p>Gerenciamento completo de alunos.</p>
                             </div>
                             <button onclick="carregarInscricoes(true)" class="btn btn-secondary btn-icon" title="Recarregar">
                                 <i class="fa-solid fa-rotate-right" style="color: var(--text-main);"></i>
@@ -326,6 +312,8 @@
                             <div class="card-widget">
                                 <h3 style="margin-bottom: 1rem; font-size: 1rem; color: var(--text-main);">Dados do Sistema</h3>
                                 
+                                <!-- REMOVIDO: Campo de Cor da Carteirinha -->
+
                                 <div style="margin-bottom: 15px;">
                                     <label class="swal-label">Nome da Secretaria</label>
                                     <input type="text" id="config-nome-sec" class="swal-input-custom" placeholder="Secretaria Mun. de Educação">
