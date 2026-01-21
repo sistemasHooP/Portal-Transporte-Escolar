@@ -1,6 +1,6 @@
 const URL_API = 'https://script.google.com/macros/s/AKfycbx6wAwfQyfLbp4IPedWu8KyGrJAM_2Ocq9edgQ5M2oxf8egOi87jeF6AjMjaRyH6W4wnA/exec';
 
-// --- CONFIGURAÇÃO GERAL ---
+// --- CONFIGURAÇÃO GERAL ----
 const URL_LOGO = './logo.png'; 
 
 // Campos padrão (Cidade e Estado agora são opcionais)
@@ -1754,4 +1754,5 @@ function formatarUrlDrive(url) {
 }
 
 const toBase64 = f => new Promise((r, j) => { const rd = new FileReader(); rd.readAsDataURL(f); rd.onload = () => r(rd.result.split(',')[1]); rd.onerror = e => j(e); });
+
 
