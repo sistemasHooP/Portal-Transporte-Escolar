@@ -1,6 +1,6 @@
 const URL_API = 'https://script.google.com/macros/s/AKfycbx6wAwfQyfLbp4IPedWu8KyGrJAM_2Ocq9edgQ5M2oxf8egOi87jeF6AjMjaRyH6W4wnA/exec';
 
-// --- CONFIGURAÇÃO DE CACHE ---
+// --- CONFIGURAÇÃO DE CACHE ----
 const CACHE_EVENTOS_KEY = 'sys_eventos_v2';
 const CACHE_CONFIG_KEY = 'sys_config_v2';
 
@@ -652,4 +652,5 @@ const toBase64 = f => new Promise((r, j) => {
     rd.onload = () => r(rd.result.split(',')[1]); 
     rd.onerror = e => j(e); 
 });
+
 
